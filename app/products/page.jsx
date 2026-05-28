@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { db } from "@/lib/db";
 import { getProducts, getCategories } from "@/lib/aggregator";
 import ProductCard from "@/components/ui/ProductCard";
