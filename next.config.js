@@ -16,7 +16,6 @@ const nextConfig = {
         ],
       },
       {
-        // Allow webhook endpoint without CSRF
         source: "/api/webhooks/:path*",
         headers: [{ key: "X-Frame-Options", value: "DENY" }],
       },
