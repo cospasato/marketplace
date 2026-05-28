@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id              String    @id @default(cuid())
+  shopDomain      String    @unique
+  customDomain    String?
+  storeName       String
+  storefrontToken String
+  logoUrl         String?
+  description     String?
+  currency        String    @default("USD")
+  primaryColor    String?
+  active          Boolean   @default(true)
+  featured        Boolean   @default(false)
+  productCount    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  products        Product[]
+  webhooks        Webhook[]
+}
+
+model Product {
+  id           String   @id
+  storeId      String
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  title        String
+  handle       String
+  description  String?
+  price        Float
+  comparePrice Float?
+  currency     String   @default("USD")
+  imageUrl     String?
+  productUrl   String
+  tags         String[]
+  category     String?
+  available    Boolean  @default(true)
+  syncedAt     DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([storeId])
+  @@index([available])
+  @@index([tags])
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  topic     String
+  shopifyId String?
+  createdAt DateTime @default(now())
+
+  @@index([storeId])
+}
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  storeId   String
+  status    String
+  message   String?
+  products  Int      @default(0)
+  createdAt DateTime @default(now())
+}
