@@ -234,7 +234,7 @@ export default function RegistryDashboard() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10, marginBottom: 20 }}>
         {[
           { label: "Total", value: items.length, color: "#f0ede8" },
           { label: "Available", value: available, color: "#4ade80" },
@@ -289,7 +289,7 @@ export default function RegistryDashboard() {
               </button>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", gap: 12 }}>
               {items.map(item => (
                 <div key={item.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, overflow: "hidden" }}>
                   <div style={{ position: "relative", aspectRatio: "4/3", background: "#1a1a1a" }}>
@@ -358,7 +358,7 @@ export default function RegistryDashboard() {
           ) : (
             <>
               <div style={{ fontSize: 12, color: "#5a5650", marginBottom: 14 }}>{filteredProducts.length} products available · click any to add</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(160px, 45%), 1fr))", gap: 12 }}>
                 {filteredProducts.map(product => {
                   const inRegistry = items.some(i => i.productId === product.id);
                   const isAdding = addingProduct === product.id;

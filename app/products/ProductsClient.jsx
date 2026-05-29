@@ -36,10 +36,10 @@ export default function ProductsClient({ initialProducts, total, pages, stores, 
   );
 
   return (
-    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 32 }}>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 24px", display: "flex", gap: 32, flexWrap: "wrap" }}>
 
       {/* Sidebar filters */}
-      <aside style={{ width: 200, flexShrink: 0 }}>
+      <aside style={{ width: "clamp(160px, 20vw, 200px)", flexShrink: 0, minWidth: 140 }}>
         <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Filters</div>
         <div style={{ fontSize: 13, color: "var(--text3)" }}>{total} products</div>
 

@@ -204,7 +204,7 @@ export default function RegistryHomeClient() {
                 <div style={{ fontSize: 13, color: "#5a5650", marginBottom: 20, fontFamily: "sans-serif" }}>
                   {registries.length} registries{search ? ` matching "${search}"` : ""}
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", gap: 16 }}>
                   {registries.map(r => <RegistryCard key={r.id} r={r} />)}
                 </div>
               </div>
@@ -233,7 +233,7 @@ export default function RegistryHomeClient() {
 
             <div>
               <label style={lbl}>Occasion *</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: 8 }}>
                 {OCCASION_CREATE.map(o => (
                   <button key={o.id} onClick={() => setForm(f => ({ ...f, occasion: o.label }))} style={{
                     padding: "10px 8px", textAlign: "center", cursor: "pointer", fontFamily: "inherit", borderRadius: 10,
@@ -287,7 +287,7 @@ export default function RegistryHomeClient() {
               foundRegistries.length === 0 ? (
                 <p style={{ color: "#5a5650", fontSize: 14 }}>No registries found for that email.</p>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", gap: 14 }}>
                   {foundRegistries.map(r => <RegistryCard key={r.id} r={r} />)}
                 </div>
               )

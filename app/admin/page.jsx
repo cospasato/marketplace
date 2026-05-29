@@ -1,32 +1,57 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 
-// ─── Shared styles ───────────────────────────────────────────────────────────
-const card = { background: "#111", border: "1px solid #1e1e1e", borderRadius: 14, padding: "20px 22px" };
-const badge = (color) => ({ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 100, letterSpacing: "0.06em", textTransform: "uppercase", background: `${color}18`, color, border: `1px solid ${color}30` });
-const inputStyle = { background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" };
-const btn = (bg, color = "#0a0a0a") => ({ padding: "8px 16px", background: bg, color, borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "inherit", transition: "opacity 0.15s" });
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  bg: "#0a0a0a", bg1: "#111", bg2: "#1a1a1a", bg3: "#222",
+  border: "#1e1e1e", border2: "#2a2a2a",
+  text: "#f0ede8", text2: "#9a9690", text3: "#5a5650",
+  accent: "#e8d5b0", accent2: "#c4a870",
+  green: "#4ade80", red: "#f87171", blue: "#3b82f6",
+  yellow: "#f59e0b", purple: "#8b5cf6",
+};
 
-const STATUS_COLORS = { pending: "#f59e0b", confirmed: "#3b82f6", out_for_delivery: "#8b5cf6", delivered: "#4ade80", cancelled: "#f87171", unassigned: "#6b7280" };
-const STATUS_LABELS = { pending: "Pending", confirmed: "Confirmed", out_for_delivery: "Out for Delivery", delivered: "Delivered", cancelled: "Cancelled", unassigned: "Unassigned" };
+const S = {
+  card: { background: C.bg1, border: `1px solid ${C.border}`, borderRadius: 14, padding: "18px 20px" },
+  inp: { background: C.bg2, border: `1px solid ${C.border2}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" },
+  lbl: { display: "block", fontSize: 10, fontWeight: 700, color: C.text3, marginBottom: 4, letterSpacing: "0.08em", textTransform: "uppercase" },
+};
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-function StatCard({ label, value, sub, color = "#e8d5b0" }) {
+const btn = (bg, color = C.bg) => ({
+  padding: "8px 14px", background: bg, color, borderRadius: 8, border: "none",
+  cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "inherit",
+  transition: "opacity 0.15s", whiteSpace: "nowrap",
+});
+
+const badge = (color) => ({
+  fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 100,
+  letterSpacing: "0.06em", textTransform: "uppercase",
+  background: `${color}18`, color, border: `1px solid ${color}30`,
+});
+
+const STATUS_COLORS = {
+  pending: C.yellow, confirmed: C.blue, out_for_delivery: C.purple,
+  delivered: C.green, cancelled: C.red, unassigned: C.text3,
+  verified: C.green, rejected: C.red, pending_verification: C.yellow,
+};
+
+function StatCard({ label, value, color = C.accent, icon }) {
   return (
-    <div style={card}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#5a5650", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontFamily: "Georgia, serif", fontSize: 36, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: "#5a5650", marginTop: 6 }}>{sub}</div>}
+    <div style={{ ...S.card, textAlign: "center", padding: "16px 12px" }}>
+      {icon && <div style={{ fontSize: 22, marginBottom: 6 }}>{icon}</div>}
+      <div style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 800, color, lineHeight: 1, marginBottom: 4 }}>{value ?? "—"}</div>
+      <div style={{ fontSize: 10, color: C.text3, letterSpacing: "0.07em", textTransform: "uppercase" }}>{label}</div>
     </div>
   );
 }
 
-function NotificationBell({ count, onClick }) {
+function NotifBell({ count, onClick }) {
   return (
-    <button onClick={onClick} style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-      <span style={{ fontSize: 22 }}>🔔</span>
+    <button onClick={onClick} style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: "6px 8px", borderRadius: 8 }}>
+      <span style={{ fontSize: 20 }}>🔔</span>
       {count > 0 && (
-        <span style={{ position: "absolute", top: -2, right: -4, background: "#f87171", color: "#fff", fontSize: 10, fontWeight: 800, width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ position: "absolute", top: 0, right: 0, background: C.red, color: "#fff", fontSize: 9, fontWeight: 800, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {count > 9 ? "9+" : count}
         </span>
       )}
@@ -34,975 +59,734 @@ function NotificationBell({ count, onClick }) {
   );
 }
 
-// ─── Main admin page ──────────────────────────────────────────────────────────
-const emptyStore = { shopDomain: "", customDomain: "", storeName: "", description: "", currency: "USD", primaryColor: "" };
-
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [tab, setTab] = useState("orders");
+  const [tab, setTab] = useState("dashboard");
+  const [stats, setStats] = useState({});
   const [stores, setStores] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [logs, setLogs] = useState([]);
-  const [stats, setStats] = useState({ stores: 0, products: 0, syncs: 0, orders: 0, pending: 0, delivering: 0 });
-  const [notifications, setNotifications] = useState([]);
-  const [unread, setUnread] = useState(0);
-  const [showNotifs, setShowNotifs] = useState(false);
-  const [form, setForm] = useState(emptyStore);
-  const [editing, setEditing] = useState(null);
-  const [syncing, setSyncing] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [syncResult, setSyncResult] = useState(null);
-  const [registries, setRegistries] = useState([]);
-  const [regDeleteConfirm, setRegDeleteConfirm] = useState(null);
   const [payments, setPayments] = useState([]);
   const [payMethods, setPayMethods] = useState([]);
-  const [payMethodForm, setPayMethodForm] = useState({ name: "", type: "Mobile Money", details: "", instructions: "" });
-  const [savingMethod, setSavingMethod] = useState(false);
-  const [editingMethod, setEditingMethod] = useState(null);
-  const [payFilter, setPayFilter] = useState("all");
+  const [registries, setRegistries] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [notifs, setNotifs] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [syncing, setSyncing] = useState(null);
+  const [syncResult, setSyncResult] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderFilter, setOrderFilter] = useState("all");
+  const [payFilter, setPayFilter] = useState("all");
+  const [storeForm, setStoreForm] = useState({ shopDomain: "", customDomain: "", storeName: "", description: "", currency: "USD", primaryColor: "" });
+  const [editingStore, setEditingStore] = useState(null);
+  const [savingStore, setSavingStore] = useState(false);
+  const [deleteStoreConfirm, setDeleteStoreConfirm] = useState(null);
+  const [methodForm, setMethodForm] = useState({ name: "", type: "Mobile Money", details: "", instructions: "" });
+  const [editingMethod, setEditingMethod] = useState(null);
+  const [savingMethod, setSavingMethod] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
   const [accountForm, setAccountForm] = useState({ name: "", email: "", phone: "", newPassword: "" });
   const [savingAccount, setSavingAccount] = useState(false);
-  const [accountDeleteConfirm, setAccountDeleteConfirm] = useState(null);
   const [deleteAccountConfirm, setDeleteAccountConfirm] = useState(null);
-  const [accountSearch, setAccountSearch] = useState("");
-  const [orderFilter, setOrderFilter] = useState("all");
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [deleteRegConfirm, setDeleteRegConfirm] = useState(null);
   const [driverForm, setDriverForm] = useState({ driverName: "", driverPhone: "", estimatedAt: "" });
-
-  const load = useCallback(async () => {
-    const [storesRes, logsRes, statsRes, ordersRes, notifsRes, regsRes] = await Promise.all([
-      fetch("/api/admin/stores"),
-      fetch("/api/admin/logs"),
-      fetch("/api/admin/stats"),
-      fetch("/api/admin/orders"),
-      fetch("/api/admin/notifications"),
-      fetch("/api/admin/registries"),
-      fetch("/api/admin/payments"),
-      fetch("/api/admin/payment-methods"),
-      fetch("/api/admin/accounts"),
-    ]);
-    setStores(await storesRes.json());
-    setLogs(await logsRes.json());
-    const s = await statsRes.json();
-    const o = await ordersRes.json();
-    const n = await notifsRes.json();
-    setOrders(o);
-    setStats({ ...s, orders: o.length, pending: o.filter(x => x.status === "pending").length, delivering: o.filter(x => x.deliveryStatus === "out_for_delivery").length });
-    setNotifications(n.notifications || []);
-    const regsData = await regsRes.json();
-    const [payRes, methodsRes] = [await (await fetch("/api/admin/payments")).json(), await (await fetch("/api/admin/payment-methods")).json()];
-    setPayments(Array.isArray(payRes) ? payRes : []);
-    setPayMethods(Array.isArray(methodsRes) ? methodsRes : []);
-    const accRes = await (await fetch("/api/admin/accounts")).json();
-    setAccounts(Array.isArray(accRes) ? accRes : []);
-    setRegistries(Array.isArray(regsData) ? regsData : []);
-    setUnread(n.unread || 0);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  // Poll for new orders every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
-  }, [load]);
+  const [accountSearch, setAccountSearch] = useState("");
 
   const flash = (text, type = "ok") => { setMsg({ text, type }); setTimeout(() => setMsg(null), 4000); };
 
-  const saveStore = async () => {
-    setSaving(true);
-    const method = editing ? "PUT" : "POST";
-    const url = editing ? `/api/admin/stores/${editing}` : "/api/admin/stores";
-    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    setSaving(false);
-    if (res.ok) { flash(editing ? "Store updated" : "Store added — click Sync to pull products"); setForm(emptyStore); setEditing(null); setTab("stores"); await load(); }
-    else { const err = await res.json(); flash(err.error || "Error saving store", "error"); }
+  const load = useCallback(async () => {
+    try {
+      const [sRes, stRes, oRes, pRes, pmRes, regRes, accRes, logRes, notifRes] = await Promise.all([
+        fetch("/api/admin/stats"),
+        fetch("/api/admin/stores"),
+        fetch("/api/admin/orders"),
+        fetch("/api/admin/payments"),
+        fetch("/api/admin/payment-methods"),
+        fetch("/api/admin/registries"),
+        fetch("/api/admin/accounts"),
+        fetch("/api/admin/logs"),
+        fetch("/api/admin/notifications"),
+      ]);
+      if (sRes.ok) setStats(await sRes.json());
+      if (stRes.ok) setStores(await stRes.json());
+      if (oRes.ok) setOrders(await oRes.json());
+      if (pRes.ok) setPayments(await pRes.json());
+      if (pmRes.ok) setPayMethods(await pmRes.json());
+      if (regRes.ok) setRegistries(await regRes.json());
+      if (accRes.ok) { const d = await accRes.json(); setAccounts(Array.isArray(d) ? d : []); }
+      if (logRes.ok) setLogs(await logRes.json());
+      if (notifRes.ok) { const n = await notifRes.json(); setNotifs(n.notifications || []); setUnread(n.unread || 0); }
+    } catch {}
+  }, []);
+
+  useEffect(() => { load(); const t = setInterval(load, 30000); return () => clearInterval(t); }, [load]);
+
+  const markNotifsRead = async () => {
+    await fetch("/api/admin/notifications", { method: "PUT" });
+    setUnread(0); setNotifs(n => n.map(x => ({ ...x, read: true })));
   };
 
   const syncStore = async (id) => {
     setSyncing(id);
     const res = await fetch("/api/admin/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeId: id }) });
-    const data = await res.json();
-    setSyncing(null);
-    if (data.ok) flash(data.message);
-    else flash(data.error || "Sync failed", "error");
+    const d = await res.json(); setSyncing(null);
+    if (d.ok) flash(d.message); else flash(d.error || "Sync failed", "error");
     await load();
   };
 
   const syncAll = async () => {
     setSyncing("all"); setSyncResult(null);
     const res = await fetch("/api/admin/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ all: true }) });
-    const data = await res.json();
-    setSyncing(null); setSyncResult(data.results); await load();
+    const d = await res.json(); setSyncing(null); setSyncResult(d.results); await load();
   };
 
   const updateOrder = async (id, updates) => {
     const res = await fetch("/api/admin/orders", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, ...updates }) });
     if (res.ok) { flash("Order updated"); await load(); setSelectedOrder(null); }
-    else flash("Failed to update order", "error");
+    else flash("Failed to update", "error");
   };
 
-  const markNotifsRead = async () => {
-    await fetch("/api/admin/notifications", { method: "PUT" });
-    setUnread(0);
-    setNotifications(n => n.map(x => ({ ...x, read: true })));
+  const saveStore = async () => {
+    setSavingStore(true);
+    const method = editingStore ? "PUT" : "POST";
+    const url = editingStore ? `/api/admin/stores/${editingStore}` : "/api/admin/stores";
+    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(storeForm) });
+    setSavingStore(false);
+    if (res.ok) { flash(editingStore ? "Store updated" : "Store added — click Sync"); setStoreForm({ shopDomain: "", customDomain: "", storeName: "", description: "", currency: "USD", primaryColor: "" }); setEditingStore(null); setTab("stores"); await load(); }
+    else { const d = await res.json(); flash(d.error || "Error", "error"); }
   };
+
+  const saveMethod = async () => {
+    setSavingMethod(true);
+    const method = editingMethod ? "PUT" : "POST";
+    const body = editingMethod ? { id: editingMethod, ...methodForm } : methodForm;
+    const res = await fetch("/api/admin/payment-methods", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    setSavingMethod(false);
+    if (res.ok) { flash(editingMethod ? "Updated" : "Added"); setMethodForm({ name: "", type: "Mobile Money", details: "", instructions: "" }); setEditingMethod(null); await load(); }
+    else flash("Error saving", "error");
+  };
+
+  const saveAccount = async () => {
+    setSavingAccount(true);
+    const res = await fetch("/api/admin/accounts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingAccount.id, ...accountForm }) });
+    setSavingAccount(false);
+    if (res.ok) { flash("Account updated"); setEditingAccount(null); await load(); }
+    else { const d = await res.json(); flash(d.error || "Error", "error"); }
+  };
+
+  const TABS = [
+    { key: "dashboard", label: "Dashboard", icon: "📊" },
+    { key: "orders", label: `Orders`, icon: "🛍", count: orders.filter(o => o.status === "pending").length },
+    { key: "delivery", label: "Delivery", icon: "🚚" },
+    { key: "payments", label: "Payments", icon: "💳", count: payments.filter(p => p.status === "pending_verification").length },
+    { key: "stores", label: "Stores", icon: "🏪" },
+    { key: "add-store", label: editingStore ? "Edit Store" : "Add Store", icon: "➕" },
+    { key: "registries", label: "Registries", icon: "🎁" },
+    { key: "accounts", label: "Accounts", icon: "👤" },
+    { key: "pay-methods", label: "Pay Methods", icon: "⚙️" },
+    { key: "logs", label: "Logs", icon: "📋" },
+  ];
 
   const filteredOrders = orderFilter === "all" ? orders : orders.filter(o =>
     orderFilter === "pending" ? o.status === "pending" :
     orderFilter === "delivering" ? o.deliveryStatus === "out_for_delivery" :
-    orderFilter === "delivered" ? o.deliveryStatus === "delivered" :
-    o.status === orderFilter
+    orderFilter === "delivered" ? o.deliveryStatus === "delivered" : true
   );
 
-  const tabStyle = (t) => ({
-    padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-    cursor: "pointer", border: "none", transition: "all 0.15s",
-    color: tab === t ? "#e8d5b0" : "#5a5650",
-    background: tab === t ? "rgba(232,213,176,0.1)" : "transparent",
-  });
+  const filteredPayments = payFilter === "all" ? payments : payments.filter(p => p.status === payFilter);
 
-  const fields = [
-    { key: "shopDomain", label: "Myshopify domain *", placeholder: "your-store.myshopify.com", note: "Must end in .myshopify.com" },
-    { key: "customDomain", label: "Custom domain (optional)", placeholder: "berogenge.com" },
-    { key: "storeName", label: "Store display name *", placeholder: "My Awesome Store" },
-    { key: "description", label: "Short description", placeholder: "Fashion & accessories" },
-    { key: "currency", label: "Currency", placeholder: "USD" },
-    { key: "primaryColor", label: "Brand color (hex)", placeholder: "#4a90e2" },
-  ];
+  const filteredAccounts = accounts.filter(a =>
+    !accountSearch || a.name?.toLowerCase().includes(accountSearch.toLowerCase()) || a.email?.toLowerCase().includes(accountSearch.toLowerCase())
+  );
 
   return (
-    <div style={{ maxWidth: 1160, margin: "0 auto", padding: "32px 24px", minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#c4a870", marginBottom: 6 }}>MARKETPLACE ADMIN</div>
-          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 800, color: "#f0ede8" }}>Control Center</h1>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          {/* Notifications */}
-          <div style={{ position: "relative" }}>
-            <NotificationBell count={unread} onClick={() => { setShowNotifs(!showNotifs); if (unread > 0) markNotifsRead(); }} />
-            {showNotifs && (
-              <div style={{ position: "absolute", right: 0, top: 40, width: 340, background: "#111", border: "1px solid #2a2a2a", borderRadius: 14, zIndex: 100, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
-                <div style={{ padding: "14px 16px", borderBottom: "1px solid #1e1e1e", fontSize: 13, fontWeight: 700, color: "#f0ede8" }}>Notifications</div>
-                {notifications.length === 0 ? (
-                  <div style={{ padding: "24px 16px", textAlign: "center", color: "#5a5650", fontSize: 13 }}>No notifications yet</div>
-                ) : (
-                  <div style={{ maxHeight: 300, overflowY: "auto" }}>
-                    {notifications.map(n => (
-                      <div key={n.id} style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a", background: n.read ? "transparent" : "rgba(232,213,176,0.04)" }}>
-                        <div style={{ fontSize: 12, color: n.read ? "#5a5650" : "#f0ede8", lineHeight: 1.5 }}>{n.message}</div>
-                        <div style={{ fontSize: 10, color: "#3a3a3a", marginTop: 3 }}>{new Date(n.createdAt).toLocaleString()}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+      {/* ── Top bar ── */}
+      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(16px)", borderBottom: `1px solid ${C.border}`, padding: "0 16px", display: "flex", alignItems: "center", gap: 12, height: 56 }}>
+        <div style={{ fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 16, color: C.accent, letterSpacing: "-0.01em", flexShrink: 0 }}>MARKET</div>
+        <div style={{ fontSize: 11, color: C.text3, borderLeft: `1px solid ${C.border2}`, paddingLeft: 12, flexShrink: 0 }}>Admin</div>
+        <div style={{ flex: 1 }} />
+        <div style={{ position: "relative" }}>
+          <NotifBell count={unread} onClick={() => { setShowNotifs(!showNotifs); if (unread > 0) markNotifsRead(); }} />
+          {showNotifs && (
+            <div style={{ position: "absolute", right: 0, top: 44, width: 320, background: C.bg1, border: `1px solid ${C.border2}`, borderRadius: 14, zIndex: 200, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+              <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700 }}>Notifications</div>
+              <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                {notifs.length === 0 ? <div style={{ padding: "20px 16px", color: C.text3, fontSize: 13, textAlign: "center" }}>No notifications</div> :
+                  notifs.map(n => (
+                    <div key={n.id} style={{ padding: "10px 16px", borderBottom: `1px solid ${C.border}`, background: n.read ? "transparent" : `${C.accent}08` }}>
+                      <div style={{ fontSize: 12, color: n.read ? C.text3 : C.text, lineHeight: 1.5 }}>{n.message}</div>
+                      <div style={{ fontSize: 10, color: C.text3, marginTop: 3 }}>{new Date(n.createdAt).toLocaleString()}</div>
+                    </div>
+                  ))}
               </div>
-            )}
-          </div>
-          <button onClick={syncAll} disabled={!!syncing} style={{ ...btn(syncing ? "#1a1a1a" : "#e8d5b0"), padding: "10px 20px", fontSize: 13 }}>
-            {syncing === "all" ? "⟳ Syncing..." : "↺ Sync All Stores"}
-          </button>
+            </div>
+          )}
         </div>
+        <button onClick={syncAll} disabled={!!syncing} style={{ ...btn(syncing ? C.bg2 : C.accent, syncing ? C.text3 : C.bg), padding: "7px 14px", fontSize: 12 }}>
+          {syncing === "all" ? "⟳ Syncing..." : "↺ Sync All"}
+        </button>
       </div>
 
-      {/* Flash */}
-      {msg && (
-        <div style={{ marginBottom: 20, padding: "12px 18px", background: msg.type === "error" ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.1)", border: `1px solid ${msg.type === "error" ? "rgba(248,113,113,0.25)" : "rgba(74,222,128,0.25)"}`, borderRadius: 10, fontSize: 13, color: msg.type === "error" ? "#f87171" : "#4ade80" }}>
-          {msg.text}
-        </div>
-      )}
+      <div style={{ display: "flex", minHeight: "calc(100vh - 56px)" }}>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 28 }}>
-        <StatCard label="Stores" value={stats.stores} />
-        <StatCard label="Products" value={stats.products?.toLocaleString()} />
-        <StatCard label="Total Orders" value={stats.orders} color="#c4a870" />
-        <StatCard label="Pending" value={stats.pending} color="#f59e0b" />
-        <StatCard label="Delivering" value={stats.delivering} color="#8b5cf6" />
-        <StatCard label="Syncs" value={stats.syncs} color="#4ade80" />
-      </div>
+        {/* ── Sidebar nav ── */}
+        <nav style={{ width: 200, flexShrink: 0, background: C.bg1, borderRight: `1px solid ${C.border}`, padding: "16px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
+          {TABS.map(({ key, label, icon, count }) => (
+            <button key={key} onClick={() => setTab(key)} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "9px 12px", borderRadius: 8, border: "none", cursor: "pointer",
+              background: tab === key ? `${C.accent}12` : "transparent",
+              color: tab === key ? C.accent : C.text2,
+              fontSize: 13, fontWeight: tab === key ? 600 : 400,
+              fontFamily: "inherit", textAlign: "left", width: "100%",
+              transition: "all 0.12s",
+            }}>
+              <span style={{ fontSize: 15 }}>{icon}</span>
+              <span style={{ flex: 1 }}>{label}</span>
+              {count > 0 && <span style={{ ...badge(C.red), fontSize: 9, padding: "1px 6px" }}>{count}</span>}
+            </button>
+          ))}
+        </nav>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 2, marginBottom: 24, borderBottom: "1px solid #1a1a1a", paddingBottom: 12 }}>
-        {[
-          { key: "orders", label: `🛍 Orders (${orders.length})` },
-          { key: "delivery", label: `🚚 Delivery Board` },
-          { key: "stores", label: `🏪 Stores (${stores.length})` },
-          { key: "add", label: editing ? "✏️ Edit Store" : "＋ Add Store" },
-          { key: "logs", label: "📋 Sync Logs" },
-          { key: "registries", label: `🎁 Registries` },
-          { key: "payments", label: "💳 Payments" },
-          { key: "pay-methods", label: "⚙️ Payment Methods" },
-          { key: "accounts", label: "👤 Accounts" },
-        ].map(({ key, label }) => (
-          <button key={key} style={tabStyle(key)} onClick={() => { setTab(key); if (key === "add" && !editing) setForm(emptyStore); }}>
-            {label}
-          </button>
-        ))}
-      </div>
+        {/* ── Main content ── */}
+        <main style={{ flex: 1, padding: "24px", overflowX: "hidden", maxWidth: "100%" }}>
 
-      {/* ── ORDERS TAB ─────────────────────────────────────────────── */}
-      {tab === "orders" && (
-        <div>
-          {/* Filter bar */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
-            {[["all", "All"], ["pending", "Pending"], ["confirmed", "Confirmed"], ["delivering", "Delivering"], ["delivered", "Delivered"]].map(([val, label]) => (
-              <button key={val} onClick={() => setOrderFilter(val)} style={{ ...btn(orderFilter === val ? "#e8d5b0" : "#1a1a1a", orderFilter === val ? "#0a0a0a" : "#9a9690"), border: "1px solid #2a2a2a" }}>
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {filteredOrders.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📦</div>
-              <p>No orders yet. When customers request delivery, orders appear here.</p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {filteredOrders.map(order => (
-                <div key={order.id} style={{ ...card, display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }} onClick={() => { setSelectedOrder(order); setDriverForm({ driverName: order.driverName || "", driverPhone: order.driverPhone || "", estimatedAt: "" }); }}>
-                  {/* Product image */}
-                  <div style={{ width: 52, height: 52, borderRadius: 10, overflow: "hidden", background: "#1a1a1a", flexShrink: 0 }}>
-                    {order.productImageUrl ? <img src={order.productImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📦</div>}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#f0ede8", marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.productTitle}</div>
-                    <div style={{ fontSize: 12, color: "#5a5650" }}>
-                      {order.customerName} · {order.deliveryCity}
-                      {order.store && <span style={{ color: "#3a3a3a" }}> · {order.store.storeName}</span>}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 15, color: "#e8d5b0", marginBottom: 4 }}>
-                      {order.currency} {(order.productPrice * order.quantity).toFixed(2)}
-                    </div>
-                    <span style={badge(STATUS_COLORS[order.deliveryStatus] || "#6b7280")}>{STATUS_LABELS[order.deliveryStatus] || order.deliveryStatus}</span>
-                  </div>
-                  <div style={{ color: "#3a3a3a", fontSize: 11, flexShrink: 0 }}>{new Date(order.createdAt).toLocaleDateString()}</div>
-                </div>
-              ))}
+          {/* Flash */}
+          {msg && (
+            <div style={{ marginBottom: 16, padding: "10px 16px", borderRadius: 8, fontSize: 13, display: "flex", alignItems: "center", gap: 8,
+              background: msg.type === "error" ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.1)",
+              border: `1px solid ${msg.type === "error" ? "rgba(248,113,113,0.25)" : "rgba(74,222,128,0.25)"}`,
+              color: msg.type === "error" ? C.red : C.green,
+            }}>
+              {msg.type === "error" ? "✕" : "✓"} {msg.text}
             </div>
           )}
 
-          {/* Order detail modal */}
-          {selectedOrder && (
-            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={() => setSelectedOrder(null)}>
-              <div style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 20, padding: 28, maxWidth: 540, width: "100%", maxHeight: "90vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 20 }}>
-                  <div>
-                    <div style={{ fontSize: 10, color: "#5a5650", marginBottom: 4, letterSpacing: "0.08em" }}>ORDER #{selectedOrder.id.slice(-6).toUpperCase()}</div>
-                    <h3 style={{ fontFamily: "Georgia, serif", fontSize: 18, color: "#f0ede8" }}>{selectedOrder.productTitle}</h3>
-                  </div>
-                  <button onClick={() => setSelectedOrder(null)} style={{ background: "none", border: "none", color: "#5a5650", cursor: "pointer", fontSize: 20 }}>✕</button>
-                </div>
-
-                {/* Customer info */}
-                <div style={{ background: "#1a1a1a", borderRadius: 12, padding: "14px 16px", marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#5a5650", marginBottom: 10 }}>CUSTOMER</div>
-                  <div style={{ fontSize: 13, color: "#f0ede8", marginBottom: 4 }}>{selectedOrder.customerName}</div>
-                  <div style={{ fontSize: 12, color: "#9a9690" }}>{selectedOrder.customerEmail}</div>
-                  {selectedOrder.customerPhone && <div style={{ fontSize: 12, color: "#9a9690" }}>{selectedOrder.customerPhone}</div>}
-                </div>
-
-                {/* Delivery info */}
-                <div style={{ background: "#1a1a1a", borderRadius: 12, padding: "14px 16px", marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#5a5650", marginBottom: 10 }}>DELIVERY ADDRESS</div>
-                  <div style={{ fontSize: 13, color: "#f0ede8" }}>{selectedOrder.deliveryAddress}</div>
-                  <div style={{ fontSize: 12, color: "#9a9690" }}>{selectedOrder.deliveryCity}{selectedOrder.deliveryRegion && `, ${selectedOrder.deliveryRegion}`}</div>
-                </div>
-
-                {selectedOrder.notes && (
-                  <div style={{ background: "#1a1a1a", borderRadius: 12, padding: "14px 16px", marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#5a5650", marginBottom: 6 }}>NOTES</div>
-                    <div style={{ fontSize: 13, color: "#9a9690" }}>{selectedOrder.notes}</div>
-                  </div>
-                )}
-
-                {/* Order value */}
-                <div style={{ background: "rgba(232,213,176,0.06)", border: "1px solid rgba(232,213,176,0.12)", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#9a9690", marginBottom: 4 }}>
-                    <span>{selectedOrder.productTitle}</span><span>x{selectedOrder.quantity}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 18, color: "#e8d5b0" }}>
-                    <span>Total</span><span>{selectedOrder.currency} {(selectedOrder.productPrice * selectedOrder.quantity).toFixed(2)}</span>
-                  </div>
-                </div>
-
-                {/* Driver assignment */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#5a5650", marginBottom: 10, letterSpacing: "0.08em" }}>ASSIGN DRIVER</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                    <div>
-                      <label style={{ fontSize: 10, color: "#5a5650", display: "block", marginBottom: 4 }}>Driver name</label>
-                      <input value={driverForm.driverName} onChange={e => setDriverForm(f => ({ ...f, driverName: e.target.value }))} placeholder="John Doe" style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 10, color: "#5a5650", display: "block", marginBottom: 4 }}>Driver phone</label>
-                      <input value={driverForm.driverPhone} onChange={e => setDriverForm(f => ({ ...f, driverPhone: e.target.value }))} placeholder="+255 7xx xxx xxx" style={inputStyle} />
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 10, color: "#5a5650", display: "block", marginBottom: 4 }}>Estimated delivery time</label>
-                    <input type="datetime-local" value={driverForm.estimatedAt} onChange={e => setDriverForm(f => ({ ...f, estimatedAt: e.target.value }))} style={inputStyle} />
-                  </div>
-                </div>
-
-                {/* Status actions */}
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#5a5650", marginBottom: 10, letterSpacing: "0.08em" }}>UPDATE STATUS</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button onClick={() => updateOrder(selectedOrder.id, { status: "confirmed", deliveryStatus: "confirmed", ...driverForm })} style={btn("#3b82f6", "#fff")}>✓ Confirm</button>
-                  <button onClick={() => updateOrder(selectedOrder.id, { deliveryStatus: "out_for_delivery", ...driverForm })} style={btn("#8b5cf6", "#fff")}>🚚 Out for Delivery</button>
-                  <button onClick={() => updateOrder(selectedOrder.id, { status: "completed", deliveryStatus: "delivered" })} style={btn("#4ade80", "#0a0a0a")}>✅ Delivered</button>
-                  <button onClick={() => updateOrder(selectedOrder.id, { status: "cancelled", deliveryStatus: "cancelled" })} style={btn("#f87171", "#fff")}>✕ Cancel</button>
-                </div>
+          {/* ── DASHBOARD ── */}
+          {tab === "dashboard" && (
+            <div>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22, marginBottom: 20, color: C.text }}>Dashboard</h1>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12, marginBottom: 28 }}>
+                <StatCard label="Stores" value={stats.stores} icon="🏪" />
+                <StatCard label="Products" value={stats.products?.toLocaleString()} icon="📦" color={C.text} />
+                <StatCard label="Orders" value={stats.orders} icon="🛍" color={C.accent2} />
+                <StatCard label="Pending" value={stats.pending} icon="⏳" color={C.yellow} />
+                <StatCard label="Delivering" value={stats.delivering} icon="🚚" color={C.purple} />
+                <StatCard label="Registries" value={stats.registries} icon="🎁" color={C.accent2} />
+                <StatCard label="Gifts Purchased" value={stats.giftsPurchased} icon="✅" color={C.green} />
+                <StatCard label="Accounts" value={stats.accounts} icon="👤" color="#a78bfa" />
               </div>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* ── DELIVERY BOARD TAB ─────────────────────────────────────── */}
-      {tab === "delivery" && (
-        <div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-            {[
-              { key: "pending", label: "📥 New Orders", color: "#f59e0b" },
-              { key: "confirmed", label: "✓ Confirmed", color: "#3b82f6" },
-              { key: "out_for_delivery", label: "🚚 Out for Delivery", color: "#8b5cf6" },
-              { key: "delivered", label: "✅ Delivered", color: "#4ade80" },
-            ].map(({ key, label, color }) => {
-              const colOrders = orders.filter(o => o.deliveryStatus === key || (key === "pending" && o.status === "pending" && o.deliveryStatus === "unassigned"));
-              return (
-                <div key={key}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color }}>{label}</span>
-                    <span style={{ fontSize: 11, background: `${color}18`, color, padding: "2px 8px", borderRadius: 100, fontWeight: 700 }}>{colOrders.length}</span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {colOrders.map(order => (
-                      <div key={order.id} onClick={() => { setSelectedOrder(order); setDriverForm({ driverName: order.driverName || "", driverPhone: order.driverPhone || "", estimatedAt: "" }); setTab("orders"); }}
-                        style={{ background: "#111", border: `1px solid ${color}25`, borderRadius: 12, padding: "14px", cursor: "pointer", transition: "border-color 0.15s" }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = `${color}60`}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = `${color}25`}
-                      >
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#f0ede8", marginBottom: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.productTitle}</div>
-                        <div style={{ fontSize: 11, color: "#9a9690", marginBottom: 4 }}>👤 {order.customerName}</div>
-                        <div style={{ fontSize: 11, color: "#9a9690", marginBottom: 4 }}>📍 {order.deliveryCity}</div>
-                        {order.driverName && <div style={{ fontSize: 11, color: "#c4a870" }}>🏍 {order.driverName}</div>}
-                        <div style={{ fontSize: 10, color: "#3a3a3a", marginTop: 6 }}>{new Date(order.createdAt).toLocaleDateString()}</div>
-                      </div>
-                    ))}
-                    {colOrders.length === 0 && (
-                      <div style={{ background: "#0d0d0d", border: "1px dashed #1e1e1e", borderRadius: 12, padding: "20px 14px", textAlign: "center", color: "#3a3a3a", fontSize: 12 }}>Empty</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── STORES TAB ────────────────────────────────────────────── */}
-      {tab === "stores" && (
-        <div>
-          {stores.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
-              <p>No stores yet.</p>
-              <button onClick={() => setTab("add")} style={{ marginTop: 12, ...btn("#e8d5b0"), padding: "10px 20px" }}>+ Add your first store</button>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {stores.map(store => (
-                <div key={store.id} style={{ ...card, display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 10, background: store.primaryColor || "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 18, color: "#e8d5b0", flexShrink: 0 }}>
-                    {store.storeName[0].toUpperCase()}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#f0ede8", marginBottom: 3 }}>{store.storeName}</div>
-                    <div style={{ fontSize: 11, color: "#5a5650" }}>
-                      {store.shopDomain}
-                      {store.customDomain && <span style={{ color: "#c4a870", marginLeft: 6 }}>→ {store.customDomain}</span>}
-                      <span style={{ marginLeft: 8 }}>· {store.productCount} products</span>
+              {/* Recent orders */}
+              <div style={{ ...S.card, marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 14 }}>Recent orders</div>
+                {orders.slice(0, 5).map(o => (
+                  <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.productTitle}</div>
+                      <div style={{ fontSize: 11, color: C.text3 }}>{o.customerName} · {o.deliveryCity}</div>
                     </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                    <button onClick={() => syncStore(store.id)} disabled={syncing === store.id} style={btn("#1a1a1a", "#9a9690")}>
-                      {syncing === store.id ? "⟳" : "↺"} Sync
-                    </button>
-                    <button onClick={() => { setEditing(store.id); setForm({ shopDomain: store.shopDomain, customDomain: store.customDomain || "", storeName: store.storeName, description: store.description || "", currency: store.currency, primaryColor: store.primaryColor || "" }); setTab("add"); }} style={btn("#1a1a1a", "#9a9690")}>Edit</button>
-                    {deleteConfirm === store.id ? (
-                      <>
-                        <button onClick={async () => { await fetch(`/api/admin/stores/${store.id}`, { method: "DELETE" }); setDeleteConfirm(null); flash("Store removed"); await load(); }} style={btn("rgba(248,113,113,0.15)", "#f87171")}>Confirm</button>
-                        <button onClick={() => setDeleteConfirm(null)} style={btn("#1a1a1a", "#5a5650")}>Cancel</button>
-                      </>
-                    ) : (
-                      <button onClick={() => setDeleteConfirm(store.id)} style={btn("#1a1a1a", "#5a5650")}>✕</button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {syncResult && (
-            <div style={{ ...card, marginTop: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#f0ede8", marginBottom: 12 }}>Last sync results</div>
-              {syncResult.map((r, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #1a1a1a", fontSize: 12 }}>
-                  <span style={{ color: "#9a9690" }}>{r.store}</span>
-                  <span style={{ color: r.status === "ok" ? "#4ade80" : "#f87171" }}>{r.status === "ok" ? `${r.count} products` : r.error}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── ADD/EDIT STORE TAB ────────────────────────────────────── */}
-      {tab === "add" && (
-        <div style={{ maxWidth: 560 }}>
-          <h2 style={{ fontFamily: "Georgia, serif", fontSize: 20, marginBottom: 24, color: "#f0ede8" }}>{editing ? "Edit store" : "Connect a new store"}</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {fields.map(({ key, label, placeholder, note }) => (
-              <div key={key}>
-                <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#5a5650", marginBottom: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</label>
-                {note && <div style={{ fontSize: 11, color: "#3a3a3a", marginBottom: 5 }}>{note}</div>}
-                <input value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} placeholder={placeholder} disabled={!!editing && key === "shopDomain"} style={{ ...inputStyle, opacity: editing && key === "shopDomain" ? 0.5 : 1 }} />
-              </div>
-            ))}
-            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-              <button onClick={saveStore} disabled={saving} style={{ ...btn("#e8d5b0"), flex: 1, padding: "13px", fontSize: 15, fontFamily: "Georgia, serif", fontWeight: 800 }}>
-                {saving ? "Saving..." : editing ? "Save changes" : "Add store"}
-              </button>
-              {editing && <button onClick={() => { setEditing(null); setForm(emptyStore); setTab("stores"); }} style={{ ...btn("#1a1a1a", "#9a9690"), padding: "13px 20px" }}>Cancel</button>}
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* ── REGISTRIES TAB ─────────────────────────────────── */}
-      {tab === "registries" && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <div style={{ fontSize: 13, color: "#5a5650" }}>{registries.length} registries total</div>
-            <a href="/registry" target="_blank" rel="noopener noreferrer" style={{ padding: "8px 16px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#9a9690", fontSize: 12, textDecoration: "none", fontWeight: 600 }}>
-              View public page ↗
-            </a>
-          </div>
-
-          {registries.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🎁</div>
-              <p>No registries yet.</p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {registries.map(reg => {
-                const items = reg.items || [];
-                const purchased = items.filter(i => i.status === "purchased").length;
-                const claimed = items.filter(i => i.status === "claimed").length;
-                const contribs = reg.contributions || [];
-                const totalValue = items.reduce((s, i) => s + (i.price || 0), 0);
-                const progress = items.length > 0 ? Math.round(((purchased + claimed) / items.length) * 100) : 0;
-                const emoji = { "Wedding": "💍", "Birthday": "🎂", "Baby Shower": "👶", "Christmas": "🎄", "Graduation": "🎓", "Housewarming": "🏠", "Anniversary": "💝" }[reg.occasion] || "🎁";
-
-                return (
-                  <div key={reg.id} style={{ ...card, display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
-                    <div style={{ fontSize: 28, flexShrink: 0 }}>{emoji}</div>
-
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
-                        <span style={{ fontFamily: "Georgia, serif", fontSize: 15, fontWeight: 700, color: "#f0ede8" }}>{reg.title}</span>
-                        <span style={{ ...badge(reg.isPublic ? "#4ade80" : "#f87171") }}>{reg.isPublic ? "Public" : "Private"}</span>
-                        <span style={{ ...badge("#c4a870") }}>{reg.occasion}</span>
-                      </div>
-                      <div style={{ fontSize: 12, color: "#5a5650", marginBottom: 8 }}>
-                        {reg.ownerName} · {reg.ownerEmail}
-                        {reg.eventDate && ` · ${new Date(reg.eventDate).toLocaleDateString()}`}
-                      </div>
-
-                      {/* Progress bar */}
-                      {items.length > 0 && (
-                        <div style={{ marginBottom: 8 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#5a5650", marginBottom: 4 }}>
-                            <span>{items.length} items · {purchased} purchased · {claimed} claimed · {contribs.length} gifters</span>
-                            <span style={{ color: "#c4a870" }}>{progress}%</span>
-                          </div>
-                          <div style={{ height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, #4ade80, #e8d5b0)", borderRadius: 2 }} />
-                          </div>
-                        </div>
-                      )}
-
-                      <div style={{ fontSize: 12, color: "#5a5650" }}>
-                        Total value: <span style={{ color: "#e8d5b0" }}>USD {totalValue.toFixed(2)}</span>
-                        {" · "}Created {new Date(reg.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
-                      <a href={`/registry/${reg.slug}`} target="_blank" rel="noopener noreferrer" style={{ ...btn("#1a1a1a", "#9a9690"), textDecoration: "none", display: "inline-flex", alignItems: "center" }}>View ↗</a>
-                      <a href={`/registry/live/${reg.slug}`} target="_blank" rel="noopener noreferrer" style={{ ...btn("#1a1a1a", "#c4a870"), textDecoration: "none", display: "inline-flex", alignItems: "center" }}>🔴 Live</a>
-                      <button onClick={async () => {
-                        await fetch("/api/admin/registries", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: reg.id, isPublic: !reg.isPublic }) });
-                        flash(`Registry ${reg.isPublic ? "hidden" : "published"}`);
-                        await load();
-                      }} style={btn("#1a1a1a", "#9a9690")}>
-                        {reg.isPublic ? "Hide" : "Publish"}
-                      </button>
-                      {regDeleteConfirm === reg.id ? (
-                        <>
-                          <button onClick={async () => { await fetch(`/api/admin/registries?id=${reg.id}`, { method: "DELETE" }); setRegDeleteConfirm(null); flash("Registry deleted"); await load(); }} style={btn("rgba(248,113,113,0.15)", "#f87171")}>Confirm</button>
-                          <button onClick={() => setRegDeleteConfirm(null)} style={btn("#1a1a1a", "#5a5650")}>Cancel</button>
-                        </>
-                      ) : (
-                        <button onClick={() => setRegDeleteConfirm(reg.id)} style={btn("#1a1a1a", "#5a5650")}>✕</button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-
-
-      {/* ── ACCOUNTS TAB ─────────────────────────────────────── */}
-      {tab === "accounts" && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
-            <div style={{ fontSize: 13, color: "#5a5650" }}>{accounts.length} registry accounts</div>
-            <input
-              value={accountSearch}
-              onChange={e => setAccountSearch(e.target.value)}
-              placeholder="Search by name or email..."
-              style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px 14px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: 260 }}
-            />
-          </div>
-
-          {/* Edit modal */}
-          {editAccount && (
-            <div style={{ ...card, marginBottom: 20, border: "1px solid rgba(232,213,176,0.2)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#c4a870" }}>EDIT ACCOUNT — {editAccount.email}</div>
-                <button onClick={() => setEditAccount(null)} style={{ background: "none", border: "none", color: "#5a5650", cursor: "pointer", fontSize: 18 }}>✕</button>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-                {[
-                  { key: "name", label: "Full name", placeholder: "Jane Doe" },
-                  { key: "email", label: "Email", placeholder: "jane@email.com" },
-                  { key: "phone", label: "Phone", placeholder: "+255 7xx xxx xxx" },
-                  { key: "newPassword", label: "New password (leave blank to keep)", placeholder: "At least 6 chars" },
-                ].map(({ key, label, placeholder }) => (
-                  <div key={key}>
-                    <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</label>
-                    <input
-                      type={key === "newPassword" ? "password" : "text"}
-                      value={accountForm[key]}
-                      onChange={e => setAccountForm(f => ({ ...f, [key]: e.target.value }))}
-                      placeholder={placeholder}
-                      style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }}
-                    />
+                    <span style={badge(STATUS_COLORS[o.deliveryStatus] || C.text3)}>{o.deliveryStatus}</span>
                   </div>
                 ))}
+                {orders.length === 0 && <div style={{ color: C.text3, fontSize: 13 }}>No orders yet</div>}
               </div>
-              <button onClick={async () => {
-                setSavingAccount(true);
-                const body = { id: editAccount.id, name: accountForm.name, email: accountForm.email, phone: accountForm.phone };
-                if (accountForm.newPassword) body.newPassword = accountForm.newPassword;
-                const res = await fetch("/api/admin/accounts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-                const data = await res.json();
-                if (res.ok) { flash("Account updated"); setEditAccount(null); await load(); }
-                else flash(data.error || "Failed", "error");
-                setSavingAccount(false);
-              }} disabled={savingAccount} style={{ ...btn("#e8d5b0"), padding: "10px 24px" }}>
-                {savingAccount ? "Saving..." : "Save changes"}
-              </button>
+
+              {/* Recent payments */}
+              <div style={S.card}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 14 }}>Recent gift payments</div>
+                {payments.slice(0, 5).map(p => (
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.contribution?.item?.title || "Gift"}</div>
+                      <div style={{ fontSize: 11, color: C.text3 }}>{p.contribution?.gifterName} · {p.method?.name}</div>
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: C.accent, flexShrink: 0 }}>{p.currency} {p.totalAmount?.toFixed(2)}</span>
+                    <span style={badge(STATUS_COLORS[p.status] || C.text3)}>{p.status}</span>
+                  </div>
+                ))}
+                {payments.length === 0 && <div style={{ color: C.text3, fontSize: 13 }}>No payments yet</div>}
+              </div>
             </div>
           )}
 
-          {accounts.filter(a => !accountSearch || a.name.toLowerCase().includes(accountSearch.toLowerCase()) || a.email.toLowerCase().includes(accountSearch.toLowerCase())).length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>👥</div>
-              <p>No accounts yet.</p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {accounts
-                .filter(a => !accountSearch || a.name.toLowerCase().includes(accountSearch.toLowerCase()) || a.email.toLowerCase().includes(accountSearch.toLowerCase()))
-                .map(account => {
-                const totalItems = account.registries.reduce((s, r) => s + (r.items?.length || 0), 0);
-                const totalPurchased = account.registries.reduce((s, r) => s + (r.items?.filter(i => i.status === "purchased").length || 0), 0);
-                const totalGifters = account.registries.reduce((s, r) => s + (r.contributions?.length || 0), 0);
-                return (
-                  <div key={account.id} style={{ ...card }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 14, flexWrap: "wrap" }}>
-                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#1a1a1a", border: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 18, color: "#e8d5b0", flexShrink: 0 }}>
-                        {account.name?.[0]?.toUpperCase() || "?"}
+          {/* ── ORDERS ── */}
+          {tab === "orders" && (
+            <div>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22, marginBottom: 16 }}>Orders</h1>
+              <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+                {[["all","All"], ["pending","Pending"], ["delivering","Delivering"], ["delivered","Delivered"]].map(([v, l]) => (
+                  <button key={v} onClick={() => setOrderFilter(v)} style={{ ...btn(orderFilter === v ? C.accent : C.bg2, orderFilter === v ? C.bg : C.text2), border: `1px solid ${C.border2}` }}>{l}</button>
+                ))}
+              </div>
+              {filteredOrders.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 0", color: C.text3 }}>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>📦</div><p>No orders</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {filteredOrders.map(o => (
+                    <div key={o.id} onClick={() => { setSelectedOrder(o); setDriverForm({ driverName: o.driverName || "", driverPhone: o.driverPhone || "", estimatedAt: "" }); }}
+                      style={{ ...S.card, cursor: "pointer", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                      {o.productImageUrl && <img src={o.productImageUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />}
+                      <div style={{ flex: 1, minWidth: 150 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.productTitle}</div>
+                        <div style={{ fontSize: 11, color: C.text3 }}>{o.customerName} · {o.deliveryCity} · {o.store?.storeName}</div>
                       </div>
-                      <div style={{ flex: 1, minWidth: 160 }}>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: "#f0ede8", marginBottom: 3 }}>{account.name}</div>
-                        <div style={{ fontSize: 12, color: "#5a5650", marginBottom: 6 }}>
-                          {account.email}
-                          {account.phone && <span style={{ marginLeft: 10 }}>📞 {account.phone}</span>}
-                        </div>
-                        <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#5a5650", flexWrap: "wrap" }}>
-                          <span>📅 Joined {new Date(account.createdAt).toLocaleDateString()}</span>
-                          <span>🔑 {account.sessions} sessions</span>
-                          <span style={{ color: "#c4a870" }}>📋 {account.registries.length} registries</span>
-                          <span>🎁 {totalItems} items</span>
-                          <span style={{ color: "#4ade80" }}>✅ {totalPurchased} purchased</span>
-                          <span>🤝 {totalGifters} gifters</span>
-                        </div>
-
-                        {/* Registries list */}
-                        {account.registries.length > 0 && (
-                          <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            {account.registries.map(r => (
-                              <a key={r.id} href={`/registry/${r.slug || r.id}`} target="_blank" rel="noopener noreferrer" style={{ padding: "3px 10px", background: "#1a1a1a", border: `1px solid ${r.isPublic ? "rgba(74,222,128,0.2)" : "#2a2a2a"}`, borderRadius: 6, color: r.isPublic ? "#4ade80" : "#9a9690", fontSize: 11, textDecoration: "none" }}>
-                                {r.title} ↗
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
-                        <button onClick={() => { setEditAccount(account); setAccountForm({ name: account.name, email: account.email, phone: account.phone || "", newPassword: "" }); }} style={btn("#1a1a1a", "#9a9690")}>
-                          ✏️ Edit
-                        </button>
-                        <button onClick={async () => {
-                          await db?.accountSession?.deleteMany({ where: { accountId: account.id } });
-                          await fetch("/api/admin/accounts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: account.id, forceLogout: true }) });
-                          flash("Sessions cleared — user logged out");
-                        }} style={btn("#1a1a1a", "#f59e0b")}>
-                          🔒 Logout user
-                        </button>
-                        {deleteAccountConfirm === account.id ? (
-                          <div style={{ display: "flex", gap: 6, flexDirection: "column" }}>
-                            <div style={{ fontSize: 11, color: "#f87171" }}>Delete account + registries?</div>
-                            <div style={{ display: "flex", gap: 4 }}>
-                              <button onClick={async () => {
-                                await fetch(`/api/admin/accounts?id=${account.id}&deleteRegistries=1`, { method: "DELETE" });
-                                flash("Account and registries deleted"); setDeleteAccountConfirm(null); await load();
-                              }} style={btn("rgba(248,113,113,0.15)", "#f87171")}>+ registries</button>
-                              <button onClick={async () => {
-                                await fetch(`/api/admin/accounts?id=${account.id}`, { method: "DELETE" });
-                                flash("Account deleted"); setDeleteAccountConfirm(null); await load();
-                              }} style={btn("rgba(248,113,113,0.1)", "#f87171")}>account only</button>
-                              <button onClick={() => setDeleteAccountConfirm(null)} style={btn("#1a1a1a", "#5a5650")}>Cancel</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button onClick={() => setDeleteAccountConfirm(account.id)} style={btn("rgba(248,113,113,0.08)", "#f87171")}>🗑 Delete</button>
-                        )}
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 14, color: C.accent }}>{o.currency} {(o.productPrice * o.quantity).toFixed(2)}</div>
+                        <span style={badge(STATUS_COLORS[o.deliveryStatus] || C.text3)}>{o.deliveryStatus}</span>
                       </div>
                     </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Order detail modal */}
+              {selectedOrder && (
+                <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setSelectedOrder(null)}>
+                  <div style={{ ...S.card, maxWidth: 520, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24 }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+                      <div>
+                        <div style={{ fontSize: 10, color: C.text3, marginBottom: 3 }}>ORDER #{selectedOrder.id.slice(-6).toUpperCase()}</div>
+                        <h3 style={{ fontFamily: "Georgia, serif", fontSize: 17, color: C.text }}>{selectedOrder.productTitle}</h3>
+                      </div>
+                      <button onClick={() => setSelectedOrder(null)} style={{ background: "none", border: "none", color: C.text3, cursor: "pointer", fontSize: 18 }}>✕</button>
+                    </div>
+                    {[
+                      { title: "Customer", rows: [[selectedOrder.customerName, ""], [selectedOrder.customerEmail, ""], [selectedOrder.customerPhone || "—", ""]] },
+                      { title: "Delivery", rows: [[selectedOrder.deliveryAddress, ""], [`${selectedOrder.deliveryCity}${selectedOrder.deliveryRegion ? ", " + selectedOrder.deliveryRegion : ""}`, ""]] },
+                    ].map(({ title, rows }) => (
+                      <div key={title} style={{ background: C.bg2, borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
+                        <div style={{ fontSize: 10, color: C.text3, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>{title.toUpperCase()}</div>
+                        {rows.map(([v], i) => v && <div key={i} style={{ fontSize: 13, color: i === 0 ? C.text : C.text2 }}>{v}</div>)}
+                      </div>
+                    ))}
+                    {selectedOrder.notes && <div style={{ background: C.bg2, borderRadius: 10, padding: "12px 14px", marginBottom: 12, fontSize: 13, color: C.text2 }}>{selectedOrder.notes}</div>}
+                    <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 10, padding: "14px", marginBottom: 16 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 18, color: C.accent }}>
+                        <span>Total</span><span>{selectedOrder.currency} {(selectedOrder.productPrice * selectedOrder.quantity).toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, color: C.text3, fontWeight: 700, marginBottom: 8, letterSpacing: "0.08em" }}>ASSIGN DRIVER</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                        <div><label style={S.lbl}>Driver name</label><input value={driverForm.driverName} onChange={e => setDriverForm(f => ({ ...f, driverName: e.target.value }))} placeholder="Name" style={S.inp} /></div>
+                        <div><label style={S.lbl}>Driver phone</label><input value={driverForm.driverPhone} onChange={e => setDriverForm(f => ({ ...f, driverPhone: e.target.value }))} placeholder="+255..." style={S.inp} /></div>
+                      </div>
+                      <input type="datetime-local" value={driverForm.estimatedAt} onChange={e => setDriverForm(f => ({ ...f, estimatedAt: e.target.value }))} style={S.inp} />
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      <button onClick={() => updateOrder(selectedOrder.id, { status: "confirmed", deliveryStatus: "confirmed", ...driverForm })} style={btn(C.blue, "#fff")}>✓ Confirm</button>
+                      <button onClick={() => updateOrder(selectedOrder.id, { deliveryStatus: "out_for_delivery", ...driverForm })} style={btn(C.purple, "#fff")}>🚚 Out for delivery</button>
+                      <button onClick={() => updateOrder(selectedOrder.id, { status: "completed", deliveryStatus: "delivered" })} style={btn(C.green, C.bg)}>✅ Delivered</button>
+                      <button onClick={() => updateOrder(selectedOrder.id, { status: "cancelled", deliveryStatus: "cancelled" })} style={btn(`${C.red}20`, C.red)}>✕ Cancel</button>
+                    </div>
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* ── PAYMENTS TAB ─────────────────────────────────────── */}
-      {tab === "payments" && (
-        <div>
-          <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
-            {[["all","All"], ["pending_verification","Pending"], ["verified","Verified"], ["rejected","Rejected"]].map(([val, lbl]) => (
-              <button key={val} onClick={() => setPayFilter(val)} style={{ ...btn(payFilter === val ? "#e8d5b0" : "#1a1a1a", payFilter === val ? "#0a0a0a" : "#9a9690"), border: "1px solid #2a2a2a" }}>{lbl}</button>
-            ))}
-          </div>
-
-          {payments.filter(p => payFilter === "all" || p.status === payFilter).length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>💳</div>
-              <p>No payments yet.</p>
+          {/* ── DELIVERY BOARD ── */}
+          {tab === "delivery" && (
+            <div>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22, marginBottom: 20 }}>Delivery Board</h1>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 }}>
+                {[
+                  { key: "pending", label: "📥 New", color: C.yellow },
+                  { key: "confirmed", label: "✓ Confirmed", color: C.blue },
+                  { key: "out_for_delivery", label: "🚚 On the way", color: C.purple },
+                  { key: "delivered", label: "✅ Delivered", color: C.green },
+                ].map(({ key, label, color }) => {
+                  const col = orders.filter(o => o.deliveryStatus === key || (key === "pending" && o.deliveryStatus === "unassigned" && o.status === "pending"));
+                  return (
+                    <div key={key}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color }}>{label}</span>
+                        <span style={{ ...badge(color), fontSize: 9 }}>{col.length}</span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {col.map(o => (
+                          <div key={o.id} onClick={() => { setSelectedOrder(o); setTab("orders"); setDriverForm({ driverName: o.driverName || "", driverPhone: o.driverPhone || "", estimatedAt: "" }); }}
+                            style={{ background: C.bg1, border: `1px solid ${color}25`, borderRadius: 10, padding: 12, cursor: "pointer" }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.productTitle}</div>
+                            <div style={{ fontSize: 11, color: C.text3 }}>👤 {o.customerName}</div>
+                            <div style={{ fontSize: 11, color: C.text3 }}>📍 {o.deliveryCity}</div>
+                            {o.driverName && <div style={{ fontSize: 11, color: C.accent2, marginTop: 4 }}>🏍 {o.driverName}</div>}
+                          </div>
+                        ))}
+                        {col.length === 0 && <div style={{ background: C.bg1, border: `1px dashed ${C.border}`, borderRadius: 10, padding: 16, textAlign: "center", color: C.text3, fontSize: 11 }}>Empty</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {payments.filter(p => payFilter === "all" || p.status === payFilter).map(pay => {
-                const item = pay.contribution?.item;
-                const reg = pay.contribution?.registry;
-                const dropColors = { pending: "#f59e0b", ordered: "#3b82f6", delivered: "#4ade80", failed: "#f87171" };
-                return (
-                  <div key={pay.id} style={{ ...card }}>
-                    <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
-                      {item?.imageUrl && (
-                        <div style={{ width: 56, height: 56, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
-                          <img src={item.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        </div>
-                      )}
-                      <div style={{ flex: 1, minWidth: 200 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-                          <span style={{ fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 15, color: "#f0ede8" }}>{item?.title || "Gift"}</span>
-                          <span style={badge(pay.status === "verified" ? "#4ade80" : pay.status === "rejected" ? "#f87171" : "#f59e0b")}>
-                            {pay.status === "verified" ? "✅ Verified" : pay.status === "rejected" ? "✕ Rejected" : "⏳ Pending"}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "#5a5650", marginBottom: 6 }}>
-                          {pay.contribution?.gifterName} → {reg?.ownerName} ({reg?.title})
-                          {" · "}{pay.method?.name || "Unknown method"}
-                          {pay.reference && <span style={{ color: "#9a9690", marginLeft: 6 }}>Ref: {pay.reference}</span>}
-                        </div>
-                        <div style={{ display: "flex", gap: 16, fontSize: 13, flexWrap: "wrap" }}>
-                          <span style={{ color: "#9a9690" }}>Gift: <strong style={{ color: "#f0ede8" }}>{pay.currency} {pay.amount?.toFixed(2)}</strong></span>
-                          <span style={{ color: "#c4a870" }}>Fee: {pay.currency} {pay.serviceFee?.toFixed(2)}</span>
-                          <span style={{ color: "#e8d5b0", fontWeight: 700 }}>Total: {pay.currency} {pay.totalAmount?.toFixed(2)}</span>
+          )}
+
+          {/* ── PAYMENTS ── */}
+          {tab === "payments" && (
+            <div>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22, marginBottom: 16 }}>Gift Payments</h1>
+              <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+                {[["all","All"], ["pending_verification","Pending"], ["verified","Verified"], ["rejected","Rejected"]].map(([v, l]) => (
+                  <button key={v} onClick={() => setPayFilter(v)} style={{ ...btn(payFilter === v ? C.accent : C.bg2, payFilter === v ? C.bg : C.text2), border: `1px solid ${C.border2}` }}>{l} {v !== "all" && `(${payments.filter(p => p.status === v).length})`}</button>
+                ))}
+              </div>
+              {filteredPayments.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 0", color: C.text3 }}><div style={{ fontSize: 36, marginBottom: 12 }}>💳</div><p>No payments</p></div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {filteredPayments.map(pay => {
+                    const item = pay.contribution?.item;
+                    const reg = pay.contribution?.registry;
+                    return (
+                      <div key={pay.id} style={S.card}>
+                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
+                          {item?.imageUrl && <img src={item.imageUrl} alt="" style={{ width: 52, height: 52, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />}
+                          <div style={{ flex: 1, minWidth: 180 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                              <span style={{ fontWeight: 600, fontSize: 14, color: C.text }}>{item?.title || "Gift"}</span>
+                              <span style={badge(STATUS_COLORS[pay.status] || C.text3)}>{pay.status}</span>
+                            </div>
+                            <div style={{ fontSize: 11, color: C.text3, marginBottom: 4 }}>
+                              {pay.contribution?.gifterName} → {reg?.ownerName} ({reg?.title})
+                            </div>
+                            <div style={{ display: "flex", gap: 14, fontSize: 12, flexWrap: "wrap" }}>
+                              <span style={{ color: C.text2 }}>Gift: <b style={{ color: C.text }}>{pay.currency} {pay.amount?.toFixed(2)}</b></span>
+                              <span style={{ color: C.accent2 }}>Fee: {pay.currency} {pay.serviceFee?.toFixed(2)}</span>
+                              <span style={{ color: C.accent, fontWeight: 700 }}>Total: {pay.currency} {pay.totalAmount?.toFixed(2)}</span>
+                            </div>
+                            {pay.reference && <div style={{ fontSize: 11, color: C.text3, marginTop: 4 }}>Ref: {pay.reference}</div>}
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+                            {pay.status === "pending_verification" && (
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <button onClick={async () => { await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, status: "verified" }) }); flash("✅ Verified"); await load(); }} style={btn(`${C.green}20`, C.green)}>✅ Verify</button>
+                                <button onClick={async () => { await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, status: "rejected" }) }); flash("Rejected"); await load(); }} style={btn(`${C.red}20`, C.red)}>✕</button>
+                              </div>
+                            )}
+                            {pay.status === "verified" && (
+                              <div style={{ background: C.bg2, borderRadius: 8, padding: "10px 12px", minWidth: 220 }}>
+                                <div style={{ fontSize: 10, color: C.accent2, fontWeight: 700, marginBottom: 8, letterSpacing: "0.07em" }}>DROPSHIP</div>
+                                <div style={{ display: "flex", gap: 4, marginBottom: 8, flexWrap: "wrap" }}>
+                                  {["pending","ordered","delivered","failed"].map(s => (
+                                    <button key={s} onClick={async () => { await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, dropshipStatus: s }) }); await load(); }}
+                                      style={{ ...btn(pay.dropshipStatus === s ? STATUS_COLORS[s] || C.accent : C.bg3, pay.dropshipStatus === s ? C.bg : C.text2), padding: "4px 8px", fontSize: 10 }}>{s}</button>
+                                  ))}
+                                </div>
+                                {item?.productUrl && (
+                                  <a href={item.productUrl} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "6px 10px", background: `${C.accent}10`, border: `1px solid ${C.accent}20`, borderRadius: 6, color: C.accent, fontSize: 11, textDecoration: "none", textAlign: "center", fontWeight: 600 }}>
+                                    🛍 Buy on store ↗
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-                        {/* Verify/Reject buttons */}
-                        {pay.status === "pending_verification" && (
-                          <div style={{ display: "flex", gap: 6 }}>
-                            <button onClick={async () => {
-                              await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, status: "verified" }) });
-                              flash("Payment verified ✅"); await load();
-                            }} style={btn("rgba(74,222,128,0.15)", "#4ade80")}>✅ Verify</button>
-                            <button onClick={async () => {
-                              await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, status: "rejected" }) });
-                              flash("Payment rejected"); await load();
-                            }} style={btn("rgba(248,113,113,0.15)", "#f87171")}>✕ Reject</button>
+          {/* ── STORES ── */}
+          {tab === "stores" && (
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22 }}>Stores</h1>
+                <button onClick={() => { setEditingStore(null); setStoreForm({ shopDomain: "", customDomain: "", storeName: "", description: "", currency: "USD", primaryColor: "" }); setTab("add-store"); }} style={btn(C.accent)}>+ Add Store</button>
+              </div>
+              {stores.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 0", color: C.text3 }}><div style={{ fontSize: 36, marginBottom: 12 }}>🏪</div><p>No stores yet</p></div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {stores.map(st => (
+                    <div key={st.id} style={{ ...S.card, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 8, background: st.primaryColor || C.bg2, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 16, color: C.accent, flexShrink: 0 }}>
+                        {st.storeName?.[0]?.toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 150 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                          <span style={{ fontWeight: 600, fontSize: 14, color: C.text }}>{st.storeName}</span>
+                          <span style={badge(st.active ? C.green : C.red)}>{st.active ? "Active" : "Off"}</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: C.text3 }}>
+                          {st.shopDomain}{st.customDomain && ` → ${st.customDomain}`} · {st.productCount} products
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        <button onClick={() => syncStore(st.id)} disabled={syncing === st.id} style={btn(C.bg2, C.text2)}>{syncing === st.id ? "⟳" : "↺"} Sync</button>
+                        <button onClick={() => { setEditingStore(st.id); setStoreForm({ shopDomain: st.shopDomain, customDomain: st.customDomain || "", storeName: st.storeName, description: st.description || "", currency: st.currency, primaryColor: st.primaryColor || "" }); setTab("add-store"); }} style={btn(C.bg2, C.text2)}>Edit</button>
+                        {deleteStoreConfirm === st.id ? (
+                          <>
+                            <button onClick={async () => { await fetch(`/api/admin/stores/${st.id}`, { method: "DELETE" }); setDeleteStoreConfirm(null); flash("Removed"); await load(); }} style={btn(`${C.red}20`, C.red)}>Confirm</button>
+                            <button onClick={() => setDeleteStoreConfirm(null)} style={btn(C.bg2, C.text3)}>Cancel</button>
+                          </>
+                        ) : <button onClick={() => setDeleteStoreConfirm(st.id)} style={btn(C.bg2, C.text3)}>✕</button>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {syncResult && (
+                <div style={{ ...S.card, marginTop: 16 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 10 }}>Sync results</div>
+                  {syncResult.map((r, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: `1px solid ${C.border}`, fontSize: 12 }}>
+                      <span style={{ color: C.text2 }}>{r.store}</span>
+                      <span style={{ color: r.status === "ok" ? C.green : C.red }}>{r.status === "ok" ? `${r.count} products` : r.error}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── ADD/EDIT STORE ── */}
+          {tab === "add-store" && (
+            <div style={{ maxWidth: 540 }}>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22, marginBottom: 20 }}>{editingStore ? "Edit Store" : "Add Store"}</h1>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {[
+                  { k: "shopDomain", l: "Myshopify domain *", p: "store.myshopify.com", note: "Must end in .myshopify.com", dis: !!editingStore },
+                  { k: "customDomain", l: "Custom domain (optional)", p: "berogenge.com" },
+                  { k: "storeName", l: "Store name *", p: "My Store" },
+                  { k: "description", l: "Description", p: "Fashion & accessories" },
+                  { k: "currency", l: "Currency", p: "USD" },
+                  { k: "primaryColor", l: "Brand color (hex)", p: "#4a90e2" },
+                ].map(({ k, l, p, note, dis }) => (
+                  <div key={k}>
+                    <label style={S.lbl}>{l}</label>
+                    {note && <div style={{ fontSize: 10, color: C.text3, marginBottom: 4 }}>{note}</div>}
+                    <input value={storeForm[k]} onChange={e => setStoreForm(f => ({ ...f, [k]: e.target.value }))} placeholder={p} disabled={dis} style={{ ...S.inp, opacity: dis ? 0.5 : 1 }} />
+                  </div>
+                ))}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={saveStore} disabled={savingStore} style={{ ...btn(C.accent), flex: 1, padding: 12 }}>{savingStore ? "Saving..." : editingStore ? "Save changes" : "Add store"}</button>
+                  {editingStore && <button onClick={() => { setEditingStore(null); setStoreForm({ shopDomain: "", customDomain: "", storeName: "", description: "", currency: "USD", primaryColor: "" }); setTab("stores"); }} style={btn(C.bg2, C.text2)}>Cancel</button>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── REGISTRIES ── */}
+          {tab === "registries" && (
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22 }}>Registries</h1>
+                <a href="/registry" target="_blank" rel="noopener noreferrer" style={{ ...btn(C.bg2, C.text2), textDecoration: "none" }}>View public page ↗</a>
+              </div>
+              {registries.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 0", color: C.text3 }}><div style={{ fontSize: 36, marginBottom: 12 }}>🎁</div><p>No registries yet</p></div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {registries.map(reg => {
+                    const items = reg.items || [];
+                    const purchased = items.filter(i => i.status === "purchased").length;
+                    const claimed = items.filter(i => i.status === "claimed").length;
+                    const pct = items.length > 0 ? Math.round(((purchased + claimed) / items.length) * 100) : 0;
+                    const totalVal = items.reduce((s, i) => s + (i.price || 0), 0);
+                    return (
+                      <div key={reg.id} style={S.card}>
+                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
+                          <div style={{ flex: 1, minWidth: 180 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                              <span style={{ fontWeight: 600, fontSize: 14, color: C.text }}>{reg.title}</span>
+                              <span style={badge(reg.isPublic ? C.green : C.red)}>{reg.isPublic ? "Public" : "Hidden"}</span>
+                              <span style={badge(C.accent2)}>{reg.occasion}</span>
+                            </div>
+                            <div style={{ fontSize: 11, color: C.text3, marginBottom: 8 }}>
+                              {reg.ownerName} · {reg.ownerEmail}{reg.eventDate ? ` · ${new Date(reg.eventDate).toLocaleDateString()}` : ""}
+                            </div>
+                            {items.length > 0 && (
+                              <div>
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.text3, marginBottom: 4 }}>
+                                  <span>{items.length} items · {purchased} purchased · {(reg.contributions || []).length} gifters</span>
+                                  <span>{pct}%</span>
+                                </div>
+                                <div style={{ height: 4, background: C.bg2, borderRadius: 2, overflow: "hidden" }}>
+                                  <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${C.green}, ${C.accent})` }} />
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
+                          <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
+                            <a href={`/registry/${reg.slug}`} target="_blank" rel="noopener noreferrer" style={{ ...btn(C.bg2, C.text2), textDecoration: "none" }}>View ↗</a>
+                            <a href={`/registry/live/${reg.slug}`} target="_blank" rel="noopener noreferrer" style={{ ...btn(C.bg2, C.accent2), textDecoration: "none" }}>🔴 Live</a>
+                            <button onClick={async () => { await fetch("/api/admin/registries", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: reg.id, isPublic: !reg.isPublic }) }); flash("Updated"); await load(); }} style={btn(C.bg2, C.text2)}>
+                              {reg.isPublic ? "Hide" : "Publish"}
+                            </button>
+                            {deleteRegConfirm === reg.id ? (
+                              <>
+                                <button onClick={async () => { await fetch(`/api/admin/registries?id=${reg.id}`, { method: "DELETE" }); setDeleteRegConfirm(null); flash("Deleted"); await load(); }} style={btn(`${C.red}20`, C.red)}>Confirm</button>
+                                <button onClick={() => setDeleteRegConfirm(null)} style={btn(C.bg2, C.text3)}>Cancel</button>
+                              </>
+                            ) : <button onClick={() => setDeleteRegConfirm(reg.id)} style={btn(C.bg2, C.text3)}>✕</button>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-                        {/* Dropship section */}
-                        {pay.status === "verified" && (
-                          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "12px 14px", minWidth: 260 }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "#c4a870", marginBottom: 8, letterSpacing: "0.08em" }}>DROPSHIP ORDER</div>
-                            <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
-                              {["pending","ordered","delivered","failed"].map(s => (
-                                <button key={s} onClick={async () => {
-                                  await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, dropshipStatus: s }) });
-                                  flash(`Dropship: ${s}`); await load();
-                                }} style={{ ...btn(pay.dropshipStatus === s ? dropColors[s] : "#111", pay.dropshipStatus === s ? "#0a0a0a" : "#9a9690"), border: `1px solid ${dropColors[s]}30`, padding: "5px 10px", fontSize: 11 }}>
-                                  {s}
-                                </button>
+          {/* ── ACCOUNTS ── */}
+          {tab === "accounts" && (
+            <div>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22, marginBottom: 16 }}>Registry Accounts</h1>
+              <input value={accountSearch} onChange={e => setAccountSearch(e.target.value)} placeholder="Search by name or email..." style={{ ...S.inp, maxWidth: 360, marginBottom: 16 }} />
+
+              {editingAccount && (
+                <div style={{ ...S.card, marginBottom: 16, border: `1px solid ${C.accent2}30` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.accent2, marginBottom: 14, letterSpacing: "0.08em" }}>EDITING: {editingAccount.name}</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, marginBottom: 12 }}>
+                    {[["name","Name"],["email","Email"],["phone","Phone"]].map(([k, l]) => (
+                      <div key={k}><label style={S.lbl}>{l}</label><input value={accountForm[k] || ""} onChange={e => setAccountForm(f => ({ ...f, [k]: e.target.value }))} style={S.inp} /></div>
+                    ))}
+                    <div><label style={S.lbl}>New password (blank = no change)</label><input type="password" value={accountForm.newPassword || ""} onChange={e => setAccountForm(f => ({ ...f, newPassword: e.target.value }))} placeholder="Min 6 chars" style={S.inp} /></div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={saveAccount} disabled={savingAccount} style={btn(C.accent)}>{savingAccount ? "Saving..." : "Save changes"}</button>
+                    <button onClick={() => setEditingAccount(null)} style={btn(C.bg2, C.text2)}>Cancel</button>
+                  </div>
+                </div>
+              )}
+
+              {filteredAccounts.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 0", color: C.text3 }}>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>👤</div>
+                  <p>{accounts.length === 0 ? "No accounts yet." : `No results for "${accountSearch}"`}</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {filteredAccounts.map(acc => (
+                    <div key={acc.id} style={S.card}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                        <div style={{ width: 42, height: 42, borderRadius: "50%", background: C.bg2, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 17, color: C.accent, flexShrink: 0 }}>
+                          {acc.name?.[0]?.toUpperCase() || "?"}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 160 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                            <span style={{ fontWeight: 600, fontSize: 14, color: C.text }}>{acc.name}</span>
+                            <span style={{ fontSize: 10, color: C.text3, background: C.bg2, padding: "2px 7px", borderRadius: 4 }}>{acc.registryCount || 0} registries</span>
+                          </div>
+                          <div style={{ fontSize: 12, color: C.text2, marginBottom: 2 }}>{acc.email}</div>
+                          {acc.phone && <div style={{ fontSize: 11, color: C.text3 }}>{acc.phone}</div>}
+                          <div style={{ fontSize: 10, color: C.text3, marginTop: 4 }}>Joined {new Date(acc.createdAt).toLocaleDateString()}</div>
+                          {acc.registries?.length > 0 && (
+                            <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                              {acc.registries.map(r => (
+                                <a key={r.id} href={`/registry/${r.slug}`} target="_blank" rel="noopener noreferrer" style={{ padding: "2px 8px", background: C.bg2, border: `1px solid ${r.isPublic ? C.green + "40" : C.border}`, borderRadius: 100, fontSize: 10, color: r.isPublic ? C.green : C.text3, textDecoration: "none" }}>
+                                  🎁 {r.title || r.occasion}
+                                </a>
                               ))}
                             </div>
-                            <a href={item?.productUrl} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "7px 12px", background: "rgba(232,213,176,0.08)", border: "1px solid rgba(232,213,176,0.2)", borderRadius: 8, color: "#e8d5b0", fontSize: 12, textDecoration: "none", fontWeight: 600, textAlign: "center" }}>
-                              🛍 Buy on store ↗
-                            </a>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                        <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
+                          <button onClick={() => { setEditingAccount(acc); setAccountForm({ name: acc.name, email: acc.email, phone: acc.phone || "", newPassword: "" }); }} style={btn(C.bg2, C.text2)}>Edit</button>
+                          {deleteAccountConfirm === acc.id ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <div style={{ fontSize: 10, color: C.red }}>Delete?</div>
+                              <div style={{ display: "flex", gap: 4 }}>
+                                <button onClick={async () => { await fetch(`/api/admin/accounts?id=${acc.id}`, { method: "DELETE" }); setDeleteAccountConfirm(null); flash("Deleted"); await load(); }} style={btn(`${C.red}20`, C.red)}>Account</button>
+                                <button onClick={async () => { await fetch(`/api/admin/accounts?id=${acc.id}&withRegistries=1`, { method: "DELETE" }); setDeleteAccountConfirm(null); flash("Deleted all"); await load(); }} style={btn(`${C.red}30`, C.red)}>+Registries</button>
+                                <button onClick={() => setDeleteAccountConfirm(null)} style={btn(C.bg2, C.text3)}>✕</button>
+                              </div>
+                            </div>
+                          ) : <button onClick={() => setDeleteAccountConfirm(acc.id)} style={btn(C.bg2, C.text3)}>✕</button>}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* ── PAYMENT METHODS TAB ──────────────────────────────── */}
-      {tab === "pay-methods" && (
-        <div>
-          <h3 style={{ fontFamily: "Georgia, serif", fontSize: 18, color: "#f0ede8", marginBottom: 20 }}>Payment Methods</h3>
-
-          {/* Add/Edit form */}
-          <div style={{ ...card, marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#c4a870", marginBottom: 16, letterSpacing: "0.08em" }}>
-              {editingMethod ? "EDIT METHOD" : "ADD NEW METHOD"}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-              <div>
-                <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Name *</label>
-                <input value={payMethodForm.name} onChange={e => setPayMethodForm(f => ({ ...f, name: e.target.value }))} placeholder="M-Pesa Tanzania" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Type</label>
-                <select value={payMethodForm.type} onChange={e => setPayMethodForm(f => ({ ...f, type: e.target.value }))} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }}>
-                  {["Mobile Money", "Bank Transfer", "Cash", "Crypto", "Other"].map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-            </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Account / Number / Address *</label>
-              <input value={payMethodForm.details} onChange={e => setPayMethodForm(f => ({ ...f, details: e.target.value }))} placeholder="e.g. 0712 345 678 (John Doe)" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }} />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Payment instructions (shown to customer)</label>
-              <textarea value={payMethodForm.instructions} onChange={e => setPayMethodForm(f => ({ ...f, instructions: e.target.value }))} placeholder="Send payment to the number above. Use gift recipient name as reference." rows={2} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%", resize: "vertical" }} />
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={async () => {
-                setSavingMethod(true);
-                if (editingMethod) {
-                  await fetch("/api/admin/payment-methods", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingMethod, ...payMethodForm }) });
-                  flash("Method updated"); setEditingMethod(null);
-                } else {
-                  await fetch("/api/admin/payment-methods", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payMethodForm) });
-                  flash("Method added");
-                }
-                setPayMethodForm({ name: "", type: "Mobile Money", details: "", instructions: "" });
-                await load(); setSavingMethod(false);
-              }} disabled={savingMethod} style={{ ...btn("#e8d5b0"), padding: "10px 20px" }}>
-                {savingMethod ? "Saving..." : editingMethod ? "Save changes" : "Add method"}
-              </button>
-              {editingMethod && <button onClick={() => { setEditingMethod(null); setPayMethodForm({ name: "", type: "Mobile Money", details: "", instructions: "" }); }} style={{ ...btn("#1a1a1a", "#9a9690"), border: "1px solid #2a2a2a" }}>Cancel</button>}
-            </div>
-          </div>
-
-          {/* Methods list */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {payMethods.map(m => (
-              <div key={m.id} style={{ ...card, display: "flex", alignItems: "center", gap: 14 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f0ede8" }}>{m.name}</span>
-                    <span style={{ fontSize: 10, padding: "2px 8px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#9a9690" }}>{m.type}</span>
-                    <span style={badge(m.active ? "#4ade80" : "#f87171")}>{m.active ? "Active" : "Inactive"}</span>
+          {/* ── PAYMENT METHODS ── */}
+          {tab === "pay-methods" && (
+            <div>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22, marginBottom: 16 }}>Payment Methods</h1>
+              <div style={{ ...S.card, marginBottom: 20 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.accent2, marginBottom: 14, letterSpacing: "0.08em" }}>{editingMethod ? "EDIT METHOD" : "ADD METHOD"}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10, marginBottom: 10 }}>
+                  <div><label style={S.lbl}>Name *</label><input value={methodForm.name} onChange={e => setMethodForm(f => ({ ...f, name: e.target.value }))} placeholder="M-Pesa Tanzania" style={S.inp} /></div>
+                  <div>
+                    <label style={S.lbl}>Type</label>
+                    <select value={methodForm.type} onChange={e => setMethodForm(f => ({ ...f, type: e.target.value }))} style={{ ...S.inp }}>
+                      {["Mobile Money","Bank Transfer","Cash","Crypto","Other"].map(t => <option key={t}>{t}</option>)}
+                    </select>
                   </div>
-                  <div style={{ fontSize: 12, color: "#9a9690", fontFamily: "monospace" }}>{m.details}</div>
-                  {m.instructions && <div style={{ fontSize: 11, color: "#5a5650", marginTop: 4 }}>{m.instructions}</div>}
+                  <div><label style={S.lbl}>Account / Number *</label><input value={methodForm.details} onChange={e => setMethodForm(f => ({ ...f, details: e.target.value }))} placeholder="0712 345 678 (Name)" style={S.inp} /></div>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => { setEditingMethod(m.id); setPayMethodForm({ name: m.name, type: m.type, details: m.details, instructions: m.instructions || "" }); }} style={btn("#1a1a1a", "#9a9690")}>Edit</button>
-                  <button onClick={async () => { await fetch("/api/admin/payment-methods", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id, active: !m.active }) }); await load(); }} style={btn("#1a1a1a", "#9a9690")}>
-                    {m.active ? "Disable" : "Enable"}
-                  </button>
-                  <button onClick={async () => { await fetch(`/api/admin/payment-methods?id=${m.id}`, { method: "DELETE" }); flash("Method deleted"); await load(); }} style={btn("rgba(248,113,113,0.1)", "#f87171")}>✕</button>
+                <div style={{ marginBottom: 12 }}><label style={S.lbl}>Instructions (shown to customer)</label><textarea value={methodForm.instructions} onChange={e => setMethodForm(f => ({ ...f, instructions: e.target.value }))} rows={2} style={{ ...S.inp, resize: "vertical" }} /></div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={saveMethod} disabled={savingMethod} style={btn(C.accent)}>{savingMethod ? "Saving..." : editingMethod ? "Save" : "Add"}</button>
+                  {editingMethod && <button onClick={() => { setEditingMethod(null); setMethodForm({ name: "", type: "Mobile Money", details: "", instructions: "" }); }} style={btn(C.bg2, C.text2)}>Cancel</button>}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-      {/* ── ACCOUNTS TAB ─────────────────────────────────────── */}
-      {tab === "accounts" && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <div style={{ fontSize: 13, color: "#5a5650" }}>{accounts.length} registered accounts</div>
-          </div>
-
-          {/* Edit modal */}
-          {editingAccount && (
-            <div style={{ ...card, marginBottom: 20, border: "1px solid rgba(232,213,176,0.2)" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#c4a870", marginBottom: 16, letterSpacing: "0.08em" }}>EDITING: {editingAccount.name}</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-                {[["name","Name","Jane Doe"],["email","Email","jane@email.com"],["phone","Phone","+255 7xx xxx xxx"]].map(([key, lbl, ph]) => (
-                  <div key={key}>
-                    <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>{lbl}</label>
-                    <input value={accountForm[key] || ""} onChange={e => setAccountForm(f => ({ ...f, [key]: e.target.value }))} placeholder={ph}
-                      style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {payMethods.map(m => (
+                  <div key={m.id} style={{ ...S.card, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, minWidth: 160 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                        <span style={{ fontWeight: 600, fontSize: 14, color: C.text }}>{m.name}</span>
+                        <span style={{ fontSize: 10, color: C.text3, background: C.bg2, padding: "2px 7px", borderRadius: 4 }}>{m.type}</span>
+                        <span style={badge(m.active ? C.green : C.red)}>{m.active ? "Active" : "Off"}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: C.text2, fontFamily: "monospace" }}>{m.details}</div>
+                      {m.instructions && <div style={{ fontSize: 11, color: C.text3, marginTop: 3 }}>{m.instructions}</div>}
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => { setEditingMethod(m.id); setMethodForm({ name: m.name, type: m.type, details: m.details, instructions: m.instructions || "" }); }} style={btn(C.bg2, C.text2)}>Edit</button>
+                      <button onClick={async () => { await fetch("/api/admin/payment-methods", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id, active: !m.active }) }); await load(); }} style={btn(C.bg2, C.text2)}>{m.active ? "Disable" : "Enable"}</button>
+                      <button onClick={async () => { await fetch(`/api/admin/payment-methods?id=${m.id}`, { method: "DELETE" }); flash("Deleted"); await load(); }} style={btn(`${C.red}15`, C.red)}>✕</button>
+                    </div>
                   </div>
                 ))}
-                <div>
-                  <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>New password (leave blank to keep)</label>
-                  <input type="password" value={accountForm.newPassword || ""} onChange={e => setAccountForm(f => ({ ...f, newPassword: e.target.value }))} placeholder="Min 6 characters"
-                    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }} />
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={async () => {
-                  setSavingAccount(true);
-                  const res = await fetch("/api/admin/accounts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingAccount.id, ...accountForm }) });
-                  if (res.ok) { flash("Account updated"); setEditingAccount(null); await load(); }
-                  else { const d = await res.json(); flash(d.error || "Failed", "error"); }
-                  setSavingAccount(false);
-                }} disabled={savingAccount} style={btn("#e8d5b0")}>
-                  {savingAccount ? "Saving..." : "Save changes"}
-                </button>
-                <button onClick={() => setEditingAccount(null)} style={{ ...btn("#1a1a1a", "#9a9690"), border: "1px solid #2a2a2a" }}>Cancel</button>
               </div>
             </div>
           )}
 
-          {accounts.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>👤</div>
-              <p>No accounts yet. Accounts are created when users sign up on the registry page.</p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {accounts.map(acc => (
-                <div key={acc.id} style={card}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14, flexWrap: "wrap" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#1a1a1a", border: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 18, color: "#e8d5b0", flexShrink: 0 }}>
-                      {acc.name[0].toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
-                        <span style={{ fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 16, color: "#f0ede8" }}>{acc.name}</span>
-                        <span style={{ fontSize: 10, color: "#5a5650", background: "#1a1a1a", padding: "2px 8px", borderRadius: 4 }}>{acc.registryCount} registries</span>
-                        <span style={{ fontSize: 10, color: "#5a5650", background: "#1a1a1a", padding: "2px 8px", borderRadius: 4 }}>{acc.sessionCount} sessions</span>
-                      </div>
-                      <div style={{ fontSize: 12, color: "#9a9690", marginBottom: 4 }}>{acc.email}</div>
-                      {acc.phone && <div style={{ fontSize: 12, color: "#5a5650" }}>{acc.phone}</div>}
-                      <div style={{ fontSize: 11, color: "#3a3a3a", marginTop: 4 }}>Joined {new Date(acc.createdAt).toLocaleDateString()}</div>
-
-                      {/* Registries list */}
-                      {acc.registries?.length > 0 && (
-                        <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
-                          {acc.registries.map(reg => (
-                            <a key={reg.id} href={`/registry/${reg.slug}`} target="_blank" rel="noopener noreferrer" style={{
-                              padding: "3px 10px", background: "#1a1a1a", border: `1px solid ${reg.isPublic ? "rgba(74,222,128,0.2)" : "#2a2a2a"}`,
-                              borderRadius: 100, fontSize: 11, color: reg.isPublic ? "#4ade80" : "#5a5650", textDecoration: "none",
-                            }}>
-                              🎁 {reg.title || reg.occasion}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
-                      <button onClick={() => {
-                        setEditingAccount(acc);
-                        setAccountForm({ name: acc.name, email: acc.email, phone: acc.phone || "", newPassword: "" });
-                      }} style={btn("#1a1a1a", "#9a9690")}>Edit</button>
-
-                      <a href={`/account/dashboard`} target="_blank" rel="noopener noreferrer" style={{ ...btn("#1a1a1a", "#c4a870"), textDecoration: "none", display: "inline-flex" }}>View →</a>
-
-                      {accountDeleteConfirm === acc.id ? (
-                        <div style={{ display: "flex", gap: 4, flexDirection: "column" }}>
-                          <div style={{ fontSize: 11, color: "#f87171" }}>Delete account?</div>
-                          <div style={{ display: "flex", gap: 4 }}>
-                            <button onClick={async () => { await fetch(`/api/admin/accounts?id=${acc.id}`, { method: "DELETE" }); setAccountDeleteConfirm(null); flash("Account deleted"); await load(); }} style={btn("rgba(248,113,113,0.15)", "#f87171")}>Account only</button>
-                            <button onClick={async () => { await fetch(`/api/admin/accounts?id=${acc.id}&withRegistries=1`, { method: "DELETE" }); setAccountDeleteConfirm(null); flash("Account + registries deleted"); await load(); }} style={btn("rgba(248,113,113,0.2)", "#f87171")}>+ Registries</button>
-                            <button onClick={() => setAccountDeleteConfirm(null)} style={btn("#1a1a1a", "#5a5650")}>Cancel</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button onClick={() => setAccountDeleteConfirm(acc.id)} style={btn("#1a1a1a", "#5a5650")}>✕</button>
-                      )}
-                    </div>
+          {/* ── LOGS ── */}
+          {tab === "logs" && (
+            <div>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 22, marginBottom: 16 }}>Sync Logs</h1>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {logs.length === 0 && <div style={{ textAlign: "center", padding: "60px 0", color: C.text3 }}>No logs yet</div>}
+                {logs.map(l => (
+                  <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: C.bg1, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: l.status === "success" ? C.green : C.red, flexShrink: 0 }} />
+                    <span style={{ color: C.text, fontWeight: 600 }}>{l.store?.storeName || "?"}</span>
+                    <span style={{ color: C.text3, flex: 1 }}>{l.message}</span>
+                    <span style={{ color: C.text3, fontSize: 10 }}>{new Date(l.createdAt).toLocaleString()}</span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
-        </div>
-      )}
 
-      {/* ── SYNC LOGS TAB ─────────────────────────────────────────── */}
-      {tab === "logs" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {logs.length === 0 && <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>No sync logs yet.</div>}
-          {logs.map(log => (
-            <div key={log.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 8, fontSize: 12 }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: log.status === "success" ? "#4ade80" : "#f87171", flexShrink: 0 }} />
-              <span style={{ color: "#f0ede8", fontWeight: 600 }}>{log.store?.storeName || "?"}</span>
-              <span style={{ color: "#5a5650", flex: 1 }}>{log.message}</span>
-              <span style={{ color: "#3a3a3a" }}>{new Date(log.createdAt).toLocaleString()}</span>
-            </div>
-          ))}
-        </div>
-      )}
+        </main>
+      </div>
+
+      {/* Mobile bottom nav */}
+      <style>{`
+        @media (max-width: 640px) {
+          nav { display: none !important; }
+          main { padding: 16px !important; }
+        }
+      `}</style>
     </div>
   );
 }
