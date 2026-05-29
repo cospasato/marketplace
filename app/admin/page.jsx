@@ -66,10 +66,6 @@ export default function AdminPage() {
   const [accountForm, setAccountForm] = useState({ name: "", email: "", phone: "", newPassword: "" });
   const [savingAccount, setSavingAccount] = useState(false);
   const [accountDeleteConfirm, setAccountDeleteConfirm] = useState(null);
-  const [accounts, setAccounts] = useState([]);
-  const [editAccount, setEditAccount] = useState(null);
-  const [accountForm, setAccountForm] = useState({ name: "", email: "", phone: "", newPassword: "" });
-  const [savingAccount, setSavingAccount] = useState(false);
   const [deleteAccountConfirm, setDeleteAccountConfirm] = useState(null);
   const [accountSearch, setAccountSearch] = useState("");
   const [orderFilter, setOrderFilter] = useState("all");
@@ -100,8 +96,6 @@ export default function AdminPage() {
     const [payRes, methodsRes] = [await (await fetch("/api/admin/payments")).json(), await (await fetch("/api/admin/payment-methods")).json()];
     setPayments(Array.isArray(payRes) ? payRes : []);
     setPayMethods(Array.isArray(methodsRes) ? methodsRes : []);
-    const accRes = await (await fetch("/api/admin/accounts")).json();
-    setAccounts(Array.isArray(accRes) ? accRes : []);
     const accRes = await (await fetch("/api/admin/accounts")).json();
     setAccounts(Array.isArray(accRes) ? accRes : []);
     setRegistries(Array.isArray(regsData) ? regsData : []);
