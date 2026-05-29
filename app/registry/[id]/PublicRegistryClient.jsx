@@ -25,21 +25,9 @@ export default function PublicRegistryClient({ registry }) {
     return true;
   });
 
-  // Top gifters by payment amount
-  const gifterMap = {};
-  registry.contributions?.forEach(c => {
-    const name = c.gifterName || "Anonymous";
-    const amt = c.payment?.totalAmount || c.payment?.amount || c.amount || 0;
-    if (!gifterMap[name]) gifterMap[name] = { name, total: 0, count: 0 };
-    gifterMap[name].total += amt;
-    gifterMap[name].count += 1;
-  });
-  const topGifters = Object.values(gifterMap).sort((a, b) => b.total - a.total).slice(0, 5);
-  const currency = registry.items?.[0]?.currency || "USD";
-
   // Top gifters by amount paid
   const gifterMap = {};
-  registry.contributions.forEach(c => {
+  (registry.contributions || []).forEach(c => {
     const key = c.gifterEmail || c.gifterName;
     const amt = c.payment?.totalAmount || c.amount || 0;
     if (!gifterMap[key]) gifterMap[key] = { name: c.gifterName, total: 0, count: 0 };
@@ -47,6 +35,7 @@ export default function PublicRegistryClient({ registry }) {
     gifterMap[key].count += 1;
   });
   const topGifters = Object.values(gifterMap).sort((a, b) => b.total - a.total).slice(0, 3);
+  const currency = registry.items?.[0]?.currency || "USD";
 
   const daysUntil = registry.eventDate
     ? Math.ceil((new Date(registry.eventDate) - new Date()) / (1000 * 60 * 60 * 24))
@@ -157,31 +146,6 @@ export default function PublicRegistryClient({ registry }) {
       )}
 
       {/* Top Gifters Leaderboard */}
-      {topGifters.length > 0 && (
-        <div style={{ background: "#0d0d0d", borderTop: "1px solid #1a1a1a", borderBottom: "1px solid #1a1a1a", padding: "20px 24px" }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#c4a870", letterSpacing: "0.1em", marginBottom: 14, textAlign: "center", fontFamily: "sans-serif" }}>
-              🏆 TOP GIFTERS
-            </div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              {topGifters.map((g, i) => (
-                <div key={g.name} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "10px 18px",
-                  background: i === 0 ? "rgba(232,213,176,0.1)" : "#111",
-                  border: `1px solid ${i === 0 ? "rgba(232,213,176,0.25)" : "#1e1e1e"}`,
-                  borderRadius: 100,
-                }}>
-                  <span style={{ fontSize: 16 }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🎁"}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? "#e8d5b0" : "#f0ede8", fontFamily: "sans-serif" }}>{g.name}</span>
-                  {g.total > 0 && <span style={{ fontSize: 12, color: i === 0 ? "#4ade80" : "#9a9690", fontFamily: "sans-serif", fontWeight: 600 }}>{currency} {g.total.toFixed(0)}</span>}
-                  <span style={{ fontSize: 11, color: "#5a5650", fontFamily: "sans-serif" }}>{g.count} gift{g.count > 1 ? "s" : ""}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Items */}
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }}>
