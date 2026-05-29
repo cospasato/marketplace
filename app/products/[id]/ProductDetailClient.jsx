@@ -169,6 +169,7 @@ export default function ProductDetailClient({ product, related }) {
             {tabBtn("order", "🛍 Request Delivery")}
             {tabBtn("details", "📋 Details")}
             {tabBtn("store", "🏪 Visit Store")}
+            {tabBtn("registry", "🎁 Add to Registry")}
           </div>
 
           {/* Tab: Order / Delivery request */}
@@ -277,6 +278,27 @@ export default function ProductDetailClient({ product, related }) {
                   <span style={{ color: "#5a5650" }}>Category: </span>{product.category}
                 </div>
               )}
+            </div>
+          )}
+
+
+          {/* Tab: Add to registry */}
+          {tab === "registry" && (
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <div style={{ fontSize: 36, marginBottom: 16 }}>🎁</div>
+              <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, marginBottom: 8, color: "var(--text)" }}>Add to your Gift Registry</h3>
+              <p style={{ fontSize: 13, color: "#9a9690", marginBottom: 20, lineHeight: 1.7 }}>
+                Add this product to your gift registry so friends and family can buy it for you.
+              </p>
+              <a href="/registry" style={{
+                display: "inline-block", padding: "12px 28px",
+                background: "#e8d5b0", color: "#0a0a0a",
+                borderRadius: 10, fontFamily: "var(--font-display)",
+                fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 12,
+              }}>
+                Open my registry →
+              </a>
+              <p style={{ fontSize: 11, color: "#5a5650" }}>Don't have a registry? Create one free in 60 seconds.</p>
             </div>
           )}
 

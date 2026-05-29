@@ -118,3 +118,65 @@ model SyncLog {
 
   @@index([storeId])
 }
+
+model Registry {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  ownerName     String
+  ownerEmail    String
+  title         String
+  occasion      String
+  eventDate     DateTime?
+  description   String?
+  coverImage    String?
+  isPublic      Boolean        @default(true)
+  thankYouMsg   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  items         RegistryItem[]
+  contributions Contribution[]
+}
+
+model RegistryItem {
+  id            String         @id @default(cuid())
+  registryId    String
+  registry      Registry       @relation(fields: [registryId], references: [id], onDelete: Cascade)
+  productId     String?
+  storeId       String?
+  title         String
+  imageUrl      String?
+  productUrl    String
+  price         Float
+  currency      String         @default("USD")
+  quantity      Int            @default(1)
+  priority      String         @default("medium")
+  note          String?
+  status        String         @default("available")
+  claimedBy     String?
+  claimedAt     DateTime?
+  purchasedAt   DateTime?
+  shopifyOrderId String?
+  createdAt     DateTime       @default(now())
+  contributions Contribution[]
+
+  @@index([registryId])
+  @@index([status])
+}
+
+model Contribution {
+  id           String       @id @default(cuid())
+  registryId   String
+  registry     Registry     @relation(fields: [registryId], references: [id], onDelete: Cascade)
+  itemId       String?
+  item         RegistryItem? @relation(fields: [itemId], references: [id])
+  gifterName   String
+  gifterEmail  String
+  message      String?
+  amount       Float?
+  status       String       @default("pending")
+  shopifyOrderId String?
+  createdAt    DateTime     @default(now())
+
+  @@index([registryId])
+  @@index([shopifyOrderId])
+}
