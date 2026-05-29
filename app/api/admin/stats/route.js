@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET() {
-  const [stores, products, syncs, orders, pending, delivering, registries, gifts, giftsPurchased, accounts] = await Promise.all([
+  const [stores, products, syncs, orders, pending, delivering, registries, gifts, giftsPurchased] = await Promise.all([
     db.store.count({ where: { active: true } }),
     db.product.count({ where: { available: true } }),
     db.syncLog.count(),
@@ -14,7 +14,6 @@ export async function GET() {
     db.registry.count(),
     db.registryItem.count(),
     db.registryItem.count({ where: { status: "purchased" } }),
-    db.registryAccount.count(),
   ]);
-  return NextResponse.json({ stores, products, syncs, orders, pending, delivering, registries, gifts, giftsPurchased, accounts });
+  return NextResponse.json({ stores, products, syncs, orders, pending, delivering, registries, gifts, giftsPurchased });
 }
