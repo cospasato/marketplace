@@ -263,16 +263,16 @@ export default function PublicRegistryClient({ registry }) {
                 <div style={{ fontSize: 52, marginBottom: 16 }}>🎉</div>
                 <h3 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: "#4ade80", marginBottom: 12 }}>Gift claimed!</h3>
                 <p style={{ fontSize: 14, color: "#9a9690", marginBottom: 24, lineHeight: 1.7 }}>
-                  {claimModal.title} is now reserved for {registry.ownerName}. Complete your purchase on the store — the registry will update automatically.
+                  {claimModal.title} is now reserved for {registry.ownerName}. Complete payment on the next page — we'll purchase and deliver the gift for you.
                 </p>
-                <a href={claimResult.productUrl} target="_blank" rel="noopener noreferrer" style={{
+                <a href={`/pay/${claimResult.contribution?.id}`} style={{
                   display: "inline-block", padding: "13px 32px",
                   background: "#e8d5b0", color: "#0a0a0a",
                   borderRadius: 10, fontFamily: "Georgia, serif",
                   fontWeight: 800, fontSize: 15, textDecoration: "none",
                   marginBottom: 12,
                 }}>
-                  Complete purchase ↗
+                  Pay & complete gift →
                 </a>
                 <br />
                 <button onClick={() => setClaimModal(null)} style={{ padding: "8px 20px", background: "transparent", border: "none", color: "#5a5650", cursor: "pointer", fontSize: 13 }}>

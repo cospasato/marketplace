@@ -55,6 +55,12 @@ export default function AdminPage() {
   const [syncResult, setSyncResult] = useState(null);
   const [registries, setRegistries] = useState([]);
   const [regDeleteConfirm, setRegDeleteConfirm] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [payMethods, setPayMethods] = useState([]);
+  const [payMethodForm, setPayMethodForm] = useState({ name: "", type: "Mobile Money", details: "", instructions: "" });
+  const [savingMethod, setSavingMethod] = useState(false);
+  const [editingMethod, setEditingMethod] = useState(null);
+  const [payFilter, setPayFilter] = useState("all");
   const [orderFilter, setOrderFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [driverForm, setDriverForm] = useState({ driverName: "", driverPhone: "", estimatedAt: "" });
@@ -67,6 +73,8 @@ export default function AdminPage() {
       fetch("/api/admin/orders"),
       fetch("/api/admin/notifications"),
       fetch("/api/admin/registries"),
+      fetch("/api/admin/payments"),
+      fetch("/api/admin/payment-methods"),
     ]);
     setStores(await storesRes.json());
     setLogs(await logsRes.json());
@@ -77,6 +85,9 @@ export default function AdminPage() {
     setStats({ ...s, orders: o.length, pending: o.filter(x => x.status === "pending").length, delivering: o.filter(x => x.deliveryStatus === "out_for_delivery").length });
     setNotifications(n.notifications || []);
     const regsData = await regsRes.json();
+    const [payRes, methodsRes] = [await (await fetch("/api/admin/payments")).json(), await (await fetch("/api/admin/payment-methods")).json()];
+    setPayments(Array.isArray(payRes) ? payRes : []);
+    setPayMethods(Array.isArray(methodsRes) ? methodsRes : []);
     setRegistries(Array.isArray(regsData) ? regsData : []);
     setUnread(n.unread || 0);
   }, []);
@@ -216,6 +227,8 @@ export default function AdminPage() {
           { key: "add", label: editing ? "✏️ Edit Store" : "＋ Add Store" },
           { key: "logs", label: "📋 Sync Logs" },
           { key: "registries", label: `🎁 Registries` },
+          { key: "payments", label: "💳 Payments" },
+          { key: "pay-methods", label: "⚙️ Payment Methods" },
         ].map(({ key, label }) => (
           <button key={key} style={tabStyle(key)} onClick={() => { setTab(key); if (key === "add" && !editing) setForm(emptyStore); }}>
             {label}
@@ -548,6 +561,173 @@ export default function AdminPage() {
               })}
             </div>
           )}
+        </div>
+      )}
+
+
+      {/* ── PAYMENTS TAB ─────────────────────────────────────── */}
+      {tab === "payments" && (
+        <div>
+          <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
+            {[["all","All"], ["pending_verification","Pending"], ["verified","Verified"], ["rejected","Rejected"]].map(([val, lbl]) => (
+              <button key={val} onClick={() => setPayFilter(val)} style={{ ...btn(payFilter === val ? "#e8d5b0" : "#1a1a1a", payFilter === val ? "#0a0a0a" : "#9a9690"), border: "1px solid #2a2a2a" }}>{lbl}</button>
+            ))}
+          </div>
+
+          {payments.filter(p => payFilter === "all" || p.status === payFilter).length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>💳</div>
+              <p>No payments yet.</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {payments.filter(p => payFilter === "all" || p.status === payFilter).map(pay => {
+                const item = pay.contribution?.item;
+                const reg = pay.contribution?.registry;
+                const dropColors = { pending: "#f59e0b", ordered: "#3b82f6", delivered: "#4ade80", failed: "#f87171" };
+                return (
+                  <div key={pay.id} style={{ ...card }}>
+                    <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
+                      {item?.imageUrl && (
+                        <div style={{ width: 56, height: 56, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
+                          <img src={item.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                          <span style={{ fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 15, color: "#f0ede8" }}>{item?.title || "Gift"}</span>
+                          <span style={badge(pay.status === "verified" ? "#4ade80" : pay.status === "rejected" ? "#f87171" : "#f59e0b")}>
+                            {pay.status === "verified" ? "✅ Verified" : pay.status === "rejected" ? "✕ Rejected" : "⏳ Pending"}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "#5a5650", marginBottom: 6 }}>
+                          {pay.contribution?.gifterName} → {reg?.ownerName} ({reg?.title})
+                          {" · "}{pay.method?.name || "Unknown method"}
+                          {pay.reference && <span style={{ color: "#9a9690", marginLeft: 6 }}>Ref: {pay.reference}</span>}
+                        </div>
+                        <div style={{ display: "flex", gap: 16, fontSize: 13, flexWrap: "wrap" }}>
+                          <span style={{ color: "#9a9690" }}>Gift: <strong style={{ color: "#f0ede8" }}>{pay.currency} {pay.amount?.toFixed(2)}</strong></span>
+                          <span style={{ color: "#c4a870" }}>Fee: {pay.currency} {pay.serviceFee?.toFixed(2)}</span>
+                          <span style={{ color: "#e8d5b0", fontWeight: 700 }}>Total: {pay.currency} {pay.totalAmount?.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+                        {/* Verify/Reject buttons */}
+                        {pay.status === "pending_verification" && (
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button onClick={async () => {
+                              await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, status: "verified" }) });
+                              flash("Payment verified ✅"); await load();
+                            }} style={btn("rgba(74,222,128,0.15)", "#4ade80")}>✅ Verify</button>
+                            <button onClick={async () => {
+                              await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, status: "rejected" }) });
+                              flash("Payment rejected"); await load();
+                            }} style={btn("rgba(248,113,113,0.15)", "#f87171")}>✕ Reject</button>
+                          </div>
+                        )}
+
+                        {/* Dropship section */}
+                        {pay.status === "verified" && (
+                          <div style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "12px 14px", minWidth: 260 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: "#c4a870", marginBottom: 8, letterSpacing: "0.08em" }}>DROPSHIP ORDER</div>
+                            <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+                              {["pending","ordered","delivered","failed"].map(s => (
+                                <button key={s} onClick={async () => {
+                                  await fetch("/api/admin/payments", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: pay.id, dropshipStatus: s }) });
+                                  flash(`Dropship: ${s}`); await load();
+                                }} style={{ ...btn(pay.dropshipStatus === s ? dropColors[s] : "#111", pay.dropshipStatus === s ? "#0a0a0a" : "#9a9690"), border: `1px solid ${dropColors[s]}30`, padding: "5px 10px", fontSize: 11 }}>
+                                  {s}
+                                </button>
+                              ))}
+                            </div>
+                            <a href={item?.productUrl} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "7px 12px", background: "rgba(232,213,176,0.08)", border: "1px solid rgba(232,213,176,0.2)", borderRadius: 8, color: "#e8d5b0", fontSize: 12, textDecoration: "none", fontWeight: 600, textAlign: "center" }}>
+                              🛍 Buy on store ↗
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── PAYMENT METHODS TAB ──────────────────────────────── */}
+      {tab === "pay-methods" && (
+        <div>
+          <h3 style={{ fontFamily: "Georgia, serif", fontSize: 18, color: "#f0ede8", marginBottom: 20 }}>Payment Methods</h3>
+
+          {/* Add/Edit form */}
+          <div style={{ ...card, marginBottom: 24 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#c4a870", marginBottom: 16, letterSpacing: "0.08em" }}>
+              {editingMethod ? "EDIT METHOD" : "ADD NEW METHOD"}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Name *</label>
+                <input value={payMethodForm.name} onChange={e => setPayMethodForm(f => ({ ...f, name: e.target.value }))} placeholder="M-Pesa Tanzania" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Type</label>
+                <select value={payMethodForm.type} onChange={e => setPayMethodForm(f => ({ ...f, type: e.target.value }))} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }}>
+                  {["Mobile Money", "Bank Transfer", "Cash", "Crypto", "Other"].map(t => <option key={t}>{t}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Account / Number / Address *</label>
+              <input value={payMethodForm.details} onChange={e => setPayMethodForm(f => ({ ...f, details: e.target.value }))} placeholder="e.g. 0712 345 678 (John Doe)" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }} />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Payment instructions (shown to customer)</label>
+              <textarea value={payMethodForm.instructions} onChange={e => setPayMethodForm(f => ({ ...f, instructions: e.target.value }))} placeholder="Send payment to the number above. Use gift recipient name as reference." rows={2} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%", resize: "vertical" }} />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={async () => {
+                setSavingMethod(true);
+                if (editingMethod) {
+                  await fetch("/api/admin/payment-methods", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingMethod, ...payMethodForm }) });
+                  flash("Method updated"); setEditingMethod(null);
+                } else {
+                  await fetch("/api/admin/payment-methods", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payMethodForm) });
+                  flash("Method added");
+                }
+                setPayMethodForm({ name: "", type: "Mobile Money", details: "", instructions: "" });
+                await load(); setSavingMethod(false);
+              }} disabled={savingMethod} style={{ ...btn("#e8d5b0"), padding: "10px 20px" }}>
+                {savingMethod ? "Saving..." : editingMethod ? "Save changes" : "Add method"}
+              </button>
+              {editingMethod && <button onClick={() => { setEditingMethod(null); setPayMethodForm({ name: "", type: "Mobile Money", details: "", instructions: "" }); }} style={{ ...btn("#1a1a1a", "#9a9690"), border: "1px solid #2a2a2a" }}>Cancel</button>}
+            </div>
+          </div>
+
+          {/* Methods list */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {payMethods.map(m => (
+              <div key={m.id} style={{ ...card, display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: "#f0ede8" }}>{m.name}</span>
+                    <span style={{ fontSize: 10, padding: "2px 8px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, color: "#9a9690" }}>{m.type}</span>
+                    <span style={badge(m.active ? "#4ade80" : "#f87171")}>{m.active ? "Active" : "Inactive"}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: "#9a9690", fontFamily: "monospace" }}>{m.details}</div>
+                  {m.instructions && <div style={{ fontSize: 11, color: "#5a5650", marginTop: 4 }}>{m.instructions}</div>}
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => { setEditingMethod(m.id); setPayMethodForm({ name: m.name, type: m.type, details: m.details, instructions: m.instructions || "" }); }} style={btn("#1a1a1a", "#9a9690")}>Edit</button>
+                  <button onClick={async () => { await fetch("/api/admin/payment-methods", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id, active: !m.active }) }); await load(); }} style={btn("#1a1a1a", "#9a9690")}>
+                    {m.active ? "Disable" : "Enable"}
+                  </button>
+                  <button onClick={async () => { await fetch(`/api/admin/payment-methods?id=${m.id}`, { method: "DELETE" }); flash("Method deleted"); await load(); }} style={btn("rgba(248,113,113,0.1)", "#f87171")}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

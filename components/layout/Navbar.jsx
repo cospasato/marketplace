@@ -40,6 +40,9 @@ export default function Navbar() {
         })}
       </div>
 
+      <Link href="/account/dashboard" style={{ padding: "7px 14px", borderRadius: "var(--radius)", border: "1px solid var(--border2)", fontSize: 13, color: "var(--text2)", fontWeight: 500, flexShrink: 0, transition: "all 0.15s" }}>
+        My Registry
+      </Link>
       <Link href="/admin" style={{
         padding: "7px 16px", borderRadius: "var(--radius)",
         border: "1px solid var(--border2)", fontSize: 13,
