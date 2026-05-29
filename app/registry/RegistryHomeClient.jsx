@@ -112,7 +112,13 @@ export default function RegistryHomeClient() {
         body: JSON.stringify({ ...form, title: form.title || `${form.ownerName}'s ${form.occasion} Registry` }),
       });
       const data = await res.json();
-      if (res.ok) router.push(`/registry/dashboard?id=${data.id}&email=${encodeURIComponent(form.ownerEmail)}`);
+      if (res.ok) {
+        // Store registry info for easy return
+        const stored = JSON.parse(localStorage.getItem("my_registries") || "[]");
+        stored.unshift({ id: data.id, slug: data.slug, title: data.title, email: form.ownerEmail });
+        localStorage.setItem("my_registries", JSON.stringify(stored.slice(0, 10)));
+        router.push(`/registry/dashboard?id=${data.id}&email=${encodeURIComponent(form.ownerEmail)}`);
+      }
       else setError(data.error || "Failed to create registry.");
     } catch { setError("Network error. Please try again."); }
     setCreating(false);
