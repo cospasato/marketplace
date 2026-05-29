@@ -61,6 +61,17 @@ export default function AdminPage() {
   const [savingMethod, setSavingMethod] = useState(false);
   const [editingMethod, setEditingMethod] = useState(null);
   const [payFilter, setPayFilter] = useState("all");
+  const [accounts, setAccounts] = useState([]);
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [accountForm, setAccountForm] = useState({ name: "", email: "", phone: "", newPassword: "" });
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [accountDeleteConfirm, setAccountDeleteConfirm] = useState(null);
+  const [accounts, setAccounts] = useState([]);
+  const [editAccount, setEditAccount] = useState(null);
+  const [accountForm, setAccountForm] = useState({ name: "", email: "", phone: "", newPassword: "" });
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [deleteAccountConfirm, setDeleteAccountConfirm] = useState(null);
+  const [accountSearch, setAccountSearch] = useState("");
   const [orderFilter, setOrderFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [driverForm, setDriverForm] = useState({ driverName: "", driverPhone: "", estimatedAt: "" });
@@ -75,6 +86,7 @@ export default function AdminPage() {
       fetch("/api/admin/registries"),
       fetch("/api/admin/payments"),
       fetch("/api/admin/payment-methods"),
+      fetch("/api/admin/accounts"),
     ]);
     setStores(await storesRes.json());
     setLogs(await logsRes.json());
@@ -88,6 +100,10 @@ export default function AdminPage() {
     const [payRes, methodsRes] = [await (await fetch("/api/admin/payments")).json(), await (await fetch("/api/admin/payment-methods")).json()];
     setPayments(Array.isArray(payRes) ? payRes : []);
     setPayMethods(Array.isArray(methodsRes) ? methodsRes : []);
+    const accRes = await (await fetch("/api/admin/accounts")).json();
+    setAccounts(Array.isArray(accRes) ? accRes : []);
+    const accRes = await (await fetch("/api/admin/accounts")).json();
+    setAccounts(Array.isArray(accRes) ? accRes : []);
     setRegistries(Array.isArray(regsData) ? regsData : []);
     setUnread(n.unread || 0);
   }, []);
@@ -229,6 +245,7 @@ export default function AdminPage() {
           { key: "registries", label: `🎁 Registries` },
           { key: "payments", label: "💳 Payments" },
           { key: "pay-methods", label: "⚙️ Payment Methods" },
+          { key: "accounts", label: "👤 Accounts" },
         ].map(({ key, label }) => (
           <button key={key} style={tabStyle(key)} onClick={() => { setTab(key); if (key === "add" && !editing) setForm(emptyStore); }}>
             {label}
@@ -565,6 +582,146 @@ export default function AdminPage() {
       )}
 
 
+
+      {/* ── ACCOUNTS TAB ─────────────────────────────────────── */}
+      {tab === "accounts" && (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, gap: 12, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 13, color: "#5a5650" }}>{accounts.length} registry accounts</div>
+            <input
+              value={accountSearch}
+              onChange={e => setAccountSearch(e.target.value)}
+              placeholder="Search by name or email..."
+              style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px 14px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: 260 }}
+            />
+          </div>
+
+          {/* Edit modal */}
+          {editAccount && (
+            <div style={{ ...card, marginBottom: 20, border: "1px solid rgba(232,213,176,0.2)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#c4a870" }}>EDIT ACCOUNT — {editAccount.email}</div>
+                <button onClick={() => setEditAccount(null)} style={{ background: "none", border: "none", color: "#5a5650", cursor: "pointer", fontSize: 18 }}>✕</button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                {[
+                  { key: "name", label: "Full name", placeholder: "Jane Doe" },
+                  { key: "email", label: "Email", placeholder: "jane@email.com" },
+                  { key: "phone", label: "Phone", placeholder: "+255 7xx xxx xxx" },
+                  { key: "newPassword", label: "New password (leave blank to keep)", placeholder: "At least 6 chars" },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</label>
+                    <input
+                      type={key === "newPassword" ? "password" : "text"}
+                      value={accountForm[key]}
+                      onChange={e => setAccountForm(f => ({ ...f, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <button onClick={async () => {
+                setSavingAccount(true);
+                const body = { id: editAccount.id, name: accountForm.name, email: accountForm.email, phone: accountForm.phone };
+                if (accountForm.newPassword) body.newPassword = accountForm.newPassword;
+                const res = await fetch("/api/admin/accounts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+                const data = await res.json();
+                if (res.ok) { flash("Account updated"); setEditAccount(null); await load(); }
+                else flash(data.error || "Failed", "error");
+                setSavingAccount(false);
+              }} disabled={savingAccount} style={{ ...btn("#e8d5b0"), padding: "10px 24px" }}>
+                {savingAccount ? "Saving..." : "Save changes"}
+              </button>
+            </div>
+          )}
+
+          {accounts.filter(a => !accountSearch || a.name.toLowerCase().includes(accountSearch.toLowerCase()) || a.email.toLowerCase().includes(accountSearch.toLowerCase())).length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>👥</div>
+              <p>No accounts yet.</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {accounts
+                .filter(a => !accountSearch || a.name.toLowerCase().includes(accountSearch.toLowerCase()) || a.email.toLowerCase().includes(accountSearch.toLowerCase()))
+                .map(account => {
+                const totalItems = account.registries.reduce((s, r) => s + (r.items?.length || 0), 0);
+                const totalPurchased = account.registries.reduce((s, r) => s + (r.items?.filter(i => i.status === "purchased").length || 0), 0);
+                const totalGifters = account.registries.reduce((s, r) => s + (r.contributions?.length || 0), 0);
+                return (
+                  <div key={account.id} style={{ ...card }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 14, flexWrap: "wrap" }}>
+                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#1a1a1a", border: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 18, color: "#e8d5b0", flexShrink: 0 }}>
+                        {account.name?.[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 160 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#f0ede8", marginBottom: 3 }}>{account.name}</div>
+                        <div style={{ fontSize: 12, color: "#5a5650", marginBottom: 6 }}>
+                          {account.email}
+                          {account.phone && <span style={{ marginLeft: 10 }}>📞 {account.phone}</span>}
+                        </div>
+                        <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#5a5650", flexWrap: "wrap" }}>
+                          <span>📅 Joined {new Date(account.createdAt).toLocaleDateString()}</span>
+                          <span>🔑 {account.sessions} sessions</span>
+                          <span style={{ color: "#c4a870" }}>📋 {account.registries.length} registries</span>
+                          <span>🎁 {totalItems} items</span>
+                          <span style={{ color: "#4ade80" }}>✅ {totalPurchased} purchased</span>
+                          <span>🤝 {totalGifters} gifters</span>
+                        </div>
+
+                        {/* Registries list */}
+                        {account.registries.length > 0 && (
+                          <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {account.registries.map(r => (
+                              <a key={r.id} href={`/registry/${r.slug || r.id}`} target="_blank" rel="noopener noreferrer" style={{ padding: "3px 10px", background: "#1a1a1a", border: `1px solid ${r.isPublic ? "rgba(74,222,128,0.2)" : "#2a2a2a"}`, borderRadius: 6, color: r.isPublic ? "#4ade80" : "#9a9690", fontSize: 11, textDecoration: "none" }}>
+                                {r.title} ↗
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
+                        <button onClick={() => { setEditAccount(account); setAccountForm({ name: account.name, email: account.email, phone: account.phone || "", newPassword: "" }); }} style={btn("#1a1a1a", "#9a9690")}>
+                          ✏️ Edit
+                        </button>
+                        <button onClick={async () => {
+                          await db?.accountSession?.deleteMany({ where: { accountId: account.id } });
+                          await fetch("/api/admin/accounts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: account.id, forceLogout: true }) });
+                          flash("Sessions cleared — user logged out");
+                        }} style={btn("#1a1a1a", "#f59e0b")}>
+                          🔒 Logout user
+                        </button>
+                        {deleteAccountConfirm === account.id ? (
+                          <div style={{ display: "flex", gap: 6, flexDirection: "column" }}>
+                            <div style={{ fontSize: 11, color: "#f87171" }}>Delete account + registries?</div>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              <button onClick={async () => {
+                                await fetch(`/api/admin/accounts?id=${account.id}&deleteRegistries=1`, { method: "DELETE" });
+                                flash("Account and registries deleted"); setDeleteAccountConfirm(null); await load();
+                              }} style={btn("rgba(248,113,113,0.15)", "#f87171")}>+ registries</button>
+                              <button onClick={async () => {
+                                await fetch(`/api/admin/accounts?id=${account.id}`, { method: "DELETE" });
+                                flash("Account deleted"); setDeleteAccountConfirm(null); await load();
+                              }} style={btn("rgba(248,113,113,0.1)", "#f87171")}>account only</button>
+                              <button onClick={() => setDeleteAccountConfirm(null)} style={btn("#1a1a1a", "#5a5650")}>Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button onClick={() => setDeleteAccountConfirm(account.id)} style={btn("rgba(248,113,113,0.08)", "#f87171")}>🗑 Delete</button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── PAYMENTS TAB ─────────────────────────────────────── */}
       {tab === "payments" && (
         <div>
@@ -728,6 +885,113 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+
+      {/* ── ACCOUNTS TAB ─────────────────────────────────────── */}
+      {tab === "accounts" && (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <div style={{ fontSize: 13, color: "#5a5650" }}>{accounts.length} registered accounts</div>
+          </div>
+
+          {/* Edit modal */}
+          {editingAccount && (
+            <div style={{ ...card, marginBottom: 20, border: "1px solid rgba(232,213,176,0.2)" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#c4a870", marginBottom: 16, letterSpacing: "0.08em" }}>EDITING: {editingAccount.name}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                {[["name","Name","Jane Doe"],["email","Email","jane@email.com"],["phone","Phone","+255 7xx xxx xxx"]].map(([key, lbl, ph]) => (
+                  <div key={key}>
+                    <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>{lbl}</label>
+                    <input value={accountForm[key] || ""} onChange={e => setAccountForm(f => ({ ...f, [key]: e.target.value }))} placeholder={ph}
+                      style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }} />
+                  </div>
+                ))}
+                <div>
+                  <label style={{ display: "block", fontSize: 10, color: "#5a5650", marginBottom: 4, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>New password (leave blank to keep)</label>
+                  <input type="password" value={accountForm.newPassword || ""} onChange={e => setAccountForm(f => ({ ...f, newPassword: e.target.value }))} placeholder="Min 6 characters"
+                    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#f0ede8", fontSize: 13, fontFamily: "inherit", outline: "none", width: "100%" }} />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={async () => {
+                  setSavingAccount(true);
+                  const res = await fetch("/api/admin/accounts", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingAccount.id, ...accountForm }) });
+                  if (res.ok) { flash("Account updated"); setEditingAccount(null); await load(); }
+                  else { const d = await res.json(); flash(d.error || "Failed", "error"); }
+                  setSavingAccount(false);
+                }} disabled={savingAccount} style={btn("#e8d5b0")}>
+                  {savingAccount ? "Saving..." : "Save changes"}
+                </button>
+                <button onClick={() => setEditingAccount(null)} style={{ ...btn("#1a1a1a", "#9a9690"), border: "1px solid #2a2a2a" }}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {accounts.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>👤</div>
+              <p>No accounts yet. Accounts are created when users sign up on the registry page.</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {accounts.map(acc => (
+                <div key={acc.id} style={card}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14, flexWrap: "wrap" }}>
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#1a1a1a", border: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 18, color: "#e8d5b0", flexShrink: 0 }}>
+                      {acc.name[0].toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
+                        <span style={{ fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 16, color: "#f0ede8" }}>{acc.name}</span>
+                        <span style={{ fontSize: 10, color: "#5a5650", background: "#1a1a1a", padding: "2px 8px", borderRadius: 4 }}>{acc.registryCount} registries</span>
+                        <span style={{ fontSize: 10, color: "#5a5650", background: "#1a1a1a", padding: "2px 8px", borderRadius: 4 }}>{acc.sessionCount} sessions</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: "#9a9690", marginBottom: 4 }}>{acc.email}</div>
+                      {acc.phone && <div style={{ fontSize: 12, color: "#5a5650" }}>{acc.phone}</div>}
+                      <div style={{ fontSize: 11, color: "#3a3a3a", marginTop: 4 }}>Joined {new Date(acc.createdAt).toLocaleDateString()}</div>
+
+                      {/* Registries list */}
+                      {acc.registries?.length > 0 && (
+                        <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {acc.registries.map(reg => (
+                            <a key={reg.id} href={`/registry/${reg.slug}`} target="_blank" rel="noopener noreferrer" style={{
+                              padding: "3px 10px", background: "#1a1a1a", border: `1px solid ${reg.isPublic ? "rgba(74,222,128,0.2)" : "#2a2a2a"}`,
+                              borderRadius: 100, fontSize: 11, color: reg.isPublic ? "#4ade80" : "#5a5650", textDecoration: "none",
+                            }}>
+                              🎁 {reg.title || reg.occasion}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
+                      <button onClick={() => {
+                        setEditingAccount(acc);
+                        setAccountForm({ name: acc.name, email: acc.email, phone: acc.phone || "", newPassword: "" });
+                      }} style={btn("#1a1a1a", "#9a9690")}>Edit</button>
+
+                      <a href={`/account/dashboard`} target="_blank" rel="noopener noreferrer" style={{ ...btn("#1a1a1a", "#c4a870"), textDecoration: "none", display: "inline-flex" }}>View →</a>
+
+                      {accountDeleteConfirm === acc.id ? (
+                        <div style={{ display: "flex", gap: 4, flexDirection: "column" }}>
+                          <div style={{ fontSize: 11, color: "#f87171" }}>Delete account?</div>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <button onClick={async () => { await fetch(`/api/admin/accounts?id=${acc.id}`, { method: "DELETE" }); setAccountDeleteConfirm(null); flash("Account deleted"); await load(); }} style={btn("rgba(248,113,113,0.15)", "#f87171")}>Account only</button>
+                            <button onClick={async () => { await fetch(`/api/admin/accounts?id=${acc.id}&withRegistries=1`, { method: "DELETE" }); setAccountDeleteConfirm(null); flash("Account + registries deleted"); await load(); }} style={btn("rgba(248,113,113,0.2)", "#f87171")}>+ Registries</button>
+                            <button onClick={() => setAccountDeleteConfirm(null)} style={btn("#1a1a1a", "#5a5650")}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => setAccountDeleteConfirm(acc.id)} style={btn("#1a1a1a", "#5a5650")}>✕</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
