@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id              String     @id @default(cuid())
+  shopDomain      String     @unique
+  customDomain    String?
+  storeName       String
+  storefrontToken String     @default("tokenless")
+  logoUrl         String?
+  description     String?
+  currency        String     @default("USD")
+  primaryColor    String?
+  active          Boolean    @default(true)
+  featured        Boolean    @default(false)
+  productCount    Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  products        Product[]
+  webhooks        Webhook[]
+  syncLogs        SyncLog[]
+  orders          Order[]
+}
+
+model Product {
+  id           String   @id
+  storeId      String
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  title        String
+  handle       String
+  description  String?
+  price        Float
+  comparePrice Float?
+  currency     String   @default("USD")
+  imageUrl     String?
+  images       String[]
+  productUrl   String
+  tags         String[]
+  category     String?
+  vendor       String?
+  available    Boolean  @default(true)
+  syncedAt     DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([storeId])
+  @@index([available])
+}
+
+model Order {
+  id              String         @id @default(cuid())
+  storeId         String
+  store           Store          @relation(fields: [storeId], references: [id])
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  productTitle    String
+  productUrl      String
+  productImageUrl String?
+  productPrice    Float
+  currency        String         @default("USD")
+  quantity        Int            @default(1)
+  notes           String?
+  status          String         @default("pending")
+  deliveryStatus  String         @default("unassigned")
+  deliveryAddress String?
+  deliveryCity    String?
+  deliveryRegion  String?
+  driverName      String?
+  driverPhone     String?
+  estimatedAt     DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  notifications   Notification[]
+
+  @@index([storeId])
+  @@index([status])
+  @@index([deliveryStatus])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read])
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  topic     String
+  shopifyId String?
+  createdAt DateTime @default(now())
+
+  @@index([storeId])
+}
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  status    String
+  message   String?
+  products  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([storeId])
+}
+
+model Registry {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  ownerName     String
+  ownerEmail    String
+  title         String
+  occasion      String
+  eventDate     DateTime?
+  description   String?
+  coverImage    String?
+  isPublic      Boolean        @default(true)
+  thankYouMsg   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  items         RegistryItem[]
+  contributions Contribution[]
+}
+
+model RegistryItem {
+  id            String         @id @default(cuid())
+  registryId    String
+  registry      Registry       @relation(fields: [registryId], references: [id], onDelete: Cascade)
+  productId     String?
+  storeId       String?
+  title         String
+  imageUrl      String?
+  productUrl    String
+  price         Float
+  currency      String         @default("USD")
+  quantity      Int            @default(1)
+  priority      String         @default("medium")
+  note          String?
+  status        String         @default("available")
+  claimedBy     String?
+  claimedAt     DateTime?
+  purchasedAt   DateTime?
+  shopifyOrderId String?
+  createdAt     DateTime       @default(now())
+  contributions Contribution[]
+
+  @@index([registryId])
+  @@index([status])
+}
+
+model Contribution {
+  id           String       @id @default(cuid())
+  registryId   String
+  registry     Registry     @relation(fields: [registryId], references: [id], onDelete: Cascade)
+  itemId       String?
+  item         RegistryItem? @relation(fields: [itemId], references: [id])
+  gifterName   String
+  gifterEmail  String
+  message      String?
+  amount       Float?
+  status       String       @default("pending")
+  shopifyOrderId String?
+  createdAt    DateTime     @default(now())
+
+  @@index([registryId])
+  @@index([shopifyOrderId])
+}
