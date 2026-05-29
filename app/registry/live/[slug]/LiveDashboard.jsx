@@ -1,127 +1,139 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const OCCASION_EMOJIS = { "Wedding": "💍", "Birthday": "🎂", "Baby Shower": "👶", "Christmas": "🎄", "Graduation": "🎓", "Housewarming": "🏠", "Anniversary": "💝" };
 
-function Confetti({ active }) {
-  const canvasRef = useRef(null);
+function useConfetti(canvasRef) {
   const animRef = useRef(null);
   const particlesRef = useRef([]);
-
-  useEffect(() => {
-    if (!active) return;
+  const burst = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    const colors = ["#e8d5b0", "#f59e0b", "#4ade80", "#3b82f6", "#f87171", "#c4a870", "#fff"];
-    for (let i = 0; i < 120; i++) {
+    const colors = ["#e8d5b0","#f59e0b","#4ade80","#3b82f6","#f87171","#c4a870","#fff","#a78bfa"];
+    for (let i = 0; i < 150; i++) {
       particlesRef.current.push({
-        x: Math.random() * canvas.width,
-        y: -20,
-        r: Math.random() * 8 + 3,
+        x: Math.random() * canvas.width, y: -10 - Math.random() * 100,
+        w: Math.random() * 10 + 4, h: Math.random() * 6 + 2,
         color: colors[Math.floor(Math.random() * colors.length)],
-        vx: (Math.random() - 0.5) * 4,
-        vy: Math.random() * 4 + 2,
+        vx: (Math.random() - 0.5) * 5, vy: Math.random() * 5 + 3,
+        rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 6,
         opacity: 1,
-        rot: Math.random() * 360,
-        rotV: (Math.random() - 0.5) * 5,
       });
     }
-
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particlesRef.current = particlesRef.current.filter(p => p.opacity > 0.05);
       particlesRef.current.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        p.opacity -= 0.008; p.rot += p.rotV;
+        p.x += p.vx; p.y += p.vy; p.opacity -= 0.012; p.rot += p.rotV;
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot * Math.PI / 180);
         ctx.globalAlpha = p.opacity;
         ctx.fillStyle = p.color;
-        ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 1.5);
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
         ctx.restore();
       });
       if (particlesRef.current.length > 0) animRef.current = requestAnimationFrame(animate);
     };
+    cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(animate);
-    return () => { cancelAnimationFrame(animRef.current); particlesRef.current = []; ctx.clearRect(0, 0, canvas.width, canvas.height); };
-  }, [active]);
-
-  return <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 100 }} />;
+  }, []);
+  return burst;
 }
 
 export default function LiveDashboard({ slug }) {
+  const canvasRef = useRef(null);
+  const burst = useConfetti(canvasRef);
+  const prevContribsRef = useRef([]);
+
   const [registry, setRegistry] = useState(null);
   const [error, setError] = useState("");
   const [connected, setConnected] = useState(false);
   const [lastGift, setLastGift] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [recentGifts, setRecentGifts] = useState([]);
-  const prevContribsRef = useRef([]);
-  const [ticker, setTicker] = useState([]);
   const [clock, setClock] = useState(new Date());
+  const [pollCount, setPollCount] = useState(0);
 
-  // Live clock
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // SSE connection for real-time updates
-  useEffect(() => {
-    const evtSource = new EventSource(`/api/registry/live?slug=${slug}`);
+  const poll = useCallback(async () => {
+    if (!slug) return;
+    try {
+      const res = await fetch(`/api/registry/live?slug=${encodeURIComponent(slug)}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || `Error ${res.status} — check the registry slug in the URL`);
+        setConnected(false);
+        return;
+      }
+      const data = await res.json();
+      setConnected(true);
+      setError("");
+      setPollCount(n => n + 1);
 
-    evtSource.onopen = () => setConnected(true);
-
-    evtSource.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (data.type === "error") { setError(data.message); return; }
-
-        const reg = data.registry;
-        setRegistry(reg);
-
-        // Detect new contributions (gifts claimed/purchased)
-        const newContribs = (reg.contributions || []).filter(c =>
-          !prevContribsRef.current.find(p => p.id === c.id)
-        );
-
-        if (newContribs.length > 0 && prevContribsRef.current.length > 0) {
+      setRegistry(prev => {
+        const prevContribs = prevContribsRef.current;
+        const newContribs = (data.contributions || []).filter(c => !prevContribs.find(p => p.id === c.id));
+        if (newContribs.length > 0 && prevContribs.length > 0) {
           newContribs.forEach(c => {
             setLastGift(c);
             setShowCelebration(true);
-            setTimeout(() => setShowCelebration(false), 5000);
-            setRecentGifts(prev => [c, ...prev].slice(0, 6));
-            setTicker(prev => [`🎁 ${c.gifterName} gifted "${c.item?.title || "a gift"}"`, ...prev].slice(0, 10));
+            burst();
+            setTimeout(() => setShowCelebration(false), 6000);
+            setRecentGifts(r => [c, ...r].slice(0, 5));
           });
         }
-
-        prevContribsRef.current = reg.contributions || [];
-      } catch {}
-    };
-
-    evtSource.onerror = () => {
+        prevContribsRef.current = data.contributions || [];
+        return data;
+      });
+    } catch (err) {
       setConnected(false);
-      evtSource.close();
-    };
+      setError("Cannot connect. Check your internet connection.");
+    }
+  }, [slug, burst]);
 
-    return () => evtSource.close();
-  }, [slug]);
+  useEffect(() => {
+    if (!slug) { setError("No registry slug in URL. Use /registry/live/YOUR-REGISTRY-SLUG"); return; }
+    poll();
+    const t = setInterval(poll, 3000);
+    return () => clearInterval(t);
+  }, [poll, slug]);
 
-  if (error) return (
-    <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", color: "#f87171", fontSize: 18 }}>
-      {error}
+  if (!slug) return (
+    <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", color: "#f87171", padding: 40 }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+        <p>No registry slug in URL.</p>
+        <p style={{ fontSize: 13, color: "#5a5650", marginTop: 8 }}>URL should be: /registry/live/your-registry-slug</p>
+      </div>
+    </div>
+  );
+
+  if (error && !registry) return (
+    <div style={{ minHeight: "100vh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", color: "#f87171", padding: 40, maxWidth: 400 }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>😕</div>
+        <p style={{ marginBottom: 8 }}>{error}</p>
+        <p style={{ fontSize: 13, color: "#5a5650" }}>Slug used: <code style={{ color: "#c4a870" }}>{slug}</code></p>
+        <button onClick={poll} style={{ marginTop: 20, padding: "10px 24px", background: "#e8d5b0", color: "#0a0a0a", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 700 }}>Retry</button>
+      </div>
     </div>
   );
 
   if (!registry) return (
     <div style={{ minHeight: "100vh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-      <div style={{ width: 48, height: 48, border: "3px solid #2a2a2a", borderTop: "3px solid #e8d5b0", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-      <div style={{ color: "#5a5650", fontSize: 14 }}>Connecting to live feed...</div>
+      <div style={{ width: 44, height: 44, border: "3px solid #2a2a2a", borderTop: "3px solid #e8d5b0", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ color: "#5a5650", fontSize: 14 }}>Connecting to {slug}...</div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -134,115 +146,114 @@ export default function LiveDashboard({ slug }) {
   const total = items.length;
   const progressPct = total > 0 ? Math.round(((purchased + claimed) / total) * 100) : 0;
   const totalValue = items.reduce((s, i) => s + (i.price || 0), 0);
-  const giftedValue = contributions.reduce((s, c) => s + (c.amount || 0), 0);
+  const giftedValue = contributions.reduce((s, c) => s + (c.payment?.totalAmount || c.amount || 0), 0);
+  const currency = items[0]?.currency || "USD";
   const occasionEmoji = OCCASION_EMOJIS[registry.occasion] || "🎁";
 
+  // Top gifters by amount paid
+  const gifterMap = {};
+  contributions.forEach(c => {
+    const key = c.gifterEmail || c.gifterName;
+    const amt = c.payment?.totalAmount || c.amount || 0;
+    if (!gifterMap[key]) gifterMap[key] = { name: c.gifterName, email: key, total: 0, count: 0 };
+    gifterMap[key].total += amt;
+    gifterMap[key].count += 1;
+  });
+  const topGifters = Object.values(gifterMap).sort((a, b) => b.total - a.total).slice(0, 5);
+
   return (
-    <div style={{ minHeight: "100vh", background: "#000", color: "#f0ede8", fontFamily: "Georgia, serif", overflow: "hidden", position: "relative" }}>
-
-      <Confetti active={showCelebration} />
-
-      {/* Ambient background */}
-      <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse at 20% 50%, rgba(196,168,112,0.04) 0%, transparent 60%), radial-gradient(ellipse at 80% 50%, rgba(232,213,176,0.03) 0%, transparent 60%)", pointerEvents: "none" }} />
+    <div style={{ minHeight: "100vh", background: "#000", color: "#f0ede8", fontFamily: "Georgia, serif", overflow: "hidden", position: "relative", paddingBottom: 48 }}>
+      <canvas ref={canvasRef} style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 200 }} />
+      <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse at 20% 50%, rgba(196,168,112,0.04) 0%, transparent 60%)", pointerEvents: "none" }} />
 
       {/* Top bar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 32px", borderBottom: "1px solid #1a1a1a", background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? "#4ade80" : "#f87171", boxShadow: connected ? "0 0 8px #4ade80" : "0 0 8px #f87171" }} />
-          <span style={{ fontSize: 12, color: connected ? "#4ade80" : "#f87171", fontFamily: "var(--font-body, sans-serif)", letterSpacing: "0.08em" }}>
-            {connected ? "LIVE" : "RECONNECTING"}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", borderBottom: "1px solid #1a1a1a", background: "rgba(0,0,0,0.9)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? "#4ade80" : "#f59e0b", boxShadow: connected ? "0 0 8px #4ade80" : "none", animation: connected ? "pulse 2s infinite" : "none" }} />
+          <span style={{ fontSize: 11, color: connected ? "#4ade80" : "#f59e0b", fontFamily: "sans-serif", letterSpacing: "0.1em", fontWeight: 700 }}>
+            {connected ? "LIVE" : "CONNECTING"} · {pollCount} updates
           </span>
+          {error && <span style={{ fontSize: 11, color: "#f87171", fontFamily: "sans-serif" }}>⚠ {error}</span>}
         </div>
-
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 13, color: "#5a5650", marginBottom: 2, fontFamily: "sans-serif", letterSpacing: "0.1em" }}>{registry.occasion?.toUpperCase()} REGISTRY</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#e8d5b0" }}>{registry.title}</div>
+          <div style={{ fontSize: 11, color: "#5a5650", fontFamily: "sans-serif", letterSpacing: "0.1em" }}>{registry.occasion?.toUpperCase()} REGISTRY</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#e8d5b0" }}>{registry.title}</div>
         </div>
-
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: "#f0ede8", fontFamily: "sans-serif" }}>
-            {clock.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+            {clock.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </div>
-          <div style={{ fontSize: 11, color: "#5a5650", fontFamily: "sans-serif" }}>
-            {clock.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-          </div>
+          <div style={{ fontSize: 11, color: "#5a5650", fontFamily: "sans-serif" }}>{clock.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div style={{ padding: "28px 32px", display: "grid", gridTemplateColumns: "1fr 380px", gap: 24, maxWidth: 1400, margin: "0 auto" }}>
+      <div style={{ padding: "24px 28px", display: "grid", gridTemplateColumns: "1fr 360px", gap: 20, maxWidth: 1400, margin: "0 auto" }}>
 
-        {/* Left column */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {/* LEFT */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
-          {/* Hero stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+          {/* Stats */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
             {[
-              { label: "Total Gifts", value: total, color: "#f0ede8", icon: "🎁" },
-              { label: "Purchased", value: purchased, color: "#4ade80", icon: "✅" },
-              { label: "Claimed", value: claimed, color: "#f59e0b", icon: "🔖" },
-              { label: "Available", value: available, color: "#9a9690", icon: "💝" },
-            ].map(({ label, value, color, icon }) => (
-              <div key={label} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 16, padding: "20px", textAlign: "center" }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
-                <div style={{ fontSize: 36, fontWeight: 800, color, lineHeight: 1, marginBottom: 6 }}>{value}</div>
-                <div style={{ fontSize: 11, color: "#5a5650", fontFamily: "sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</div>
+              { label: "Total Gifts", value: total, icon: "🎁", color: "#f0ede8" },
+              { label: "Purchased", value: purchased, icon: "✅", color: "#4ade80" },
+              { label: "Claimed", value: claimed, icon: "🔖", color: "#f59e0b" },
+              { label: "Available", value: available, icon: "💝", color: "#9a9690" },
+            ].map(({ label, value, icon, color }) => (
+              <div key={label} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 14, padding: "18px", textAlign: "center" }}>
+                <div style={{ fontSize: 26, marginBottom: 6 }}>{icon}</div>
+                <div style={{ fontSize: 34, fontWeight: 800, color, lineHeight: 1, marginBottom: 4 }}>{value}</div>
+                <div style={{ fontSize: 10, color: "#5a5650", fontFamily: "sans-serif", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</div>
               </div>
             ))}
           </div>
 
-          {/* Progress bar */}
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 16, padding: "24px 28px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-              <span style={{ fontSize: 15, color: "#9a9690", fontFamily: "sans-serif" }}>Registry progress</span>
-              <span style={{ fontSize: 24, fontWeight: 800, color: "#e8d5b0" }}>{progressPct}%</span>
+          {/* Progress */}
+          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 14, padding: "20px 24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+              <span style={{ fontSize: 14, color: "#9a9690", fontFamily: "sans-serif" }}>Registry progress</span>
+              <span style={{ fontSize: 26, fontWeight: 800, color: "#e8d5b0" }}>{progressPct}%</span>
             </div>
-            <div style={{ height: 12, background: "#1a1a1a", borderRadius: 6, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${progressPct}%`, background: "linear-gradient(90deg, #4ade80, #e8d5b0)", borderRadius: 6, transition: "width 1s ease" }} />
+            <div style={{ height: 14, background: "#1a1a1a", borderRadius: 7, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${progressPct}%`, background: "linear-gradient(90deg, #4ade80, #e8d5b0)", borderRadius: 7, transition: "width 1s ease" }} />
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, fontSize: 12, color: "#3a3a3a", fontFamily: "sans-serif" }}>
-              <span>{purchased + claimed} of {total} gifts claimed or purchased</span>
-              <span>{available} remaining</span>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 12, color: "#3a3a3a", fontFamily: "sans-serif" }}>
+              <span>{purchased + claimed} of {total} gifts taken</span><span>{available} remaining</span>
             </div>
           </div>
 
-          {/* Value stats */}
+          {/* Value */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <div style={{ background: "#0d0d0d", border: "1px solid rgba(232,213,176,0.1)", borderRadius: 16, padding: "22px 24px" }}>
-              <div style={{ fontSize: 11, color: "#c4a870", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "sans-serif" }}>TOTAL REGISTRY VALUE</div>
-              <div style={{ fontSize: 32, fontWeight: 800, color: "#e8d5b0" }}>
-                {(registry.items?.[0]?.currency || "USD")} {totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
+            <div style={{ background: "#0d0d0d", border: "1px solid rgba(232,213,176,0.1)", borderRadius: 14, padding: "20px 22px" }}>
+              <div style={{ fontSize: 10, color: "#c4a870", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "sans-serif" }}>TOTAL REGISTRY VALUE</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: "#e8d5b0" }}>{currency} {totalValue.toLocaleString("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             </div>
-            <div style={{ background: "#0d0d0d", border: "1px solid rgba(74,222,128,0.1)", borderRadius: 16, padding: "22px 24px" }}>
-              <div style={{ fontSize: 11, color: "#4ade80", letterSpacing: "0.1em", marginBottom: 10, fontFamily: "sans-serif" }}>GIFTS GIVEN SO FAR</div>
-              <div style={{ fontSize: 32, fontWeight: 800, color: "#4ade80" }}>
-                {(registry.items?.[0]?.currency || "USD")} {giftedValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
+            <div style={{ background: "#0d0d0d", border: "1px solid rgba(74,222,128,0.1)", borderRadius: 14, padding: "20px 22px" }}>
+              <div style={{ fontSize: 10, color: "#4ade80", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "sans-serif" }}>GIFTS CONTRIBUTED</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: "#4ade80" }}>{currency} {giftedValue.toLocaleString("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             </div>
           </div>
 
-          {/* Gift items grid */}
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 16, padding: "20px 24px" }}>
-            <div style={{ fontSize: 13, color: "#5a5650", letterSpacing: "0.08em", marginBottom: 16, fontFamily: "sans-serif" }}>GIFT LIST</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+          {/* Gift grid */}
+          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 14, padding: "18px 20px" }}>
+            <div style={{ fontSize: 11, color: "#5a5650", letterSpacing: "0.08em", marginBottom: 14, fontFamily: "sans-serif" }}>GIFT LIST</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
               {items.map(item => (
                 <div key={item.id} style={{
                   background: item.status === "purchased" ? "rgba(74,222,128,0.08)" : item.status === "claimed" ? "rgba(245,158,11,0.08)" : "#111",
                   border: `1px solid ${item.status === "purchased" ? "rgba(74,222,128,0.2)" : item.status === "claimed" ? "rgba(245,158,11,0.2)" : "#1e1e1e"}`,
-                  borderRadius: 12, overflow: "hidden",
-                  transition: "all 0.5s ease",
+                  borderRadius: 10, overflow: "hidden", transition: "all 0.8s ease",
                 }}>
                   {item.imageUrl && (
-                    <div style={{ aspectRatio: "1", overflow: "hidden", position: "relative" }}>
-                      <img src={item.imageUrl} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: item.status !== "available" ? "brightness(0.7)" : "none" }} />
-                      {item.status === "purchased" && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>✅</div>}
-                      {item.status === "claimed" && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🔖</div>}
+                    <div style={{ aspectRatio: "1", position: "relative" }}>
+                      <img src={item.imageUrl} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: item.status !== "available" ? "brightness(0.6)" : "none", transition: "filter 0.8s" }} />
+                      {item.status === "purchased" && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>✅</div>}
+                      {item.status === "claimed" && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🔖</div>}
                     </div>
                   )}
-                  <div style={{ padding: "8px 10px" }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "#9a9690", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "sans-serif" }}>{item.title}</div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#e8d5b0", marginTop: 3, fontFamily: "sans-serif" }}>{item.currency} {(item.price || 0).toFixed(2)}</div>
+                  <div style={{ padding: "6px 8px" }}>
+                    <div style={{ fontSize: 10, color: "#9a9690", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "sans-serif" }}>{item.title}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#e8d5b0", marginTop: 2, fontFamily: "sans-serif" }}>{item.currency} {(item.price || 0).toFixed(0)}</div>
                   </div>
                 </div>
               ))}
@@ -250,95 +261,112 @@ export default function LiveDashboard({ slug }) {
           </div>
         </div>
 
-        {/* Right column - live feed */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* RIGHT */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
-          {/* Celebration banner */}
+          {/* Celebration */}
           {showCelebration && lastGift && (
-            <div style={{
-              background: "linear-gradient(135deg, rgba(232,213,176,0.15), rgba(196,168,112,0.1))",
-              border: "1px solid rgba(232,213,176,0.3)",
-              borderRadius: 20, padding: "24px 20px",
-              textAlign: "center",
-              animation: "fadeIn 0.4s ease",
-            }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
-              <div style={{ fontSize: 13, color: "#c4a870", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "sans-serif" }}>NEW GIFT!</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#e8d5b0", marginBottom: 6 }}>{lastGift.gifterName}</div>
-              <div style={{ fontSize: 13, color: "#9a9690", fontFamily: "sans-serif" }}>just gifted</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#f0ede8", marginTop: 6 }}>{lastGift.item?.title || "a gift"}</div>
-              {lastGift.message && <div style={{ fontSize: 13, color: "#9a9690", marginTop: 10, fontStyle: "italic" }}>"{lastGift.message}"</div>}
-              <style>{`@keyframes fadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
+            <div style={{ background: "linear-gradient(135deg, rgba(232,213,176,0.12), rgba(196,168,112,0.08))", border: "1px solid rgba(232,213,176,0.25)", borderRadius: 18, padding: "22px 18px", textAlign: "center", animation: "popIn 0.4s ease" }}>
+              <div style={{ fontSize: 44, marginBottom: 10 }}>🎉</div>
+              <div style={{ fontSize: 11, color: "#c4a870", letterSpacing: "0.1em", marginBottom: 6, fontFamily: "sans-serif" }}>NEW GIFT!</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#e8d5b0", marginBottom: 4 }}>{lastGift.gifterName}</div>
+              <div style={{ fontSize: 13, color: "#9a9690", fontFamily: "sans-serif" }}>gifted</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#f0ede8", marginTop: 4 }}>{lastGift.item?.title || "a gift"}</div>
+              {(lastGift.payment?.totalAmount || lastGift.amount) > 0 && (
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#4ade80", marginTop: 8 }}>
+                  {currency} {(lastGift.payment?.totalAmount || lastGift.amount || 0).toFixed(2)}
+                </div>
+              )}
+              {lastGift.message && <div style={{ fontSize: 12, color: "#9a9690", marginTop: 8, fontStyle: "italic", fontFamily: "sans-serif" }}>"{lastGift.message}"</div>}
             </div>
           )}
 
-          {/* Gifter wall */}
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 16, padding: "20px" }}>
-            <div style={{ fontSize: 13, color: "#5a5650", letterSpacing: "0.08em", marginBottom: 14, fontFamily: "sans-serif" }}>GIFTERS ({contributions.length})</div>
-            {contributions.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "20px 0", color: "#3a3a3a", fontSize: 13, fontFamily: "sans-serif" }}>Waiting for first gift...</div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
-                {contributions.map((c, i) => (
-                  <div key={c.id} style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "10px 12px",
-                    background: i === 0 ? "rgba(232,213,176,0.06)" : "#111",
-                    border: `1px solid ${i === 0 ? "rgba(232,213,176,0.15)" : "#1a1a1a"}`,
-                    borderRadius: 10,
-                    animation: i === 0 ? "fadeIn 0.5s ease" : "none",
+          {/* 🏆 Top Gifters leaderboard */}
+          {topGifters.length > 0 && (
+            <div style={{ background: "#0d0d0d", border: "1px solid rgba(196,168,112,0.15)", borderRadius: 16, padding: "18px 18px" }}>
+              <div style={{ fontSize: 11, color: "#c4a870", letterSpacing: "0.1em", marginBottom: 14, fontFamily: "sans-serif" }}>🏆 TOP GIFTERS</div>
+              {topGifters.map((g, i) => (
+                <div key={g.email} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < topGifters.length - 1 ? "1px solid #1a1a1a" : "none" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13,
+                    background: i === 0 ? "rgba(232,213,176,0.2)" : i === 1 ? "rgba(180,180,180,0.15)" : i === 2 ? "rgba(180,120,60,0.15)" : "#1a1a1a",
+                    color: i === 0 ? "#e8d5b0" : i === 1 ? "#c0c0c0" : i === 2 ? "#b47830" : "#5a5650",
+                    border: `1px solid ${i === 0 ? "rgba(232,213,176,0.3)" : i === 1 ? "rgba(180,180,180,0.2)" : i === 2 ? "rgba(180,120,60,0.2)" : "#2a2a2a"}`,
                   }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#1a1a1a", border: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#e8d5b0", flexShrink: 0 }}>
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? "#e8d5b0" : "#f0ede8", fontFamily: "sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.name}</div>
+                    <div style={{ fontSize: 11, color: "#5a5650", fontFamily: "sans-serif" }}>{g.count} gift{g.count !== 1 ? "s" : ""}</div>
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: i === 0 ? "#e8d5b0" : "#9a9690", fontFamily: "sans-serif", flexShrink: 0 }}>
+                    {g.total > 0 ? `${currency} ${g.total.toFixed(0)}` : "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Live gifters feed */}
+          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 16, padding: "18px" }}>
+            <div style={{ fontSize: 11, color: "#5a5650", letterSpacing: "0.08em", marginBottom: 12, fontFamily: "sans-serif" }}>GIFT FEED ({contributions.length})</div>
+            {contributions.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "20px 0", color: "#3a3a3a", fontSize: 13, fontFamily: "sans-serif" }}>Waiting for first gift... 🎁</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto" }}>
+                {contributions.slice(0, 20).map((c, i) => (
+                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: i === 0 ? "rgba(232,213,176,0.06)" : "#111", border: `1px solid ${i === 0 ? "rgba(232,213,176,0.12)" : "#1a1a1a"}`, borderRadius: 10, animation: i === 0 ? "slideIn 0.4s ease" : "none" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, color: "#e8d5b0", flexShrink: 0 }}>
                       {(c.gifterName || "?")[0].toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#f0ede8", fontFamily: "sans-serif" }}>{c.gifterName}</div>
-                      <div style={{ fontSize: 11, color: "#5a5650", fontFamily: "sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ fontSize: 10, color: "#5a5650", fontFamily: "sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {c.item?.title || "Gift"} · {c.status === "purchased" ? "✅" : "🔖"}
                       </div>
                     </div>
-                    {c.amount && <div style={{ fontSize: 12, fontWeight: 700, color: "#c4a870", fontFamily: "sans-serif", flexShrink: 0 }}>{c.amount.toFixed(0)}</div>}
+                    {(c.payment?.totalAmount || c.amount) > 0 && (
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#c4a870", fontFamily: "sans-serif", flexShrink: 0 }}>
+                        {(c.payment?.totalAmount || c.amount || 0).toFixed(0)}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Registry details */}
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 16, padding: "20px" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 40, marginBottom: 10 }}>{occasionEmoji}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#f0ede8", marginBottom: 4 }}>{registry.ownerName}</div>
-              {registry.eventDate && (
-                <div style={{ fontSize: 12, color: "#c4a870", fontFamily: "sans-serif" }}>
-                  {new Date(registry.eventDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                </div>
-              )}
-              {registry.description && (
-                <p style={{ fontSize: 12, color: "#5a5650", marginTop: 10, lineHeight: 1.6, fontFamily: "sans-serif", fontStyle: "italic" }}>{registry.description}</p>
-              )}
-            </div>
-          </div>
-
-          {/* QR/share hint */}
-          <div style={{ background: "rgba(232,213,176,0.04)", border: "1px solid rgba(232,213,176,0.1)", borderRadius: 16, padding: "18px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "#c4a870", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "sans-serif" }}>GIFT FROM YOUR PHONE</div>
-            <div style={{ fontSize: 12, color: "#5a5650", fontFamily: "monospace", wordBreak: "break-all" }}>
+          {/* Registry info */}
+          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 16, padding: "18px", textAlign: "center" }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>{occasionEmoji}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#f0ede8" }}>{registry.ownerName}</div>
+            {registry.eventDate && <div style={{ fontSize: 12, color: "#c4a870", marginTop: 4, fontFamily: "sans-serif" }}>{new Date(registry.eventDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>}
+            <div style={{ fontSize: 11, color: "#3a3a3a", marginTop: 10, fontFamily: "monospace", wordBreak: "break-all" }}>
               {typeof window !== "undefined" ? window.location.origin : ""}/registry/{registry.slug}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom ticker */}
-      {ticker.length > 0 && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.9)", borderTop: "1px solid #1a1a1a", padding: "10px 0", overflow: "hidden" }}>
-          <div style={{ display: "flex", gap: 48, animation: "ticker 20s linear infinite", whiteSpace: "nowrap", fontSize: 13, color: "#9a9690", fontFamily: "sans-serif" }}>
-            {[...ticker, ...ticker].map((t, i) => <span key={i}>{t}</span>)}
+      {/* Ticker */}
+      {contributions.length > 0 && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.95)", borderTop: "1px solid #1a1a1a", padding: "8px 0", overflow: "hidden", zIndex: 50 }}>
+          <div style={{ display: "inline-flex", gap: 48, animation: "ticker 25s linear infinite", whiteSpace: "nowrap", fontSize: 13, color: "#9a9690", fontFamily: "sans-serif" }}>
+            {[...contributions.slice(0, 10), ...contributions.slice(0, 10)].map((c, i) => (
+              <span key={i} style={{ color: i % 2 === 0 ? "#c4a870" : "#9a9690" }}>
+                🎁 {c.gifterName} gifted "{c.item?.title || "a gift"}"
+                {(c.payment?.totalAmount || c.amount) > 0 ? ` · ${currency} ${(c.payment?.totalAmount || c.amount || 0).toFixed(0)}` : ""}
+              </span>
+            ))}
           </div>
-          <style>{`@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
         </div>
       )}
+
+      <style>{`
+        @keyframes popIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }
+        @keyframes slideIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        @keyframes ticker { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+      `}</style>
     </div>
   );
 }
