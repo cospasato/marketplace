@@ -27,34 +27,34 @@ function RegistryCard({ r }) {
 
   return (
     <Link href={`/registry/${r.slug}`} style={{ textDecoration: "none" }}>
-      <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px", cursor: "pointer", transition: "all 0.2s", height: "100%", display: "flex", flexDirection: "column", gap: 12 }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--bg5)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      <div style={{ background: "var(--off-white)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px", cursor: "pointer", transition: "all 0.2s", height: "100%", display: "flex", flexDirection: "column", gap: 12 }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gray-bg)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e1e1e"; e.currentTarget.style.transform = "translateY(0)"; }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
           <div style={{ fontSize: 32 }}>{emoji}</div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--accent2)", background: "rgba(196,168,112,0.1)", border: "1px solid rgba(196,168,112,0.2)", padding: "3px 10px", borderRadius: 100, whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--gold-dk)", background: "rgba(196,168,112,0.1)", border: "1px solid rgba(196,168,112,0.2)", padding: "3px 10px", borderRadius: 100, whiteSpace: "nowrap" }}>
             {r.occasion}
           </div>
         </div>
         <div>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 4, lineHeight: 1.3 }}>{r.title}</div>
-          <div style={{ fontSize: 12, color: "var(--text3)" }}>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 700, color: "var(--black)", marginBottom: 4, lineHeight: 1.3 }}>{r.title}</div>
+          <div style={{ fontSize: 12, color: "var(--gray)" }}>
             by {r.ownerName}
-            {daysUntil !== null && daysUntil > 0 && <span style={{ color: "var(--accent2)", marginLeft: 6 }}>· {daysUntil}d away</span>}
+            {daysUntil !== null && daysUntil > 0 && <span style={{ color: "var(--gold-dk)", marginLeft: 6 }}>· {daysUntil}d away</span>}
           </div>
         </div>
         {items.length > 0 && (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text3)", marginBottom: 5, fontFamily: "sans-serif" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--gray)", marginBottom: 5, fontFamily: "sans-serif" }}>
               <span>{items.length} gifts</span><span>{progress}%</span>
             </div>
-            <div style={{ height: 4, background: "var(--bg3)", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ height: 4, background: "var(--cream)", borderRadius: 2, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, #4ade80, #e8d5b0)", borderRadius: 2 }} />
             </div>
           </div>
         )}
         {r.eventDate && (
-          <div style={{ fontSize: 11, color: "var(--text3)", fontFamily: "sans-serif" }}>
+          <div style={{ fontSize: 11, color: "var(--gray)", fontFamily: "sans-serif" }}>
             📅 {new Date(r.eventDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </div>
         )}
@@ -77,8 +77,8 @@ export default function RegistryHomeClient() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
 
-  const inp = { background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 10, padding: "12px 16px", color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none", width: "100%" };
-  const lbl = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--text3)", marginBottom: 5, letterSpacing: "0.08em", textTransform: "uppercase" };
+  const inp = { background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 10, padding: "12px 16px", color: "var(--black)", fontSize: 14, fontFamily: "inherit", outline: "none", width: "100%" };
+  const lbl = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--gray)", marginBottom: 5, letterSpacing: "0.08em", textTransform: "uppercase" };
 
   const loadRegistries = useCallback(async () => {
     setLoading(true);
@@ -137,9 +137,9 @@ export default function RegistryHomeClient() {
   return (
     <div style={{ minHeight: "100vh" }}>
       {/* Hero */}
-      <div style={{ background: "var(--bg2)", borderBottom: "1px solid var(--border)", padding: "64px 24px 48px", textAlign: "center" }}>
+      <div style={{ background: "var(--off-white)", borderBottom: "1px solid var(--border)", padding: "64px 24px 48px", textAlign: "center" }}>
         <div style={{ fontSize: 52, marginBottom: 16 }}>🎁</div>
-        <h1 style={{ fontFamily: "Georgia, serif", fontSize: "clamp(32px, 6vw, 60px)", fontWeight: 800, color: "var(--text)", lineHeight: 1.1, marginBottom: 14 }}>Gift Registry</h1>
+        <h1 style={{ fontFamily: "Georgia, serif", fontSize: "clamp(32px, 6vw, 60px)", fontWeight: 800, color: "var(--black)", lineHeight: 1.1, marginBottom: 14 }}>Gift Registry</h1>
         <p style={{ fontSize: 17, color: "var(--text2)", maxWidth: 460, margin: "0 auto 36px", lineHeight: 1.7, fontWeight: 300 }}>
           Create a wishlist for any occasion. Share it. Friends buy gifts — no duplicates, no guessing.
         </p>
@@ -152,7 +152,7 @@ export default function RegistryHomeClient() {
             placeholder="Search registries by name, occasion..."
             style={{ ...inp, padding: "14px 52px 14px 20px", fontSize: 15, borderRadius: 14 }}
           />
-          <div style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text3)", fontSize: 18, pointerEvents: "none" }}>⌕</div>
+          <div style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "var(--gray)", fontSize: 18, pointerEvents: "none" }}>⌕</div>
         </div>
       </div>
 
@@ -163,8 +163,8 @@ export default function RegistryHomeClient() {
             <button key={key} onClick={() => setTab(key)} style={{
               padding: "9px 20px", border: "none", borderRadius: 8, cursor: "pointer",
               fontSize: 13, fontWeight: 700, fontFamily: "inherit", whiteSpace: "nowrap",
-              background: tab === key ? "var(--accent)" : "transparent",
-              color: tab === key ? "var(--bg)" : "var(--text3)", transition: "all 0.15s",
+              background: tab === key ? "var(--gold)" : "transparent",
+              color: tab === key ? "var(--white)" : "var(--gray)", transition: "all 0.15s",
             }}>{label}</button>
           ))}
         </div>
@@ -180,9 +180,9 @@ export default function RegistryHomeClient() {
               {OCCASIONS.map(o => (
                 <button key={o.id} onClick={() => { setFilterOccasion(o.id); setSearch(""); }} style={{
                   padding: "7px 16px", borderRadius: 100, cursor: "pointer",
-                  fontSize: 13, fontFamily: "inherit", border: `1px solid ${filterOccasion === o.id ? "var(--accent)" : "var(--bg5)"}`,
-                  background: filterOccasion === o.id ? "rgba(232,213,176,0.1)" : "var(--bg2)",
-                  color: filterOccasion === o.id ? "var(--accent)" : "var(--text2)", transition: "all 0.15s",
+                  fontSize: 13, fontFamily: "inherit", border: `1px solid ${filterOccasion === o.id ? "var(--gold)" : "var(--gray-bg)"}`,
+                  background: filterOccasion === o.id ? "rgba(232,213,176,0.1)" : "var(--off-white)",
+                  color: filterOccasion === o.id ? "var(--gold)" : "var(--text2)", transition: "all 0.15s",
                 }}>
                   {o.emoji} {o.label}
                 </button>
@@ -190,18 +190,18 @@ export default function RegistryHomeClient() {
             </div>
 
             {loading ? (
-              <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text3)" }}>Loading registries...</div>
+              <div style={{ textAlign: "center", padding: "60px 0", color: "var(--gray)" }}>Loading registries...</div>
             ) : registries.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text3)" }}>
+              <div style={{ textAlign: "center", padding: "60px 0", color: "var(--gray)" }}>
                 <div style={{ fontSize: 40, marginBottom: 16 }}>🎁</div>
                 <p style={{ marginBottom: 16 }}>No registries found{search ? ` for "${search}"` : ""}.</p>
-                <button onClick={() => setTab("create")} style={{ padding: "10px 24px", background: "var(--accent)", color: "var(--bg)", borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={() => setTab("create")} style={{ padding: "10px 24px", background: "var(--gold)", color: "var(--white)", borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                   Create the first one →
                 </button>
               </div>
             ) : (
               <div>
-                <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 20, fontFamily: "sans-serif" }}>
+                <div style={{ fontSize: 13, color: "var(--gray)", marginBottom: 20, fontFamily: "sans-serif" }}>
                   {registries.length} registries{search ? ` matching "${search}"` : ""}
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", gap: 16 }}>
@@ -216,8 +216,8 @@ export default function RegistryHomeClient() {
         {tab === "create" && (
           <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 18 }}>
             <div>
-              <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: "var(--text)", marginBottom: 4 }}>Create your registry</h2>
-              <p style={{ fontSize: 13, color: "var(--text3)" }}>Takes 60 seconds. Free forever.</p>
+              <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: "var(--black)", marginBottom: 4 }}>Create your registry</h2>
+              <p style={{ fontSize: 13, color: "var(--gray)" }}>Takes 60 seconds. Free forever.</p>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -237,9 +237,9 @@ export default function RegistryHomeClient() {
                 {OCCASION_CREATE.map(o => (
                   <button key={o.id} onClick={() => setForm(f => ({ ...f, occasion: o.label }))} style={{
                     padding: "10px 8px", textAlign: "center", cursor: "pointer", fontFamily: "inherit", borderRadius: 10,
-                    border: `1px solid ${form.occasion === o.label ? "var(--accent)" : "var(--bg5)"}`,
-                    background: form.occasion === o.label ? "rgba(232,213,176,0.08)" : "var(--bg3)",
-                    color: form.occasion === o.label ? "var(--accent)" : "var(--text2)", fontSize: 12, transition: "all 0.15s",
+                    border: `1px solid ${form.occasion === o.label ? "var(--gold)" : "var(--gray-bg)"}`,
+                    background: form.occasion === o.label ? "rgba(232,213,176,0.08)" : "var(--cream)",
+                    color: form.occasion === o.label ? "var(--gold)" : "var(--text2)", fontSize: 12, transition: "all 0.15s",
                   }}>
                     <div style={{ fontSize: 22, marginBottom: 4 }}>{o.emoji}</div>
                     {o.label}
@@ -266,7 +266,7 @@ export default function RegistryHomeClient() {
 
             {error && <div style={{ padding: "12px 16px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 10, fontSize: 13, color: "var(--red)" }}>{error}</div>}
 
-            <button onClick={createRegistry} disabled={creating} style={{ padding: "16px", background: creating ? "var(--bg5)" : "var(--accent)", color: creating ? "var(--text3)" : "var(--bg)", borderRadius: 12, border: "none", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 16, cursor: creating ? "not-allowed" : "pointer", transition: "all 0.15s" }}>
+            <button onClick={createRegistry} disabled={creating} style={{ padding: "16px", background: creating ? "var(--gray-bg)" : "var(--gold)", color: creating ? "var(--gray)" : "var(--white)", borderRadius: 12, border: "none", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 16, cursor: creating ? "not-allowed" : "pointer", transition: "all 0.15s" }}>
               {creating ? "Creating..." : "Create My Registry →"}
             </button>
           </div>
@@ -275,17 +275,17 @@ export default function RegistryHomeClient() {
         {/* FIND BY EMAIL TAB */}
         {tab === "find" && (
           <div style={{ maxWidth: 560 }}>
-            <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: "var(--text)", marginBottom: 8 }}>Find by email</h2>
+            <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: "var(--black)", marginBottom: 8 }}>Find by email</h2>
             <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 24 }}>Enter the registry owner's email to find their list.</p>
             <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
               <input value={findEmail} onChange={e => setFindEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && findByEmail()} placeholder="owner@email.com" style={{ ...inp, flex: 1 }} />
-              <button onClick={findByEmail} disabled={finding} style={{ padding: "12px 22px", background: "var(--accent)", color: "var(--bg)", borderRadius: 10, border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
+              <button onClick={findByEmail} disabled={finding} style={{ padding: "12px 22px", background: "var(--gold)", color: "var(--white)", borderRadius: 10, border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
                 {finding ? "..." : "Search"}
               </button>
             </div>
             {foundRegistries !== null && (
               foundRegistries.length === 0 ? (
-                <p style={{ color: "var(--text3)", fontSize: 14 }}>No registries found for that email.</p>
+                <p style={{ color: "var(--gray)", fontSize: 14 }}>No registries found for that email.</p>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", gap: 14 }}>
                   {foundRegistries.map(r => <RegistryCard key={r.id} r={r} />)}

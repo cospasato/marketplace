@@ -16,8 +16,8 @@ export default function ProductsClient({ initialProducts, total, pages, stores, 
   const currentPage = parseInt(searchParams.page) || 1;
 
   const filterLabel = (label, count) => (
-    <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text3)", marginBottom: 10, marginTop: 24 }}>
-      {label} {count !== undefined && <span style={{ color: "var(--text3)", fontWeight: 400 }}>({count})</span>}
+    <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--gray)", marginBottom: 10, marginTop: 24 }}>
+      {label} {count !== undefined && <span style={{ color: "var(--gray)", fontWeight: 400 }}>({count})</span>}
     </div>
   );
 
@@ -26,7 +26,7 @@ export default function ProductsClient({ initialProducts, total, pages, stores, 
       display: "block", width: "100%", textAlign: "left",
       padding: "7px 10px", borderRadius: "var(--radius)",
       fontSize: 13, fontWeight: active ? 600 : 400,
-      color: active ? "var(--accent)" : "var(--text)",
+      color: active ? "var(--gold)" : "var(--black)",
       background: active ? "rgba(232,213,176,0.08)" : "transparent",
       border: active ? "1px solid rgba(232,213,176,0.15)" : "1px solid transparent",
       cursor: "pointer", transition: "all 0.1s", marginBottom: 2,
@@ -41,7 +41,7 @@ export default function ProductsClient({ initialProducts, total, pages, stores, 
       {/* Sidebar filters */}
       <aside style={{ width: "clamp(160px, 20vw, 200px)", flexShrink: 0, minWidth: 140 }}>
         <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Filters</div>
-        <div style={{ fontSize: 13, color: "var(--text3)" }}>{total} products</div>
+        <div style={{ fontSize: 13, color: "var(--gray)" }}>{total} products</div>
 
         {filterLabel("Sort by")}
         {[
@@ -91,7 +91,7 @@ export default function ProductsClient({ initialProducts, total, pages, stores, 
       {/* Product grid */}
       <div style={{ flex: 1 }}>
         {initialProducts.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 0", color: "var(--text3)" }}>
+          <div style={{ textAlign: "center", padding: "80px 0", color: "var(--gray)" }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>—</div>
             <p>No products found. Try different filters.</p>
           </div>
@@ -113,17 +113,17 @@ export default function ProductsClient({ initialProducts, total, pages, stores, 
                 {currentPage > 1 && (
                   <button onClick={() => updateParam("page", currentPage - 1)} style={{
                     padding: "8px 20px", borderRadius: "var(--radius)",
-                    background: "var(--bg3)", border: "1px solid var(--border)",
+                    background: "var(--cream)", border: "1px solid var(--border)",
                     color: "var(--text2)", fontSize: 14, cursor: "pointer",
                   }}>← Prev</button>
                 )}
-                <span style={{ padding: "8px 16px", color: "var(--text3)", fontSize: 14, alignSelf: "center" }}>
+                <span style={{ padding: "8px 16px", color: "var(--gray)", fontSize: 14, alignSelf: "center" }}>
                   Page {currentPage} of {pages}
                 </span>
                 {currentPage < pages && (
                   <button onClick={() => updateParam("page", currentPage + 1)} style={{
                     padding: "8px 20px", borderRadius: "var(--radius)",
-                    background: "var(--bg3)", border: "1px solid var(--border)",
+                    background: "var(--cream)", border: "1px solid var(--border)",
                     color: "var(--text2)", fontSize: 14, cursor: "pointer",
                   }}>Next →</button>
                 )}

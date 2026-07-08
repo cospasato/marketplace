@@ -29,10 +29,10 @@ export default function AdminAuth({ children }) {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{
-        width: 360, background: "var(--bg2)", border: "1px solid var(--border)",
+        width: 360, background: "var(--off-white)", border: "1px solid var(--border)",
         borderRadius: "var(--radius-xl)", padding: "40px 36px",
       }}>
-        <div style={{ fontFamily: "var(--font-display)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "var(--accent2)", marginBottom: 20 }}>
+        <div style={{ fontFamily: "var(--font-display)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "var(--gold-dk)", marginBottom: 20 }}>
           MARKET — ADMIN
         </div>
         <h2 style={{ fontSize: 26, marginBottom: 28 }}>Sign in</h2>
@@ -46,8 +46,8 @@ export default function AdminAuth({ children }) {
         />
         {error && <p style={{ fontSize: 12, color: "var(--red)", marginBottom: 10 }}>{error}</p>}
         <button onClick={login} style={{
-          width: "100%", padding: "12px", background: "var(--accent)",
-          color: "var(--bg)", borderRadius: "var(--radius)", fontFamily: "var(--font-display)",
+          width: "100%", padding: "12px", background: "var(--gold)",
+          color: "var(--white)", borderRadius: "var(--radius)", fontFamily: "var(--font-display)",
           fontWeight: 700, fontSize: 15, cursor: "pointer",
         }}>
           Enter

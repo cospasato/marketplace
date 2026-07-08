@@ -59,8 +59,8 @@ export default function ProductDetailClient({ product, related }) {
     <button key={key} onClick={() => setTab(key)} style={{
       padding: "10px 20px", border: "none", cursor: "pointer",
       fontSize: 13, fontWeight: 600,
-      color: tab === key ? "var(--bg)" : "var(--text2)",
-      background: tab === key ? "var(--accent)" : "transparent",
+      color: tab === key ? "var(--white)" : "var(--text2)",
+      background: tab === key ? "var(--gold)" : "transparent",
       borderRadius: 8, transition: "all 0.15s",
     }}>{label}</button>
   );
@@ -69,10 +69,10 @@ export default function ProductDetailClient({ product, related }) {
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px" }}>
 
       {/* Breadcrumb */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28, fontSize: 13, color: "var(--text3)" }}>
-        <Link href="/" style={{ color: "var(--text3)", textDecoration: "none" }}>Home</Link>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28, fontSize: 13, color: "var(--gray)" }}>
+        <Link href="/" style={{ color: "var(--gray)", textDecoration: "none" }}>Home</Link>
         <span>›</span>
-        <Link href="/products" style={{ color: "var(--text3)", textDecoration: "none" }}>Products</Link>
+        <Link href="/products" style={{ color: "var(--gray)", textDecoration: "none" }}>Products</Link>
         <span>›</span>
         <span style={{ color: "var(--text2)" }}>{product.title}</span>
       </div>
@@ -85,16 +85,16 @@ export default function ProductDetailClient({ product, related }) {
           {/* Main image */}
           <div style={{
             aspectRatio: "1", borderRadius: 16,
-            overflow: "hidden", background: "var(--bg3)",
+            overflow: "hidden", background: "var(--cream)",
             marginBottom: 12, position: "relative",
           }}>
             {activeImg ? (
               <img src={activeImg} alt={product.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text3)", fontSize: 14 }}>No image</div>
+              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gray)", fontSize: 14 }}>No image</div>
             )}
             {discount && (
-              <div style={{ position: "absolute", top: 16, left: 16, background: "var(--accent)", color: "var(--bg)", padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 800 }}>
+              <div style={{ position: "absolute", top: 16, left: 16, background: "var(--gold)", color: "var(--white)", padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 800 }}>
                 -{discount}%
               </div>
             )}
@@ -105,7 +105,7 @@ export default function ProductDetailClient({ product, related }) {
               {images.map((img, i) => (
                 <div key={i} onClick={() => setActiveImg(img)} style={{
                   width: 70, height: 70, borderRadius: 10, overflow: "hidden",
-                  cursor: "pointer", border: `2px solid ${activeImg === img ? "var(--accent)" : "transparent"}`,
+                  cursor: "pointer", border: `2px solid ${activeImg === img ? "var(--gold)" : "transparent"}`,
                   flexShrink: 0, transition: "border-color 0.15s",
                 }}>
                   <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -121,25 +121,25 @@ export default function ProductDetailClient({ product, related }) {
           <Link href={`/products?store=${product.storeId}`} style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             padding: "5px 12px", borderRadius: 100,
-            background: "var(--bg3)", border: "1px solid var(--border2)",
+            background: "var(--cream)", border: "1px solid var(--border2)",
             fontSize: 11, fontWeight: 600, letterSpacing: "0.07em",
-            textTransform: "uppercase", color: "var(--accent2)",
+            textTransform: "uppercase", color: "var(--gold-dk)",
             textDecoration: "none", marginBottom: 16,
           }}>
             🏪 {store.storeName}
           </Link>
 
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginBottom: 16, color: "var(--text)" }}>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginBottom: 16, color: "var(--black)" }}>
             {product.title}
           </h1>
 
           {/* Price */}
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 800, color: "var(--accent)" }}>
+            <span style={{ fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 800, color: "var(--gold)" }}>
               {product.currency} {product.price.toFixed(2)}
             </span>
             {product.comparePrice && product.comparePrice > product.price && (
-              <span style={{ fontSize: 18, color: "var(--text3)", textDecoration: "line-through" }}>
+              <span style={{ fontSize: 18, color: "var(--gray)", textDecoration: "line-through" }}>
                 {product.currency} {product.comparePrice.toFixed(2)}
               </span>
             )}
@@ -157,7 +157,7 @@ export default function ProductDetailClient({ product, related }) {
           {product.tags?.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
               {product.tags.slice(0, 5).map((tag) => (
-                <span key={tag} style={{ padding: "3px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 100, fontSize: 11, color: "var(--text2)" }}>
+                <span key={tag} style={{ padding: "3px 10px", background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 100, fontSize: 11, color: "var(--text2)" }}>
                   {tag}
                 </span>
               ))}
@@ -165,7 +165,7 @@ export default function ProductDetailClient({ product, related }) {
           )}
 
           {/* Tabs */}
-          <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--bg2)", padding: 4, borderRadius: 10 }}>
+          <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--off-white)", padding: 4, borderRadius: 10 }}>
             {tabBtn("order", "🛍 Request Delivery")}
             {tabBtn("details", "📋 Details")}
             {tabBtn("store", "🏪 Visit Store")}
@@ -184,10 +184,10 @@ export default function ProductDetailClient({ product, related }) {
                 <label style={labelStyle}>Quantity</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <button onClick={() => setQty(Math.max(1, qty - 1))} style={qtyBtn}>−</button>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", minWidth: 24, textAlign: "center" }}>{qty}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: "var(--black)", minWidth: 24, textAlign: "center" }}>{qty}</span>
                   <button onClick={() => setQty(qty + 1)} style={qtyBtn}>+</button>
                   <span style={{ fontSize: 13, color: "var(--text2)", marginLeft: 8 }}>
-                    Total: <strong style={{ color: "var(--accent)" }}>{product.currency} {(product.price * qty).toFixed(2)}</strong>
+                    Total: <strong style={{ color: "var(--gold)" }}>{product.currency} {(product.price * qty).toFixed(2)}</strong>
                   </span>
                 </div>
               </div>
@@ -229,8 +229,8 @@ export default function ProductDetailClient({ product, related }) {
               {error && <p style={{ fontSize: 12, color: "var(--red)", padding: "8px 12px", background: "rgba(248,113,113,0.1)", borderRadius: 8 }}>{error}</p>}
 
               <button onClick={handleOrder} disabled={submitting || !product.available} style={{
-                padding: "15px", background: product.available ? "var(--accent)" : "var(--bg5)",
-                color: product.available ? "var(--bg)" : "var(--text3)",
+                padding: "15px", background: product.available ? "var(--gold)" : "var(--gray-bg)",
+                color: product.available ? "var(--white)" : "var(--gray)",
                 borderRadius: 12, border: "none",
                 fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 16,
                 cursor: product.available ? "pointer" : "not-allowed",
@@ -239,7 +239,7 @@ export default function ProductDetailClient({ product, related }) {
                 {submitting ? "Placing order..." : `Request Delivery — ${product.currency} ${(product.price * qty).toFixed(2)}`}
               </button>
 
-              <p style={{ fontSize: 11, color: "var(--text3)", textAlign: "center" }}>
+              <p style={{ fontSize: 11, color: "var(--gray)", textAlign: "center" }}>
                 Our team will contact you to confirm the order and arrange delivery
               </p>
             </div>
@@ -251,10 +251,10 @@ export default function ProductDetailClient({ product, related }) {
               <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
               <h3 style={{ fontFamily: "var(--font-display)", fontSize: 20, color: "var(--green)", marginBottom: 10 }}>Order Placed!</h3>
               <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7 }}>
-                We've received your delivery request for <strong style={{ color: "var(--text)" }}>{product.title}</strong>.
-                Our team will call you at <strong style={{ color: "var(--text)" }}>{form.phone || form.email}</strong> to confirm.
+                We've received your delivery request for <strong style={{ color: "var(--black)" }}>{product.title}</strong>.
+                Our team will call you at <strong style={{ color: "var(--black)" }}>{form.phone || form.email}</strong> to confirm.
               </p>
-              <button onClick={() => router.push("/products")} style={{ marginTop: 20, padding: "10px 24px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text2)", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>
+              <button onClick={() => router.push("/products")} style={{ marginTop: 20, padding: "10px 24px", background: "var(--cream)", border: "1px solid var(--border2)", color: "var(--text2)", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>
                 Continue shopping
               </button>
             </div>
@@ -266,16 +266,16 @@ export default function ProductDetailClient({ product, related }) {
               {product.description ? (
                 <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8 }}>{product.description}</p>
               ) : (
-                <p style={{ fontSize: 14, color: "var(--text3)" }}>No description available.</p>
+                <p style={{ fontSize: 14, color: "var(--gray)" }}>No description available.</p>
               )}
               {product.vendor && (
-                <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--bg3)", borderRadius: 10, fontSize: 13, color: "var(--text2)" }}>
-                  <span style={{ color: "var(--text3)" }}>Brand: </span>{product.vendor}
+                <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--cream)", borderRadius: 10, fontSize: 13, color: "var(--text2)" }}>
+                  <span style={{ color: "var(--gray)" }}>Brand: </span>{product.vendor}
                 </div>
               )}
               {product.category && (
-                <div style={{ marginTop: 8, padding: "12px 16px", background: "var(--bg3)", borderRadius: 10, fontSize: 13, color: "var(--text2)" }}>
-                  <span style={{ color: "var(--text3)" }}>Category: </span>{product.category}
+                <div style={{ marginTop: 8, padding: "12px 16px", background: "var(--cream)", borderRadius: 10, fontSize: 13, color: "var(--text2)" }}>
+                  <span style={{ color: "var(--gray)" }}>Category: </span>{product.category}
                 </div>
               )}
             </div>
@@ -286,33 +286,33 @@ export default function ProductDetailClient({ product, related }) {
           {tab === "registry" && (
             <div style={{ textAlign: "center", padding: "20px 0" }}>
               <div style={{ fontSize: 36, marginBottom: 16 }}>🎁</div>
-              <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, marginBottom: 8, color: "var(--text)" }}>Add to your Gift Registry</h3>
+              <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, marginBottom: 8, color: "var(--black)" }}>Add to your Gift Registry</h3>
               <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20, lineHeight: 1.7 }}>
                 Add this product to your gift registry so friends and family can buy it for you.
               </p>
               <a href="/registry" style={{
                 display: "inline-block", padding: "12px 28px",
-                background: "var(--accent)", color: "var(--bg)",
+                background: "var(--gold)", color: "var(--white)",
                 borderRadius: 10, fontFamily: "var(--font-display)",
                 fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 12,
               }}>
                 Open my registry →
               </a>
-              <p style={{ fontSize: 11, color: "var(--text3)" }}>Don't have a registry? Create one free in 60 seconds.</p>
+              <p style={{ fontSize: 11, color: "var(--gray)" }}>Don't have a registry? Create one free in 60 seconds.</p>
             </div>
           )}
 
           {/* Tab: Visit store */}
           {tab === "store" && (
             <div style={{ textAlign: "center", padding: "24px 0" }}>
-              <div style={{ width: 64, height: 64, borderRadius: 16, background: store.primaryColor || "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 24, color: "var(--accent)", margin: "0 auto 16px" }}>
+              <div style={{ width: 64, height: 64, borderRadius: 16, background: store.primaryColor || "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 24, color: "var(--gold)", margin: "0 auto 16px" }}>
                 {store.storeName[0]}
               </div>
               <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, marginBottom: 8 }}>{store.storeName}</h3>
               <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20 }}>View all products and shop directly on the store</p>
               <a href={product.productUrl} target="_blank" rel="noopener noreferrer" style={{
                 display: "inline-block", padding: "12px 28px",
-                background: "var(--accent)", color: "var(--bg)",
+                background: "var(--gold)", color: "var(--white)",
                 borderRadius: 10, fontFamily: "var(--font-display)",
                 fontWeight: 700, fontSize: 14, textDecoration: "none",
               }}>
@@ -330,16 +330,16 @@ export default function ProductDetailClient({ product, related }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
             {related.map(p => (
               <Link key={p.id} href={`/products/${encodeURIComponent(p.id)}`} style={{ textDecoration: "none" }}>
-                <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden", transition: "border-color 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = "var(--bg5)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = "var(--bg3)"}
+                <div style={{ background: "var(--off-white)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden", transition: "border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "var(--gray-bg)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = "var(--cream)"}
                 >
-                  <div style={{ aspectRatio: "1", background: "var(--bg3)" }}>
+                  <div style={{ aspectRatio: "1", background: "var(--cream)" }}>
                     {p.imageUrl && <img src={p.imageUrl} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                   </div>
                   <div style={{ padding: "12px 14px" }}>
-                    <div style={{ fontSize: 12, fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--text)", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{p.currency} {p.price.toFixed(2)}</div>
+                    <div style={{ fontSize: 12, fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--black)", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>{p.currency} {p.price.toFixed(2)}</div>
                   </div>
                 </div>
               </Link>
@@ -351,6 +351,6 @@ export default function ProductDetailClient({ product, related }) {
   );
 }
 
-const labelStyle = { display: "block", fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" };
-const inputStyle = { width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text)", fontSize: 13, fontFamily: "var(--font-body)", outline: "none" };
-const qtyBtn = { width: 32, height: 32, border: "1px solid var(--border2)", borderRadius: 8, background: "var(--bg3)", color: "var(--text)", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
+const labelStyle = { display: "block", fontSize: 11, fontWeight: 600, color: "var(--gray)", marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" };
+const inputStyle = { width: "100%", padding: "10px 14px", background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--black)", fontSize: 13, fontFamily: "var(--font-body)", outline: "none" };
+const qtyBtn = { width: 32, height: 32, border: "1px solid var(--border2)", borderRadius: 8, background: "var(--cream)", color: "var(--black)", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };

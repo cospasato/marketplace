@@ -4,12 +4,12 @@ import Link from "next/link";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
-  bg: "#0a0a0a", bg1: "#111", bg2: "#1a1a1a", bg3: "#222",
-  border: "#1e1e1e", border2: "#2a2a2a",
-  text: "#f0ede8", text2: "#9a9690", text3: "#5a5650",
-  accent: "#e8d5b0", accent2: "#c4a870",
-  green: "#4ade80", red: "#f87171", blue: "#3b82f6",
-  yellow: "#f59e0b", purple: "#8b5cf6",
+  bg: "#ffffff", bg1: "#faf8f5", bg2: "#f5f0e8", bg3: "#ede6d8",
+  border: "rgba(0,0,0,0.08)", border2: "rgba(0,0,0,0.14)",
+  text: "#0f0d0b", text2: "#3d3830", text3: "#6b6560",
+  accent: "#c9962a", accent2: "#9a7020",
+  green: "#2e7d4f", red: "#c0392b", blue: "#1a5fa8",
+  yellow: "#b7680f", purple: "#6d28d9",
 };
 
 const S = {
@@ -205,7 +205,7 @@ export default function AdminPage() {
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
 
       {/* ── Top bar ── */}
-      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(16px)", borderBottom: `1px solid ${C.border}`, padding: "0 16px", display: "flex", alignItems: "center", gap: 12, height: 56 }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(255,255,255,0.96)", backdropFilter: "blur(16px)", borderBottom: `1px solid ${C.border}`, padding: "0 16px", display: "flex", alignItems: "center", gap: 12, height: 56 }}>
         <div style={{ fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 16, color: C.accent, letterSpacing: "-0.01em", flexShrink: 0 }}>MARKET</div>
         <div style={{ fontSize: 11, color: C.text3, borderLeft: `1px solid ${C.border2}`, paddingLeft: 12, flexShrink: 0 }}>Admin</div>
         <div style={{ flex: 1 }} />
@@ -234,7 +234,7 @@ export default function AdminPage() {
       <div style={{ display: "flex", minHeight: "calc(100vh - 56px)" }}>
 
         {/* ── Sidebar nav ── */}
-        <nav style={{ width: 200, flexShrink: 0, background: C.bg1, borderRight: `1px solid ${C.border}`, padding: "16px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
+        <nav style={{ width: 200, flexShrink: 0, background: "var(--off-white)", borderRight: `1px solid ${C.border}`, padding: "16px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
           {TABS.map(({ key, label, icon, count }) => (
             <button key={key} onClick={() => setTab(key)} style={{
               display: "flex", alignItems: "center", gap: 10,

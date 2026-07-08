@@ -136,15 +136,15 @@ export default function RegistryDashboard() {
 
   // ── Guards ───────────────────────────────────────────────
   if (!id) return (
-    <div style={{ padding: "80px 24px", textAlign: "center", color: "var(--text3)" }}>
+    <div style={{ padding: "80px 24px", textAlign: "center", color: "var(--gray)" }}>
       <div style={{ fontSize: 40, marginBottom: 16 }}>🔗</div>
       <p style={{ marginBottom: 16, color: "var(--red)" }}>No registry ID provided.</p>
-      <Link href="/registry" style={{ color: "var(--accent)", fontSize: 14 }}>← Browse registries</Link>
+      <Link href="/registry" style={{ color: "var(--gold)", fontSize: 14 }}>← Browse registries</Link>
     </div>
   );
 
   if (loading) return (
-    <div style={{ padding: "80px 24px", textAlign: "center", color: "var(--text3)" }}>
+    <div style={{ padding: "80px 24px", textAlign: "center", color: "var(--gray)" }}>
       <div style={{ width: 36, height: 36, border: "3px solid #2a2a2a", borderTop: "3px solid #e8d5b0", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
       <div>Loading your registry...</div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -156,10 +156,10 @@ export default function RegistryDashboard() {
       <div style={{ fontSize: 40, marginBottom: 16 }}>😕</div>
       <p style={{ color: "var(--red)", marginBottom: 16 }}>{error || "Registry not found."}</p>
       <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-        <button onClick={load} style={{ padding: "10px 20px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", cursor: "pointer", fontFamily: "inherit" }}>
+        <button onClick={load} style={{ padding: "10px 20px", background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", cursor: "pointer", fontFamily: "inherit" }}>
           Try again
         </button>
-        <Link href="/registry" style={{ padding: "10px 20px", background: "var(--accent)", color: "var(--bg)", borderRadius: 8, fontWeight: 700, textDecoration: "none", fontSize: 14 }}>
+        <Link href="/registry" style={{ padding: "10px 20px", background: "var(--gold)", color: "var(--white)", borderRadius: 8, fontWeight: 700, textDecoration: "none", fontSize: 14 }}>
           ← Back to registries
         </Link>
       </div>
@@ -184,12 +184,12 @@ export default function RegistryDashboard() {
     <button key={key} onClick={() => setActiveTab(key)} style={{
       padding: "10px 20px", border: "none", borderRadius: 8, cursor: "pointer",
       fontSize: 13, fontWeight: 700, fontFamily: "inherit", transition: "all 0.15s",
-      background: activeTab === key ? "var(--accent)" : "transparent",
-      color: activeTab === key ? "var(--bg)" : "var(--text3)",
+      background: activeTab === key ? "var(--gold)" : "transparent",
+      color: activeTab === key ? "var(--white)" : "var(--gray)",
     }}>{label}</button>
   );
 
-  const inp = { background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, fontFamily: "inherit", outline: "none" };
+  const inp = { background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 8, padding: "9px 12px", color: "var(--black)", fontSize: 13, fontFamily: "inherit", outline: "none" };
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
@@ -197,13 +197,13 @@ export default function RegistryDashboard() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12, flexWrap: "wrap" }}>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--accent2)", letterSpacing: "0.12em", marginBottom: 4 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--gold-dk)", letterSpacing: "0.12em", marginBottom: 4 }}>
             {(registry.occasion || "").toUpperCase()} REGISTRY
           </div>
-          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 24, color: "var(--text)", marginBottom: 4 }}>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 24, color: "var(--black)", marginBottom: 4 }}>
             {registry.title}
           </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "var(--text3)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "var(--gray)" }}>
             <span>{registry.ownerEmail}</span>
             {registry.eventDate && <span>· {new Date(registry.eventDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>}
             <span style={{
@@ -218,16 +218,16 @@ export default function RegistryDashboard() {
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={toggleVisibility} style={{ padding: "8px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={toggleVisibility} style={{ padding: "8px 14px", background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
             {registry.isPublic ? "🙈 Hide" : "👁 Publish"}
           </button>
-          <button onClick={copyLink} style={{ padding: "8px 14px", background: copied ? "rgba(74,222,128,0.1)" : "var(--bg3)", border: `1px solid ${copied ? "var(--green)" : "var(--bg5)"}`, borderRadius: 8, color: copied ? "var(--green)" : "var(--text2)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={copyLink} style={{ padding: "8px 14px", background: copied ? "rgba(74,222,128,0.1)" : "var(--cream)", border: `1px solid ${copied ? "var(--green)" : "var(--gray-bg)"}`, borderRadius: 8, color: copied ? "var(--green)" : "var(--text2)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
             {copied ? "✓ Copied!" : "🔗 Copy link"}
           </button>
-          <a href={`/registry/live/${registry.slug}`} target="_blank" rel="noopener noreferrer" style={{ padding: "8px 14px", background: "var(--bg3)", border: "1px solid rgba(196,168,112,0.3)", borderRadius: 8, color: "var(--accent2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+          <a href={`/registry/live/${registry.slug}`} target="_blank" rel="noopener noreferrer" style={{ padding: "8px 14px", background: "var(--cream)", border: "1px solid rgba(196,168,112,0.3)", borderRadius: 8, color: "var(--gold-dk)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
             🔴 Live
           </a>
-          <Link href={`/registry/${registry.slug}`} style={{ padding: "8px 14px", background: "var(--accent)", color: "var(--bg)", borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+          <Link href={`/registry/${registry.slug}`} style={{ padding: "8px 14px", background: "var(--gold)", color: "var(--white)", borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
             Preview →
           </Link>
         </div>
@@ -236,14 +236,14 @@ export default function RegistryDashboard() {
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10, marginBottom: 20 }}>
         {[
-          { label: "Total", value: items.length, color: "var(--text)" },
+          { label: "Total", value: items.length, color: "var(--black)" },
           { label: "Available", value: available, color: "var(--green)" },
           { label: "Claimed", value: claimed, color: "var(--yellow)" },
           { label: "Purchased", value: purchased, color: "var(--blue)" },
         ].map(({ label, value, color }) => (
-          <div key={label} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", textAlign: "center" }}>
+          <div key={label} style={{ background: "var(--off-white)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", textAlign: "center" }}>
             <div style={{ fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
-            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>{label}</div>
+            <div style={{ fontSize: 10, color: "var(--gray)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>{label}</div>
           </div>
         ))}
       </div>
@@ -261,15 +261,15 @@ export default function RegistryDashboard() {
       <div style={{ background: "rgba(232,213,176,0.04)", border: "1px solid rgba(232,213,176,0.12)", borderRadius: 12, padding: "12px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <span style={{ fontSize: 16 }}>🔗</span>
         <div style={{ flex: 1, minWidth: 160 }}>
-          <div style={{ fontSize: 10, color: "var(--accent2)", fontWeight: 700, marginBottom: 2, letterSpacing: "0.07em" }}>SHARE LINK</div>
+          <div style={{ fontSize: 10, color: "var(--gold-dk)", fontWeight: 700, marginBottom: 2, letterSpacing: "0.07em" }}>SHARE LINK</div>
           <div style={{ fontSize: 12, color: "var(--text2)", fontFamily: "monospace", wordBreak: "break-all" }}>{shareLink}</div>
         </div>
-        <a href={`https://wa.me/?text=${encodeURIComponent("My gift registry: " + shareLink)}`} target="_blank" rel="noopener noreferrer" style={{ padding: "6px 12px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 7, color: "var(--text2)", fontSize: 11, textDecoration: "none", fontWeight: 600 }}>WhatsApp</a>
-        <a href={`mailto:?subject=My Gift Registry&body=${encodeURIComponent("Check my gift registry: " + shareLink)}`} style={{ padding: "6px 12px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 7, color: "var(--text2)", fontSize: 11, textDecoration: "none", fontWeight: 600 }}>Email</a>
+        <a href={`https://wa.me/?text=${encodeURIComponent("My gift registry: " + shareLink)}`} target="_blank" rel="noopener noreferrer" style={{ padding: "6px 12px", background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 7, color: "var(--text2)", fontSize: 11, textDecoration: "none", fontWeight: 600 }}>WhatsApp</a>
+        <a href={`mailto:?subject=My Gift Registry&body=${encodeURIComponent("Check my gift registry: " + shareLink)}`} style={{ padding: "6px 12px", background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 7, color: "var(--text2)", fontSize: 11, textDecoration: "none", fontWeight: 600 }}>Email</a>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--bg2)", padding: 4, borderRadius: 10 }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--off-white)", padding: 4, borderRadius: 10 }}>
         {tabBtn("items", `🎁 Items (${items.length})`)}
         {tabBtn("add", "➕ Add Products")}
         {tabBtn("gifters", `🤝 Gifters (${contributions.length})`)}
@@ -280,19 +280,19 @@ export default function RegistryDashboard() {
       {activeTab === "items" && (
         <div>
           {items.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text3)" }}>
+            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--gray)" }}>
               <div style={{ fontSize: 48, marginBottom: 14 }}>🎁</div>
               <p style={{ marginBottom: 16, fontSize: 15 }}>Your registry is empty.</p>
-              <p style={{ marginBottom: 24, fontSize: 13, color: "var(--text3)" }}>Go to "Add Products" to add gifts from our partner stores.</p>
-              <button onClick={() => setActiveTab("add")} style={{ padding: "11px 28px", background: "var(--accent)", color: "var(--bg)", borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>
+              <p style={{ marginBottom: 24, fontSize: 13, color: "var(--gray)" }}>Go to "Add Products" to add gifts from our partner stores.</p>
+              <button onClick={() => setActiveTab("add")} style={{ padding: "11px 28px", background: "var(--gold)", color: "var(--white)", borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>
                 Browse products →
               </button>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", gap: 12 }}>
               {items.map(item => (
-                <div key={item.id} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden" }}>
-                  <div style={{ position: "relative", aspectRatio: "4/3", background: "var(--bg3)" }}>
+                <div key={item.id} style={{ background: "var(--off-white)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden" }}>
+                  <div style={{ position: "relative", aspectRatio: "4/3", background: "var(--cream)" }}>
                     {item.imageUrl && <img src={item.imageUrl} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                     <div style={{ position: "absolute", top: 8, right: 8, padding: "3px 9px", borderRadius: 100, fontSize: 10, fontWeight: 700,
                       background: `${STATUS_COLORS[item.status] || "#6b7280"}20`,
@@ -303,8 +303,8 @@ export default function RegistryDashboard() {
                     </div>
                   </div>
                   <div style={{ padding: "12px 14px" }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 4, lineHeight: 1.3 }}>{item.title}</div>
-                    <div style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 800, color: "var(--accent)", marginBottom: 8 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)", marginBottom: 4, lineHeight: 1.3 }}>{item.title}</div>
+                    <div style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 800, color: "var(--gold)", marginBottom: 8 }}>
                       {item.currency || "USD"} {(item.price || 0).toFixed(2)}
                     </div>
 
@@ -313,9 +313,9 @@ export default function RegistryDashboard() {
                       {["high", "medium", "low"].map(p => (
                         <button key={p} onClick={() => updateItemPriority(item.id, p)} style={{
                           flex: 1, padding: "4px", fontSize: 10, border: "none", borderRadius: 5, cursor: "pointer", fontFamily: "inherit",
-                          background: item.priority === p ? (p === "high" ? "rgba(248,113,113,0.2)" : p === "medium" ? "rgba(245,158,11,0.2)" : "rgba(74,222,128,0.2)") : "var(--bg3)",
-                          color: item.priority === p ? (p === "high" ? "var(--red)" : p === "medium" ? "var(--yellow)" : "var(--green)") : "var(--text3)",
-                          border: `1px solid ${item.priority === p ? "currentColor" : "var(--bg5)"}`,
+                          background: item.priority === p ? (p === "high" ? "rgba(248,113,113,0.2)" : p === "medium" ? "rgba(245,158,11,0.2)" : "rgba(74,222,128,0.2)") : "var(--cream)",
+                          color: item.priority === p ? (p === "high" ? "var(--red)" : p === "medium" ? "var(--yellow)" : "var(--green)") : "var(--gray)",
+                          border: `1px solid ${item.priority === p ? "currentColor" : "var(--gray-bg)"}`,
                         }}>
                           {p === "high" ? "🔴 Must" : p === "medium" ? "🟡 Love" : "🟢 Nice"}
                         </button>
@@ -323,7 +323,7 @@ export default function RegistryDashboard() {
                     </div>
 
                     <div style={{ display: "flex", gap: 8 }}>
-                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "7px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 7, color: "var(--text2)", fontSize: 12, textAlign: "center", textDecoration: "none", fontWeight: 600 }}>
+                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "7px", background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 7, color: "var(--text2)", fontSize: 12, textAlign: "center", textDecoration: "none", fontWeight: 600 }}>
                         View ↗
                       </a>
                       {item.status === "available" && (
@@ -352,35 +352,35 @@ export default function RegistryDashboard() {
             />
           </div>
           {filteredProducts.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text3)" }}>
+            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--gray)" }}>
               <p>{products.length === 0 ? "No products synced yet. Ask admin to sync stores." : `No results for "${searchProducts}"`}</p>
             </div>
           ) : (
             <>
-              <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 14 }}>{filteredProducts.length} products available · click any to add</div>
+              <div style={{ fontSize: 12, color: "var(--gray)", marginBottom: 14 }}>{filteredProducts.length} products available · click any to add</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(160px, 45%), 1fr))", gap: 12 }}>
                 {filteredProducts.map(product => {
                   const inRegistry = items.some(i => i.productId === product.id);
                   const isAdding = addingProduct === product.id;
                   return (
-                    <div key={product.id} style={{ background: "var(--bg2)", border: `1px solid ${inRegistry ? "rgba(74,222,128,0.3)" : "#1e1e1e"}`, borderRadius: 12, overflow: "hidden", transition: "border-color 0.15s" }}
-                      onMouseEnter={e => !inRegistry && (e.currentTarget.style.borderColor = "var(--bg5)")}
+                    <div key={product.id} style={{ background: "var(--off-white)", border: `1px solid ${inRegistry ? "rgba(74,222,128,0.3)" : "#1e1e1e"}`, borderRadius: 12, overflow: "hidden", transition: "border-color 0.15s" }}
+                      onMouseEnter={e => !inRegistry && (e.currentTarget.style.borderColor = "var(--gray-bg)")}
                       onMouseLeave={e => !inRegistry && (e.currentTarget.style.borderColor = "#1e1e1e")}
                     >
-                      <div style={{ aspectRatio: "1", background: "var(--bg3)", position: "relative", overflow: "hidden" }}>
+                      <div style={{ aspectRatio: "1", background: "var(--cream)", position: "relative", overflow: "hidden" }}>
                         {product.imageUrl && <img src={product.imageUrl} alt={product.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                         {inRegistry && (
                           <div style={{ position: "absolute", inset: 0, background: "rgba(74,222,128,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>✓</div>
                         )}
                       </div>
                       <div style={{ padding: "10px 12px" }}>
-                        <div style={{ fontSize: 10, color: "var(--text3)", marginBottom: 2, textTransform: "uppercase", letterSpacing: "0.05em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ fontSize: 10, color: "var(--gray)", marginBottom: 2, textTransform: "uppercase", letterSpacing: "0.05em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {product.store?.storeName || "Store"}
                         </div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", marginBottom: 4, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--black)", marginBottom: 4, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                           {product.title}
                         </div>
-                        <div style={{ fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 800, color: "var(--accent)", marginBottom: 8 }}>
+                        <div style={{ fontFamily: "Georgia, serif", fontSize: 13, fontWeight: 800, color: "var(--gold)", marginBottom: 8 }}>
                           {product.currency || "USD"} {(product.price || 0).toFixed(2)}
                         </div>
                         <button
@@ -388,8 +388,8 @@ export default function RegistryDashboard() {
                           disabled={inRegistry || isAdding}
                           style={{
                             width: "100%", padding: "7px", border: "none", borderRadius: 7, cursor: inRegistry || isAdding ? "default" : "pointer",
-                            background: inRegistry ? "rgba(74,222,128,0.1)" : "var(--accent)",
-                            color: inRegistry ? "var(--green)" : "var(--bg)",
+                            background: inRegistry ? "rgba(74,222,128,0.1)" : "var(--gold)",
+                            color: inRegistry ? "var(--green)" : "var(--white)",
                             fontSize: 11, fontWeight: 700, fontFamily: "inherit",
                             opacity: isAdding ? 0.6 : 1, transition: "opacity 0.15s",
                           }}>
@@ -409,20 +409,20 @@ export default function RegistryDashboard() {
       {activeTab === "gifters" && (
         <div>
           {contributions.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text3)" }}>
+            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--gray)" }}>
               <div style={{ fontSize: 48, marginBottom: 14 }}>🤝</div>
               <p>No gifters yet. Share your registry link!</p>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {contributions.map(c => (
-                <div key={c.id} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--bg3)", border: "1px solid var(--border2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 16, color: "var(--accent)", flexShrink: 0 }}>
+                <div key={c.id} style={{ background: "var(--off-white)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--cream)", border: "1px solid var(--border2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 16, color: "var(--gold)", flexShrink: 0 }}>
                     {(c.gifterName || "?")[0].toUpperCase()}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{c.gifterName}</div>
-                    <div style={{ fontSize: 12, color: "var(--text3)" }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)" }}>{c.gifterName}</div>
+                    <div style={{ fontSize: 12, color: "var(--gray)" }}>
                       {c.item?.title ? `"${c.item.title}" · ` : ""}
                       <span style={{ color: c.status === "purchased" ? "var(--green)" : "var(--yellow)" }}>
                         {c.status === "purchased" ? "✅ Purchased" : "🔖 Claimed"}
@@ -430,7 +430,7 @@ export default function RegistryDashboard() {
                     </div>
                     {c.message && <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 3, fontStyle: "italic" }}>"{c.message}"</div>}
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--text3)" }}>{new Date(c.createdAt).toLocaleDateString()}</div>
+                  <div style={{ fontSize: 11, color: "var(--gray)" }}>{new Date(c.createdAt).toLocaleDateString()}</div>
                 </div>
               ))}
             </div>
@@ -459,8 +459,8 @@ function RegistrySettings({ registry, id, onSave }) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const inp = { background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, padding: "10px 14px", color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none", width: "100%" };
-  const lbl = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--text3)", marginBottom: 5, letterSpacing: "0.07em", textTransform: "uppercase" };
+  const inp = { background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 8, padding: "10px 14px", color: "var(--black)", fontSize: 14, fontFamily: "inherit", outline: "none", width: "100%" };
+  const lbl = { display: "block", fontSize: 11, fontWeight: 700, color: "var(--gray)", marginBottom: 5, letterSpacing: "0.07em", textTransform: "uppercase" };
 
   const save = async () => {
     setSaving(true);
@@ -495,21 +495,21 @@ function RegistrySettings({ registry, id, onSave }) {
           {form.isPublic ? "👁 Public — visible to all" : "🙈 Hidden — only you can see"}
         </button>
       </div>
-      <button onClick={save} disabled={saving} style={{ padding: "13px", background: "var(--accent)", color: "var(--bg)", borderRadius: 10, border: "none", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 15, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
+      <button onClick={save} disabled={saving} style={{ padding: "13px", background: "var(--gold)", color: "var(--white)", borderRadius: 10, border: "none", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 15, cursor: "pointer", opacity: saving ? 0.7 : 1 }}>
         {saving ? "Saving..." : "Save changes"}
       </button>
 
-      <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 20, marginTop: 8 }}>
-        <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 12, fontWeight: 600 }}>DANGER ZONE</div>
+      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 20, marginTop: 8 }}>
+        <div style={{ fontSize: 12, color: "var(--gray)", marginBottom: 12, fontWeight: 600 }}>DANGER ZONE</div>
         {confirmDelete ? (
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={deleteRegistry} disabled={deleting} style={{ padding: "10px 18px", background: "rgba(248,113,113,0.15)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 8, color: "var(--red)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
               {deleting ? "Deleting..." : "Yes, delete permanently"}
             </button>
-            <button onClick={() => setConfirmDelete(false)} style={{ padding: "10px 18px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+            <button onClick={() => setConfirmDelete(false)} style={{ padding: "10px 18px", background: "var(--cream)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
           </div>
         ) : (
-          <button onClick={() => setConfirmDelete(true)} style={{ padding: "10px 18px", background: "var(--bg3)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, color: "var(--red)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={() => setConfirmDelete(true)} style={{ padding: "10px 18px", background: "var(--cream)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, color: "var(--red)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
             Delete this registry
           </button>
         )}
