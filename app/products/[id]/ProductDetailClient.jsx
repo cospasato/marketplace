@@ -59,8 +59,8 @@ export default function ProductDetailClient({ product, related }) {
     <button key={key} onClick={() => setTab(key)} style={{
       padding: "10px 20px", border: "none", cursor: "pointer",
       fontSize: 13, fontWeight: 600,
-      color: tab === key ? "#0a0a0a" : "#9a9690",
-      background: tab === key ? "#e8d5b0" : "transparent",
+      color: tab === key ? "var(--bg)" : "var(--text2)",
+      background: tab === key ? "var(--accent)" : "transparent",
       borderRadius: 8, transition: "all 0.15s",
     }}>{label}</button>
   );
@@ -69,12 +69,12 @@ export default function ProductDetailClient({ product, related }) {
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px" }}>
 
       {/* Breadcrumb */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28, fontSize: 13, color: "#5a5650" }}>
-        <Link href="/" style={{ color: "#5a5650", textDecoration: "none" }}>Home</Link>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28, fontSize: 13, color: "var(--text3)" }}>
+        <Link href="/" style={{ color: "var(--text3)", textDecoration: "none" }}>Home</Link>
         <span>›</span>
-        <Link href="/products" style={{ color: "#5a5650", textDecoration: "none" }}>Products</Link>
+        <Link href="/products" style={{ color: "var(--text3)", textDecoration: "none" }}>Products</Link>
         <span>›</span>
-        <span style={{ color: "#9a9690" }}>{product.title}</span>
+        <span style={{ color: "var(--text2)" }}>{product.title}</span>
       </div>
 
       {/* Main product layout */}
@@ -85,16 +85,16 @@ export default function ProductDetailClient({ product, related }) {
           {/* Main image */}
           <div style={{
             aspectRatio: "1", borderRadius: 16,
-            overflow: "hidden", background: "#1a1a1a",
+            overflow: "hidden", background: "var(--bg3)",
             marginBottom: 12, position: "relative",
           }}>
             {activeImg ? (
               <img src={activeImg} alt={product.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#5a5650", fontSize: 14 }}>No image</div>
+              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text3)", fontSize: 14 }}>No image</div>
             )}
             {discount && (
-              <div style={{ position: "absolute", top: 16, left: 16, background: "#e8d5b0", color: "#0a0a0a", padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 800 }}>
+              <div style={{ position: "absolute", top: 16, left: 16, background: "var(--accent)", color: "var(--bg)", padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 800 }}>
                 -{discount}%
               </div>
             )}
@@ -105,7 +105,7 @@ export default function ProductDetailClient({ product, related }) {
               {images.map((img, i) => (
                 <div key={i} onClick={() => setActiveImg(img)} style={{
                   width: 70, height: 70, borderRadius: 10, overflow: "hidden",
-                  cursor: "pointer", border: `2px solid ${activeImg === img ? "#e8d5b0" : "transparent"}`,
+                  cursor: "pointer", border: `2px solid ${activeImg === img ? "var(--accent)" : "transparent"}`,
                   flexShrink: 0, transition: "border-color 0.15s",
                 }}>
                   <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -121,25 +121,25 @@ export default function ProductDetailClient({ product, related }) {
           <Link href={`/products?store=${product.storeId}`} style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             padding: "5px 12px", borderRadius: 100,
-            background: "#1a1a1a", border: "1px solid #2a2a2a",
+            background: "var(--bg3)", border: "1px solid var(--border2)",
             fontSize: 11, fontWeight: 600, letterSpacing: "0.07em",
-            textTransform: "uppercase", color: "#c4a870",
+            textTransform: "uppercase", color: "var(--accent2)",
             textDecoration: "none", marginBottom: 16,
           }}>
             🏪 {store.storeName}
           </Link>
 
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginBottom: 16, color: "#f0ede8" }}>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginBottom: 16, color: "var(--text)" }}>
             {product.title}
           </h1>
 
           {/* Price */}
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 800, color: "#e8d5b0" }}>
+            <span style={{ fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 800, color: "var(--accent)" }}>
               {product.currency} {product.price.toFixed(2)}
             </span>
             {product.comparePrice && product.comparePrice > product.price && (
-              <span style={{ fontSize: 18, color: "#5a5650", textDecoration: "line-through" }}>
+              <span style={{ fontSize: 18, color: "var(--text3)", textDecoration: "line-through" }}>
                 {product.currency} {product.comparePrice.toFixed(2)}
               </span>
             )}
@@ -147,8 +147,8 @@ export default function ProductDetailClient({ product, related }) {
 
           {/* Availability */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 24 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: product.available ? "#4ade80" : "#f87171" }} />
-            <span style={{ fontSize: 13, color: product.available ? "#4ade80" : "#f87171", fontWeight: 500 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: product.available ? "var(--green)" : "var(--red)" }} />
+            <span style={{ fontSize: 13, color: product.available ? "var(--green)" : "var(--red)", fontWeight: 500 }}>
               {product.available ? "In stock" : "Out of stock"}
             </span>
           </div>
@@ -157,7 +157,7 @@ export default function ProductDetailClient({ product, related }) {
           {product.tags?.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
               {product.tags.slice(0, 5).map((tag) => (
-                <span key={tag} style={{ padding: "3px 10px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 100, fontSize: 11, color: "#9a9690" }}>
+                <span key={tag} style={{ padding: "3px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 100, fontSize: 11, color: "var(--text2)" }}>
                   {tag}
                 </span>
               ))}
@@ -165,7 +165,7 @@ export default function ProductDetailClient({ product, related }) {
           )}
 
           {/* Tabs */}
-          <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "#111", padding: 4, borderRadius: 10 }}>
+          <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--bg2)", padding: 4, borderRadius: 10 }}>
             {tabBtn("order", "🛍 Request Delivery")}
             {tabBtn("details", "📋 Details")}
             {tabBtn("store", "🏪 Visit Store")}
@@ -175,7 +175,7 @@ export default function ProductDetailClient({ product, related }) {
           {/* Tab: Order / Delivery request */}
           {tab === "order" && !submitted && (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <p style={{ fontSize: 13, color: "#9a9690", lineHeight: 1.6, marginBottom: 4 }}>
+              <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6, marginBottom: 4 }}>
                 Fill in your details and we'll arrange delivery of this product to your door from {store.storeName}.
               </p>
 
@@ -184,10 +184,10 @@ export default function ProductDetailClient({ product, related }) {
                 <label style={labelStyle}>Quantity</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <button onClick={() => setQty(Math.max(1, qty - 1))} style={qtyBtn}>−</button>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: "#f0ede8", minWidth: 24, textAlign: "center" }}>{qty}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", minWidth: 24, textAlign: "center" }}>{qty}</span>
                   <button onClick={() => setQty(qty + 1)} style={qtyBtn}>+</button>
-                  <span style={{ fontSize: 13, color: "#9a9690", marginLeft: 8 }}>
-                    Total: <strong style={{ color: "#e8d5b0" }}>{product.currency} {(product.price * qty).toFixed(2)}</strong>
+                  <span style={{ fontSize: 13, color: "var(--text2)", marginLeft: 8 }}>
+                    Total: <strong style={{ color: "var(--accent)" }}>{product.currency} {(product.price * qty).toFixed(2)}</strong>
                   </span>
                 </div>
               </div>
@@ -226,11 +226,11 @@ export default function ProductDetailClient({ product, related }) {
                 <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Any special instructions..." rows={2} style={{ ...inputStyle, resize: "vertical" }} />
               </div>
 
-              {error && <p style={{ fontSize: 12, color: "#f87171", padding: "8px 12px", background: "rgba(248,113,113,0.1)", borderRadius: 8 }}>{error}</p>}
+              {error && <p style={{ fontSize: 12, color: "var(--red)", padding: "8px 12px", background: "rgba(248,113,113,0.1)", borderRadius: 8 }}>{error}</p>}
 
               <button onClick={handleOrder} disabled={submitting || !product.available} style={{
-                padding: "15px", background: product.available ? "#e8d5b0" : "#2a2a2a",
-                color: product.available ? "#0a0a0a" : "#5a5650",
+                padding: "15px", background: product.available ? "var(--accent)" : "var(--bg5)",
+                color: product.available ? "var(--bg)" : "var(--text3)",
                 borderRadius: 12, border: "none",
                 fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 16,
                 cursor: product.available ? "pointer" : "not-allowed",
@@ -239,7 +239,7 @@ export default function ProductDetailClient({ product, related }) {
                 {submitting ? "Placing order..." : `Request Delivery — ${product.currency} ${(product.price * qty).toFixed(2)}`}
               </button>
 
-              <p style={{ fontSize: 11, color: "#5a5650", textAlign: "center" }}>
+              <p style={{ fontSize: 11, color: "var(--text3)", textAlign: "center" }}>
                 Our team will contact you to confirm the order and arrange delivery
               </p>
             </div>
@@ -249,12 +249,12 @@ export default function ProductDetailClient({ product, related }) {
           {tab === "order" && submitted && (
             <div style={{ padding: "32px 24px", background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 16, textAlign: "center" }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-              <h3 style={{ fontFamily: "var(--font-display)", fontSize: 20, color: "#4ade80", marginBottom: 10 }}>Order Placed!</h3>
-              <p style={{ fontSize: 14, color: "#9a9690", lineHeight: 1.7 }}>
-                We've received your delivery request for <strong style={{ color: "#f0ede8" }}>{product.title}</strong>.
-                Our team will call you at <strong style={{ color: "#f0ede8" }}>{form.phone || form.email}</strong> to confirm.
+              <h3 style={{ fontFamily: "var(--font-display)", fontSize: 20, color: "var(--green)", marginBottom: 10 }}>Order Placed!</h3>
+              <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7 }}>
+                We've received your delivery request for <strong style={{ color: "var(--text)" }}>{product.title}</strong>.
+                Our team will call you at <strong style={{ color: "var(--text)" }}>{form.phone || form.email}</strong> to confirm.
               </p>
-              <button onClick={() => router.push("/products")} style={{ marginTop: 20, padding: "10px 24px", background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#9a9690", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>
+              <button onClick={() => router.push("/products")} style={{ marginTop: 20, padding: "10px 24px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text2)", borderRadius: 8, cursor: "pointer", fontSize: 13 }}>
                 Continue shopping
               </button>
             </div>
@@ -264,18 +264,18 @@ export default function ProductDetailClient({ product, related }) {
           {tab === "details" && (
             <div>
               {product.description ? (
-                <p style={{ fontSize: 14, color: "#9a9690", lineHeight: 1.8 }}>{product.description}</p>
+                <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8 }}>{product.description}</p>
               ) : (
-                <p style={{ fontSize: 14, color: "#5a5650" }}>No description available.</p>
+                <p style={{ fontSize: 14, color: "var(--text3)" }}>No description available.</p>
               )}
               {product.vendor && (
-                <div style={{ marginTop: 16, padding: "12px 16px", background: "#1a1a1a", borderRadius: 10, fontSize: 13, color: "#9a9690" }}>
-                  <span style={{ color: "#5a5650" }}>Brand: </span>{product.vendor}
+                <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--bg3)", borderRadius: 10, fontSize: 13, color: "var(--text2)" }}>
+                  <span style={{ color: "var(--text3)" }}>Brand: </span>{product.vendor}
                 </div>
               )}
               {product.category && (
-                <div style={{ marginTop: 8, padding: "12px 16px", background: "#1a1a1a", borderRadius: 10, fontSize: 13, color: "#9a9690" }}>
-                  <span style={{ color: "#5a5650" }}>Category: </span>{product.category}
+                <div style={{ marginTop: 8, padding: "12px 16px", background: "var(--bg3)", borderRadius: 10, fontSize: 13, color: "var(--text2)" }}>
+                  <span style={{ color: "var(--text3)" }}>Category: </span>{product.category}
                 </div>
               )}
             </div>
@@ -287,32 +287,32 @@ export default function ProductDetailClient({ product, related }) {
             <div style={{ textAlign: "center", padding: "20px 0" }}>
               <div style={{ fontSize: 36, marginBottom: 16 }}>🎁</div>
               <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, marginBottom: 8, color: "var(--text)" }}>Add to your Gift Registry</h3>
-              <p style={{ fontSize: 13, color: "#9a9690", marginBottom: 20, lineHeight: 1.7 }}>
+              <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20, lineHeight: 1.7 }}>
                 Add this product to your gift registry so friends and family can buy it for you.
               </p>
               <a href="/registry" style={{
                 display: "inline-block", padding: "12px 28px",
-                background: "#e8d5b0", color: "#0a0a0a",
+                background: "var(--accent)", color: "var(--bg)",
                 borderRadius: 10, fontFamily: "var(--font-display)",
                 fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 12,
               }}>
                 Open my registry →
               </a>
-              <p style={{ fontSize: 11, color: "#5a5650" }}>Don't have a registry? Create one free in 60 seconds.</p>
+              <p style={{ fontSize: 11, color: "var(--text3)" }}>Don't have a registry? Create one free in 60 seconds.</p>
             </div>
           )}
 
           {/* Tab: Visit store */}
           {tab === "store" && (
             <div style={{ textAlign: "center", padding: "24px 0" }}>
-              <div style={{ width: 64, height: 64, borderRadius: 16, background: store.primaryColor || "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 24, color: "#e8d5b0", margin: "0 auto 16px" }}>
+              <div style={{ width: 64, height: 64, borderRadius: 16, background: store.primaryColor || "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 24, color: "var(--accent)", margin: "0 auto 16px" }}>
                 {store.storeName[0]}
               </div>
               <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, marginBottom: 8 }}>{store.storeName}</h3>
-              <p style={{ fontSize: 13, color: "#9a9690", marginBottom: 20 }}>View all products and shop directly on the store</p>
+              <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20 }}>View all products and shop directly on the store</p>
               <a href={product.productUrl} target="_blank" rel="noopener noreferrer" style={{
                 display: "inline-block", padding: "12px 28px",
-                background: "#e8d5b0", color: "#0a0a0a",
+                background: "var(--accent)", color: "var(--bg)",
                 borderRadius: 10, fontFamily: "var(--font-display)",
                 fontWeight: 700, fontSize: 14, textDecoration: "none",
               }}>
@@ -330,16 +330,16 @@ export default function ProductDetailClient({ product, related }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
             {related.map(p => (
               <Link key={p.id} href={`/products/${encodeURIComponent(p.id)}`} style={{ textDecoration: "none" }}>
-                <div style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 14, overflow: "hidden", transition: "border-color 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = "#2a2a2a"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = "#1a1a1a"}
+                <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden", transition: "border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "var(--bg5)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = "var(--bg3)"}
                 >
-                  <div style={{ aspectRatio: "1", background: "#1a1a1a" }}>
+                  <div style={{ aspectRatio: "1", background: "var(--bg3)" }}>
                     {p.imageUrl && <img src={p.imageUrl} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                   </div>
                   <div style={{ padding: "12px 14px" }}>
-                    <div style={{ fontSize: 12, fontFamily: "var(--font-display)", fontWeight: 600, color: "#f0ede8", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#e8d5b0" }}>{p.currency} {p.price.toFixed(2)}</div>
+                    <div style={{ fontSize: 12, fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--text)", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{p.currency} {p.price.toFixed(2)}</div>
                   </div>
                 </div>
               </Link>
@@ -351,6 +351,6 @@ export default function ProductDetailClient({ product, related }) {
   );
 }
 
-const labelStyle = { display: "block", fontSize: 11, fontWeight: 600, color: "#5a5650", marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" };
-const inputStyle = { width: "100%", padding: "10px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#f0ede8", fontSize: 13, fontFamily: "var(--font-body)", outline: "none" };
-const qtyBtn = { width: 32, height: 32, border: "1px solid #2a2a2a", borderRadius: 8, background: "#1a1a1a", color: "#f0ede8", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
+const labelStyle = { display: "block", fontSize: 11, fontWeight: 600, color: "var(--text3)", marginBottom: 5, letterSpacing: "0.06em", textTransform: "uppercase" };
+const inputStyle = { width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text)", fontSize: 13, fontFamily: "var(--font-body)", outline: "none" };
+const qtyBtn = { width: 32, height: 32, border: "1px solid var(--border2)", borderRadius: 8, background: "var(--bg3)", color: "var(--text)", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };

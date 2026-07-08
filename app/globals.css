@@ -1,28 +1,57 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
 :root {
-  --bg: #0a0a0a;
-  --bg2: #111111;
-  --bg3: #1a1a1a;
-  --bg4: #222222;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
-  --text: #f0ede8;
-  --text2: #9a9690;
-  --text3: #5a5650;
-  --accent: #e8d5b0;
-  --accent2: #c4a870;
-  --green: #4ade80;
-  --red: #f87171;
+  /* Backgrounds — slightly warmer blacks */
+  --bg:   #0c0b0a;
+  --bg2:  #141210;
+  --bg3:  #1e1b18;
+  --bg4:  #272420;
+  --bg5:  #302c28;
+
+  /* Borders */
+  --border:  rgba(255,240,220,0.08);
+  --border2: rgba(255,240,220,0.16);
+  --border3: rgba(255,240,220,0.26);
+
+  /* Text — much better contrast ladder */
+  --text:  #f5f0e8;        /* primary — almost white, warm */
+  --text2: #b8b0a4;        /* secondary — clearly visible */
+  --text3: #7a7268;        /* tertiary — for labels, timestamps only */
+  --text4: #4a453f;        /* quaternary — dividers, placeholders */
+
+  /* Brand accent — gold */
+  --accent:  #e8d5a0;
+  --accent2: #c8a84a;
+  --accent3: rgba(232,213,160,0.12);
+
+  /* Status */
+  --green:  #5dd68c;
+  --green2: rgba(93,214,140,0.12);
+  --red:    #f07070;
+  --red2:   rgba(240,112,112,0.12);
+  --blue:   #60a5fa;
+  --blue2:  rgba(96,165,250,0.12);
+  --yellow: #fbbf24;
+  --yel2:   rgba(251,191,36,0.12);
+  --purple: #a78bfa;
+  --pur2:   rgba(167,139,250,0.12);
+
+  /* Typography */
   --font-display: 'Syne', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
-  --radius: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --font-body:    'DM Sans', sans-serif;
+
+  /* Shape */
+  --radius:    8px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
 
 body {
@@ -30,18 +59,21 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4, h5 {
   font-family: var(--font-display);
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 a { color: inherit; text-decoration: none; }
+a:hover { color: var(--accent); }
 
 button {
   font-family: var(--font-body);
@@ -55,45 +87,74 @@ input, select, textarea {
   font-family: var(--font-body);
   color: var(--text);
   background: var(--bg3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border2);
   border-radius: var(--radius);
   padding: 10px 14px;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, background 0.2s;
   width: 100%;
 }
-
+input::placeholder, textarea::placeholder { color: var(--text3); }
 input:focus, select:focus, textarea:focus {
-  border-color: var(--border2);
+  border-color: var(--accent2);
+  background: var(--bg4);
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
-::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text4); }
 
-/* Utility */
+/* ── Global utility classes ──────────────────────────── */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 
-/* ── Mobile responsiveness ──────────────────────────────── */
-@media (max-width: 768px) {
-  /* Navbar */
-  nav { padding: 0 14px !important; gap: 8px !important; }
-  nav a[href="/products"], nav a[href="/search"] { display: none; }
+/* Card */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+.card:hover { border-color: var(--border2); }
 
-  /* Product grids */
-  .product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-
-  /* Registry pages */
-  .registry-hero { padding: 40px 16px 32px !important; }
-  .registry-grid { grid-template-columns: 1fr !important; }
-
-  /* General spacing */
-  main > div { padding-left: 14px !important; padding-right: 14px !important; }
+/* Pill badge */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 100px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
+/* Gradient accent text */
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Page layout ──────────────────────────────────────── */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Animations ───────────────────────────────────────── */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+@keyframes spin     { to { transform:rotate(360deg); } }
+@keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:0.45} }
+@keyframes shimmer  { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  body { font-size: 14px; }
+  .hide-mobile { display: none !important; }
+  .page-container { padding: 0 16px; }
+}
 @media (max-width: 480px) {
-  .product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-  h1 { font-size: clamp(22px, 7vw, 40px) !important; }
+  .hide-sm { display: none !important; }
 }

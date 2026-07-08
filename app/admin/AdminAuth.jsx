@@ -47,7 +47,7 @@ export default function AdminAuth({ children }) {
         {error && <p style={{ fontSize: 12, color: "var(--red)", marginBottom: 10 }}>{error}</p>}
         <button onClick={login} style={{
           width: "100%", padding: "12px", background: "var(--accent)",
-          color: "#0a0a0a", borderRadius: "var(--radius)", fontFamily: "var(--font-display)",
+          color: "var(--bg)", borderRadius: "var(--radius)", fontFamily: "var(--font-display)",
           fontWeight: 700, fontSize: 15, cursor: "pointer",
         }}>
           Enter

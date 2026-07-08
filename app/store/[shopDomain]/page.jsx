@@ -75,14 +75,14 @@ export default function StoreDrawer({ params }) {
         width: 34, height: 34,
         border: "none", borderRadius: 8,
         background: "transparent",
-        color: disabled ? "#444" : "#9a9690",
+        color: disabled ? "#444" : "var(--text2)",
         fontSize: 16, cursor: disabled ? "not-allowed" : "pointer",
         display: "flex", alignItems: "center", justifyContent: "center",
         transition: "background 0.12s, color 0.12s",
         flexShrink: 0,
       }}
-      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = "#222"; e.currentTarget.style.color = "#f0ede8"; }}}
-      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = disabled ? "#444" : "#9a9690"; }}
+      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = "var(--bg4)"; e.currentTarget.style.color = "var(--text)"; }}}
+      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = disabled ? "#444" : "var(--text2)"; }}
     >
       {children}
     </button>
@@ -122,7 +122,7 @@ export default function StoreDrawer({ params }) {
       >
         {/* ── Browser chrome ── */}
         <div style={{
-          background: "#111111",
+          background: "var(--bg2)",
           borderBottom: "1px solid #222",
           flexShrink: 0,
         }}>
@@ -157,7 +157,7 @@ export default function StoreDrawer({ params }) {
             {/* Platform brand */}
             <div style={{
               fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
-              color: "#c4a870", background: "rgba(196,168,112,0.1)",
+              color: "var(--accent2)", background: "rgba(196,168,112,0.1)",
               border: "1px solid rgba(196,168,112,0.2)",
               padding: "3px 10px", borderRadius: 100,
               fontFamily: "Georgia, serif",
@@ -182,13 +182,13 @@ export default function StoreDrawer({ params }) {
             <div style={{
               flex: 1, display: "flex", alignItems: "center", gap: 6,
               padding: "7px 14px",
-              background: "#1a1a1a", border: "1px solid #2a2a2a",
+              background: "var(--bg3)", border: "1px solid #2a2a2a",
               borderRadius: 10, overflow: "hidden",
               cursor: "default",
             }}>
               <span style={{ fontSize: 11, flexShrink: 0 }}>🔒</span>
               <span style={{
-                fontSize: 12, color: "#9a9690",
+                fontSize: 12, color: "var(--text2)",
                 overflow: "hidden", textOverflow: "ellipsis",
                 whiteSpace: "nowrap", fontFamily: "monospace",
               }}>
@@ -205,22 +205,22 @@ export default function StoreDrawer({ params }) {
               style={{
                 width: 34, height: 34, borderRadius: 8,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#9a9690", fontSize: 14, textDecoration: "none",
+                color: "var(--text2)", fontSize: 14, textDecoration: "none",
                 transition: "background 0.12s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#222"; e.currentTarget.style.color = "#f0ede8"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9a9690"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--bg4)"; e.currentTarget.style.color = "var(--text)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text2)"; }}
             >
               ↗
             </a>
           </div>
 
           {/* Progress bar */}
-          <div style={{ height: 2, background: "#1a1a1a" }}>
+          <div style={{ height: 2, background: "var(--bg3)" }}>
             <div style={{
               height: "100%",
               width: `${progress}%`,
-              background: "#e8d5b0",
+              background: "var(--accent)",
               transition: loading ? "width 0.5s ease" : "opacity 0.3s ease 0.1s",
               opacity: progress >= 100 ? 0 : 1,
             }} />

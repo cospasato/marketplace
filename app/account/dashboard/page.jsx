@@ -65,12 +65,12 @@ export default function AccountDashboard() {
     }
   };
 
-  if (loading) return <div style={{ padding: 80, textAlign: "center", color: "#5a5650" }}>Loading your account...</div>;
+  if (loading) return <div style={{ padding: 80, textAlign: "center", color: "var(--text3)" }}>Loading your account...</div>;
   if (!account) return null;
 
-  const inp = { background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "11px 14px", color: "#f0ede8", fontSize: 14, fontFamily: "inherit", outline: "none", width: "100%" };
+  const inp = { background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 10, padding: "11px 14px", color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none", width: "100%" };
   const tabBtn = (key, label) => (
-    <button key={key} onClick={() => setTab(key)} style={{ padding: "9px 20px", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit", background: tab === key ? "#e8d5b0" : "transparent", color: tab === key ? "#0a0a0a" : "#5a5650", transition: "all 0.15s" }}>{label}</button>
+    <button key={key} onClick={() => setTab(key)} style={{ padding: "9px 20px", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit", background: tab === key ? "var(--accent)" : "transparent", color: tab === key ? "var(--bg)" : "var(--text3)", transition: "all 0.15s" }}>{label}</button>
   );
 
   return (
@@ -78,24 +78,24 @@ export default function AccountDashboard() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#1a1a1a", border: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 20, color: "#e8d5b0" }}>
+          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--bg3)", border: "1px solid var(--border2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 20, color: "var(--accent)" }}>
             {account.name[0].toUpperCase()}
           </div>
           <div>
-            <div style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 700, color: "#f0ede8" }}>{account.name}</div>
-            <div style={{ fontSize: 12, color: "#5a5650" }}>{account.email}</div>
+            <div style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>{account.name}</div>
+            <div style={{ fontSize: 12, color: "var(--text3)" }}>{account.email}</div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <Link href="/registry" style={{ padding: "8px 16px", background: "#e8d5b0", color: "#0a0a0a", borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>+ New Registry</Link>
-          <button onClick={logout} style={{ padding: "8px 16px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#9a9690", fontSize: 13, cursor: "pointer" }}>Sign out</button>
+          <Link href="/registry" style={{ padding: "8px 16px", background: "var(--accent)", color: "var(--bg)", borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: "none" }}>+ New Registry</Link>
+          <button onClick={logout} style={{ padding: "8px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", fontSize: 13, cursor: "pointer" }}>Sign out</button>
         </div>
       </div>
 
-      {msg && <div style={{ marginBottom: 16, padding: "10px 16px", borderRadius: 8, fontSize: 13, background: msg.type === "error" ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.1)", border: `1px solid ${msg.type === "error" ? "rgba(248,113,113,0.25)" : "rgba(74,222,128,0.25)"}`, color: msg.type === "error" ? "#f87171" : "#4ade80" }}>{msg.text}</div>}
+      {msg && <div style={{ marginBottom: 16, padding: "10px 16px", borderRadius: 8, fontSize: 13, background: msg.type === "error" ? "rgba(248,113,113,0.1)" : "rgba(74,222,128,0.1)", border: `1px solid ${msg.type === "error" ? "rgba(248,113,113,0.25)" : "rgba(74,222,128,0.25)"}`, color: msg.type === "error" ? "var(--red)" : "var(--green)" }}>{msg.text}</div>}
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "#111", padding: 4, borderRadius: 12 }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "var(--bg2)", padding: 4, borderRadius: 12 }}>
         {tabBtn("registries", `🎁 My Registries (${registries.length})`)}
         {tabBtn("profile", "👤 Profile")}
       </div>
@@ -104,10 +104,10 @@ export default function AccountDashboard() {
       {tab === "registries" && (
         <div>
           {registries.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0", color: "#5a5650" }}>
+            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text3)" }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🎁</div>
               <p style={{ marginBottom: 16 }}>You haven't created any registries yet.</p>
-              <Link href="/registry?tab=create" style={{ padding: "10px 24px", background: "#e8d5b0", color: "#0a0a0a", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}>Create your first registry →</Link>
+              <Link href="/registry?tab=create" style={{ padding: "10px 24px", background: "var(--accent)", color: "var(--bg)", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}>Create your first registry →</Link>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -121,26 +121,26 @@ export default function AccountDashboard() {
                 const emoji = { "Wedding": "💍", "Birthday": "🎂", "Baby Shower": "👶", "Christmas": "🎄", "Graduation": "🎓", "Housewarming": "🏠", "Anniversary": "💝" }[reg.occasion] || "🎁";
 
                 return (
-                  <div key={reg.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "20px 22px" }}>
+                  <div key={reg.id} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px 22px" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                       <div style={{ display: "flex", gap: 12, flex: 1, minWidth: 200 }}>
                         <div style={{ fontSize: 28, flexShrink: 0 }}>{emoji}</div>
                         <div>
-                          <div style={{ fontFamily: "Georgia, serif", fontSize: 17, fontWeight: 700, color: "#f0ede8", marginBottom: 4 }}>{reg.title}</div>
-                          <div style={{ fontSize: 12, color: "#5a5650" }}>
+                          <div style={{ fontFamily: "Georgia, serif", fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>{reg.title}</div>
+                          <div style={{ fontSize: 12, color: "var(--text3)" }}>
                             {reg.occasion}
                             {reg.eventDate && ` · ${new Date(reg.eventDate).toLocaleDateString()}`}
-                            <span style={{ marginLeft: 10, padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: reg.isPublic ? "rgba(74,222,128,0.1)" : "rgba(248,113,113,0.1)", color: reg.isPublic ? "#4ade80" : "#f87171" }}>
+                            <span style={{ marginLeft: 10, padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: reg.isPublic ? "rgba(74,222,128,0.1)" : "rgba(248,113,113,0.1)", color: reg.isPublic ? "var(--green)" : "var(--red)" }}>
                               {reg.isPublic ? "Public" : "Hidden"}
                             </span>
                           </div>
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flexShrink: 0 }}>
-                        <Link href={`/registry/dashboard?id=${reg.id}&email=${encodeURIComponent(account.email)}`} style={{ padding: "7px 14px", background: "#e8d5b0", color: "#0a0a0a", borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Manage</Link>
-                        <a href={`/registry/live/${reg.slug}`} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#c4a870", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>🔴 Live</a>
-                        <Link href={`/registry/${reg.slug}`} style={{ padding: "7px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#9a9690", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Preview</Link>
-                        <button onClick={() => toggleVisibility(reg.id, reg.isPublic)} style={{ padding: "7px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#9a9690", fontSize: 12, cursor: "pointer" }}>
+                        <Link href={`/registry/dashboard?id=${reg.id}&email=${encodeURIComponent(account.email)}`} style={{ padding: "7px 14px", background: "var(--accent)", color: "var(--bg)", borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Manage</Link>
+                        <a href={`/registry/live/${reg.slug}`} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--accent2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>🔴 Live</a>
+                        <Link href={`/registry/${reg.slug}`} style={{ padding: "7px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Preview</Link>
+                        <button onClick={() => toggleVisibility(reg.id, reg.isPublic)} style={{ padding: "7px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", fontSize: 12, cursor: "pointer" }}>
                           {reg.isPublic ? "Hide" : "Publish"}
                         </button>
                       </div>
@@ -150,14 +150,14 @@ export default function AccountDashboard() {
                     <div style={{ display: "flex", gap: 20, marginTop: 14, flexWrap: "wrap" }}>
                       {[
                         { label: "Items", value: items.length },
-                        { label: "Claimed", value: claimed, color: "#f59e0b" },
-                        { label: "Purchased", value: purchased, color: "#4ade80" },
+                        { label: "Claimed", value: claimed, color: "var(--yellow)" },
+                        { label: "Purchased", value: purchased, color: "var(--green)" },
                         { label: "Gifters", value: contribs.length },
-                        { label: "Gifted (verified)", value: `USD ${totalGifted.toFixed(0)}`, color: "#4ade80" },
+                        { label: "Gifted (verified)", value: `USD ${totalGifted.toFixed(0)}`, color: "var(--green)" },
                       ].map(({ label, value, color }) => (
                         <div key={label} style={{ textAlign: "center" }}>
-                          <div style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 800, color: color || "#f0ede8" }}>{value}</div>
-                          <div style={{ fontSize: 10, color: "#5a5650", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+                          <div style={{ fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 800, color: color || "var(--text)" }}>{value}</div>
+                          <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
                         </div>
                       ))}
                     </div>
@@ -165,10 +165,10 @@ export default function AccountDashboard() {
                     {/* Progress */}
                     {items.length > 0 && (
                       <div style={{ marginTop: 14 }}>
-                        <div style={{ height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ height: 4, background: "var(--bg3)", borderRadius: 2, overflow: "hidden" }}>
                           <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg, #4ade80, #e8d5b0)", borderRadius: 2 }} />
                         </div>
-                        <div style={{ fontSize: 11, color: "#5a5650", marginTop: 4 }}>{progress}% complete</div>
+                        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4 }}>{progress}% complete</div>
                       </div>
                     )}
                   </div>
@@ -182,10 +182,10 @@ export default function AccountDashboard() {
       {/* Profile tab */}
       {tab === "profile" && (
         <div style={{ maxWidth: 480 }}>
-          <div style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 16, padding: "24px" }}>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 16, padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 18, color: "#f0ede8" }}>Profile details</h3>
-              <button onClick={() => setEditProfile(!editProfile)} style={{ padding: "6px 14px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#9a9690", fontSize: 12, cursor: "pointer" }}>
+              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 18, color: "var(--text)" }}>Profile details</h3>
+              <button onClick={() => setEditProfile(!editProfile)} style={{ padding: "6px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 8, color: "var(--text2)", fontSize: 12, cursor: "pointer" }}>
                 {editProfile ? "Cancel" : "Edit"}
               </button>
             </div>
@@ -193,23 +193,23 @@ export default function AccountDashboard() {
             {editProfile ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#5a5650", marginBottom: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Name</label>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text3)", marginBottom: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Name</label>
                   <input value={profileForm.name} onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} style={inp} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#5a5650", marginBottom: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Phone</label>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text3)", marginBottom: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Phone</label>
                   <input value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} style={inp} />
                 </div>
-                <button onClick={saveProfile} disabled={saving} style={{ padding: "12px", background: "#e8d5b0", color: "#0a0a0a", borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={saveProfile} disabled={saving} style={{ padding: "12px", background: "var(--accent)", color: "var(--bg)", borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                   {saving ? "Saving..." : "Save changes"}
                 </button>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {[["Name", account.name], ["Email", account.email], ["Phone", account.phone || "—"]].map(([label, value]) => (
-                  <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1a1a1a" }}>
-                    <span style={{ fontSize: 12, color: "#5a5650" }}>{label}</span>
-                    <span style={{ fontSize: 14, color: "#f0ede8" }}>{value}</span>
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                    <span style={{ fontSize: 12, color: "var(--text3)" }}>{label}</span>
+                    <span style={{ fontSize: 14, color: "var(--text)" }}>{value}</span>
                   </div>
                 ))}
               </div>
