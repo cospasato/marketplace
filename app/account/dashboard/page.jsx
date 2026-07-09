@@ -107,7 +107,7 @@ export default function AccountDashboard() {
             <div style={{ textAlign: "center", padding: "60px 0", color: "var(--text3)" }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🎁</div>
               <p style={{ marginBottom: 16 }}>You haven't created any registries yet.</p>
-              <Link href="/registry?tab=create" style={{ padding: "10px 24px", background: "var(--accent)", color: "var(--bg)", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}>Create your first registry →</Link>
+              <Link href="/registry/create" style={{ padding: "10px 24px", background: "var(--accent)", color: "var(--bg)", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none" }}>Create your first registry →</Link>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

@@ -57,7 +57,7 @@ export default function AppShell({ children }) {
 
         {/* Right actions */}
         <div className="topnav-actions">
-          <Link href="/registry?tab=create" className="topnav-cta">+ Create Registry</Link>
+          <Link href="/registry/create" className="topnav-cta">+ Create Registry</Link>
           <Link href="/admin" className="topnav-admin">Admin</Link>
         </div>
       </header>
@@ -71,7 +71,7 @@ export default function AppShell({ children }) {
           <span style={{ fontSize:8, fontWeight:700, color:"var(--gold)", letterSpacing:"0.14em", textTransform:"uppercase", marginTop:2 }}>Gift Registry</span>
         </Link>
         <div style={{ display:"flex", gap:8 }}>
-          <Link href="/registry?tab=create" style={{ height:34, padding:"0 14px", background:"var(--maroon)", color:"#fff", borderRadius:"var(--r-lg)", fontSize:13, fontWeight:700, display:"flex", alignItems:"center", fontFamily:"var(--font-body)" }}>
+          <Link href="/registry/create" style={{ height:34, padding:"0 14px", background:"var(--maroon)", color:"#fff", borderRadius:"var(--r-lg)", fontSize:13, fontWeight:700, display:"flex", alignItems:"center", fontFamily:"var(--font-body)" }}>
             + Create
           </Link>
           <Link href="/admin" style={{ width:34, height:34, background:"var(--cream)", borderRadius:"var(--r-md)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15 }}>

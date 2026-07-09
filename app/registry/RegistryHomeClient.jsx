@@ -39,7 +39,7 @@ function RegistryCard({ r }) {
             <div style={{ width:44, height:44, borderRadius:12, background: expired ? "#2a2520" : `linear-gradient(135deg,${c1},${c2})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>{emoji}</div>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:"var(--font-display)", fontSize:14, fontWeight:700, color:"#f0ece6", lineHeight:1.25, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{r.title}</div>
-              <div style={{ fontSize:11, color:"#6b6560", marginTop:2 }}>
+              <div style={{ fontSize:12, fontWeight:600, color:"#4a4540", marginTop:2 }}>
                 {r.ownerName}
                 {expired && <span style={{ marginLeft:6, color:"#4a4540", fontWeight:600 }}>· EXPIRED</span>}
                 {days !== null && days >= 0 && <span style={{ marginLeft:6, color:c1, fontWeight:600 }}>· {days === 0 ? "Today! 🎉" : `${days}d`}</span>}
@@ -116,9 +116,9 @@ export default function RegistryHomeClient() {
     <div>
       {/* ── Tab switcher ── */}
       <div style={{ display:"flex", padding:"4px", margin:"12px 16px 0", background:"var(--cream)", borderRadius:"var(--r-lg)" }}>
-        {[["browse","Browse"],["create","Create"],["find","Find"]].map(([k,l]) => (
+        {[["browse","Browse"],["find","Find by Email"]].map(([k,l]) => (
           <button key={k} onClick={() => setTab(k)} style={{
-            flex:1, padding:"9px 4px", borderRadius:"var(--r-md)", border:"none", fontFamily:"var(--font-body)", fontSize:13, fontWeight: tab===k ? 700 : 400,
+            flex:1, padding:"9px 4px", borderRadius:"var(--r-md)", border:"none", fontFamily:"var(--font-body)", fontSize:13, fontWeight: tab===k ? 800 : 600,
             background: tab===k ? "var(--white)" : "transparent",
             color: tab===k ? "var(--maroon)" : "var(--gray)",
             boxShadow: tab===k ? "var(--shadow-xs)" : "none",
@@ -156,14 +156,14 @@ export default function RegistryHomeClient() {
             </div>
           ) : (
             <div>
-              <div style={{ fontSize:12, color:"var(--gray)", marginBottom:12, fontFamily:"var(--font-body)" }}>{activeRegs.length} active · {expiredRegs.length} expired</div>
+              <div style={{ fontSize:13, fontWeight:600, color:"var(--gray)", marginBottom:12, fontFamily:"var(--font-body)" }}>{activeRegs.length} active · {expiredRegs.length} expired</div>
               <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                 {activeRegs.map(r => <RegistryCard key={r.id} r={r} />)}
                 {expiredRegs.length > 0 && (
                   <>
                     <div style={{ display:"flex", alignItems:"center", gap:10, margin:"8px 0" }}>
                       <div style={{ flex:1, height:1, background:"var(--border)" }} />
-                      <span style={{ fontSize:11, color:"var(--gray-lt)", fontFamily:"var(--font-body)", fontWeight:600 }}>EXPIRED</span>
+                      <span style={{ fontSize:12, fontWeight:600, color:"var(--gray)", fontFamily:"var(--font-body)", fontWeight:600 }}>EXPIRED</span>
                       <div style={{ flex:1, height:1, background:"var(--border)" }} />
                     </div>
                     {expiredRegs.map(r => <RegistryCard key={r.id} r={r} />)}

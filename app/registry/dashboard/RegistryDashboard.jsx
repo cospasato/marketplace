@@ -203,7 +203,7 @@ export default function RegistryDashboard() {
             </span>
           </div>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(20px, 4vw, 28px)", color: "var(--black)", marginBottom: 4 }}>{registry.title}</h1>
-          <p style={{ fontSize: 13, color: "var(--gray)" }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text2)" }}>
             {registry.ownerEmail}
             {registry.eventDate && ` · ${new Date(registry.eventDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
           </p>
@@ -246,7 +246,7 @@ export default function RegistryDashboard() {
         ].map(({ label, value, color }) => (
           <div key={label} style={{ ...s.card, textAlign: "center", padding: "14px" }}>
             <div style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
-            <div style={{ fontSize: 10, color: "var(--gray)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>{label}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--black)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>{label}</div>
           </div>
         ))}
       </div>
@@ -371,7 +371,7 @@ export default function RegistryDashboard() {
               <label style={s.lbl}>Product link (URL) *</label>
               <input type="url" value={customForm.productUrl} onChange={e => setCustomForm(f => ({ ...f, productUrl: e.target.value }))}
                 placeholder="https://www.anystore.com/products/..." style={s.inp} />
-              <div style={{ fontSize: 11, color: "var(--gray)", marginTop: 4 }}>Paste the full URL where this product is available</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text2)", marginTop: 4 }}>Paste the full URL where this product is available</div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
@@ -392,7 +392,7 @@ export default function RegistryDashboard() {
               <label style={s.lbl}>Product image URL (optional)</label>
               <input type="url" value={customForm.imageUrl} onChange={e => setCustomForm(f => ({ ...f, imageUrl: e.target.value }))}
                 placeholder="https://... (link to product photo)" style={s.inp} />
-              <div style={{ fontSize: 11, color: "var(--gray)", marginTop: 4 }}>Right-click any product image → "Copy image address" to get the URL</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text2)", marginTop: 4 }}>Right-click any product image → "Copy image address" to get the URL</div>
               {customForm.imageUrl && (
                 <div style={{ marginTop: 10, width: 80, height: 80, borderRadius: 8, overflow: "hidden", border: "1px solid var(--border2)" }}>
                   <img src={customForm.imageUrl} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -421,7 +421,7 @@ export default function RegistryDashboard() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: customForm.groupBuy ? 12 : 0 }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)" }}>👥 Enable group purchasing</div>
-                  <div style={{ fontSize: 12, color: "var(--gray)", marginTop: 2 }}>Let multiple people contribute toward this one gift</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text2)", marginTop: 2 }}>Let multiple people contribute toward this one gift</div>
                 </div>
                 <button onClick={() => setCustomForm(f => ({ ...f, groupBuy: !f.groupBuy }))} style={{
                   width: 46, height: 26, borderRadius: 13, border: "none", cursor: "pointer",
@@ -468,7 +468,7 @@ export default function RegistryDashboard() {
         <div>
           <div style={{ marginBottom: 18 }}>
             <h3 style={{ fontFamily: "var(--font-display)", fontSize: 20, marginBottom: 6 }}>Add from partner stores</h3>
-            <p style={{ fontSize: 13, color: "var(--gray)", marginBottom: 14 }}>Click any product to add it to your registry instantly.</p>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text2)", marginBottom: 14 }}>Click any product to add it to your registry instantly.</p>
             <input value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Search products..." style={{ ...s.inp, maxWidth: 360 }} />
           </div>
           {filteredProducts.length === 0 ? (
@@ -523,13 +523,13 @@ export default function RegistryDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)" }}>{c.gifterName}</div>
-                    <div style={{ fontSize: 12, color: "var(--gray)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text2)" }}>
                       {c.item?.title ? `"${c.item.title}" · ` : ""}
                       <span style={{ color: c.status === "purchased" ? "var(--green)" : "var(--yellow)", fontWeight: 600 }}>
                         {c.status === "purchased" ? "✅ Purchased" : "🔖 Claimed"}
                       </span>
                     </div>
-                    {c.message && <div style={{ fontSize: 12, color: "var(--gray)", marginTop: 3, fontStyle: "italic" }}>"{c.message}"</div>}
+                    {c.message && <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text2)", marginTop: 3, fontStyle: "italic" }}>"{c.message}"</div>}
                   </div>
                   <div style={{ fontSize: 11, color: "var(--gray-lt)" }}>{new Date(c.createdAt).toLocaleDateString()}</div>
                 </div>
@@ -592,7 +592,7 @@ function RegistrySettings({ registry, id, onSave }) {
         {saving ? "Saving..." : "Save changes"}
       </button>
       <div style={{ borderTop: "1px solid var(--border)", paddingTop: 20, marginTop: 4 }}>
-        <div style={{ fontSize: 11, color: "var(--gray)", marginBottom: 12, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase" }}>Danger Zone</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text2)", marginBottom: 12, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase" }}>Danger Zone</div>
         {confirmDelete ? (
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={deleteRegistry} disabled={deleting} style={{ padding: "10px 18px", background: "var(--red-bg)", border: "1px solid rgba(192,57,43,0.3)", borderRadius: "var(--radius)", color: "var(--red)", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>

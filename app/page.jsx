@@ -80,7 +80,7 @@ export default async function HomePage() {
             Create a registry for weddings, birthdays and more. Share with everyone. Receive exactly what you wish for — no duplicates, no guessing.
           </p>
           <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
-            <Link href="/registry?tab=create" className="btn-gold" style={{ flex:"0 0 auto", padding:"13px 30px" }}>Create Free Registry</Link>
+            <Link href="/registry/create" className="btn-gold" style={{ flex:"0 0 auto", padding:"13px 30px" }}>Create Free Registry</Link>
             <Link href="/registry" style={{ flex:"0 0 auto", padding:"12px 26px", background:"rgba(255,255,255,0.12)", color:"#fff", border:"1px solid rgba(255,255,255,0.3)", borderRadius:"var(--r-xl)", fontFamily:"var(--font-body)", fontWeight:600, fontSize:15, display:"inline-flex", alignItems:"center", backdropFilter:"blur(8px)" }}>
               Browse Registries →
             </Link>
@@ -186,7 +186,7 @@ export default async function HomePage() {
           ))}
         </div>
         <div style={{ padding:"22px 28px" }}>
-          <Link href="/registry?tab=create" className="btn-gold" style={{ display:"inline-flex", padding:"13px 32px", width:"auto" }}>
+          <Link href="/registry/create" className="btn-gold" style={{ display:"inline-flex", padding:"13px 32px", width:"auto" }}>
             Start Free Registry →
           </Link>
         </div>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* ═══════════════════════════════════════════════════════
    NIZAWADIE — Adaptive Design System
@@ -84,11 +84,12 @@ body {
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.65;
+  font-weight: 450;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
 }
-h1,h2,h3,h4,h5 { font-family: var(--font-display); font-weight: 700; line-height: 1.18; color: var(--text); }
+h1,h2,h3,h4,h5 { font-family: var(--font-display); font-weight: 800; line-height: 1.18; color: var(--text); }
 a { color: inherit; text-decoration: none; }
 button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
 * { -webkit-tap-highlight-color: transparent; }
@@ -101,6 +102,7 @@ input, select, textarea {
   border-radius: var(--r-md);
   padding: 12px 14px;
   font-size: 15px;
+  font-weight: 500;
   outline: none;
   transition: border-color 0.18s, box-shadow 0.18s;
   width: 100%;
@@ -178,7 +180,7 @@ input::placeholder, textarea::placeholder { color: var(--gray-lt); }
   border-radius: var(--r-md);
   margin-bottom: 2px;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text2);
   transition: all 0.14s;
   cursor: pointer;
@@ -362,4 +364,30 @@ input::placeholder, textarea::placeholder { color: var(--gray-lt); }
   background-size: 500px 100%;
   animation: shimmer 1.4s infinite;
   border-radius: var(--r-md);
+}
+
+/* ── Strong readable text everywhere ── */
+p { font-weight: 450; color: var(--text2); }
+label { font-weight: 600 !important; color: var(--text) !important; }
+.section-label { font-weight: 800 !important; }
+small, .small { font-weight: 500; }
+
+/* Ensure all page text is heavy enough */
+.app-main * { -webkit-font-smoothing: antialiased; }
+.app-main p  { font-weight: 450; }
+.app-main li { font-weight: 450; }
+
+/* Force visible placeholder */
+input::placeholder, textarea::placeholder { color: var(--gray) !important; font-weight: 400; }
+
+/* ── Stronger text throughout app ── */
+.occ-chip span   { font-weight: 700 !important; }
+.home-reg-card * { font-weight: inherit; }
+.topnav-link     { font-weight: 600 !important; }
+.tabbar-label    { font-weight: 600; }
+
+/* Prevent thin/light fonts */
+body, button, input, select, textarea, a {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
