@@ -3,73 +3,82 @@ import { useState } from "react";
 import Link from "next/link";
 
 const OCC_EMOJI = { Wedding:"💍", Birthday:"🎂", "Baby Shower":"👶", Christmas:"🎄", Graduation:"🎓", Housewarming:"🏠", Anniversary:"💝" };
-const OCC_GRADIENT = {
-  Wedding: "linear-gradient(135deg,#d4af37,#8b6914)",
-  Birthday: "linear-gradient(135deg,#e8334a,#9e1c2e)",
-  "Baby Shower": "linear-gradient(135deg,#7eb8f7,#2563a8)",
-  Graduation: "linear-gradient(135deg,#2e7d4f,#1a4f30)",
-  Housewarming: "linear-gradient(135deg,#ea7c2b,#a0501a)",
-  Anniversary: "linear-gradient(135deg,#9b59b6,#6c3483)",
-  Christmas: "linear-gradient(135deg,#c0392b,#2e7d4f)",
+const OCC_GRAD  = {
+  Wedding:      "linear-gradient(135deg,#c9a227,#7b6200)",
+  Birthday:     "linear-gradient(135deg,#e8334a,#9e1c2e)",
+  "Baby Shower":"linear-gradient(135deg,#4aa3e8,#1a5a9a)",
+  Graduation:   "linear-gradient(135deg,#2e9e5e,#135e32)",
+  Housewarming: "linear-gradient(135deg,#e87c2b,#8b3e00)",
+  Anniversary:  "linear-gradient(135deg,#9b59b6,#5b1e8c)",
+  Christmas:    "linear-gradient(135deg,#c0392b,#1e7a3c)",
 };
-const PRIORITY_COLORS = { high: "#c0392b", medium: "#b7680f", low: "#2e7d4f" };
-const PRIORITY_LABELS = { high: "Must have", medium: "Would love", low: "Nice to have" };
+const OCC_ACCENT = {
+  Wedding:"#c9a227", Birthday:"#e8334a", "Baby Shower":"#4aa3e8",
+  Graduation:"#2e9e5e", Housewarming:"#e87c2b", Anniversary:"#9b59b6", Christmas:"#c0392b",
+};
+const PRI_COLOR = { high:"#c0392b", medium:"#b7680f", low:"#1e9e5e" };
+const PRI_LABEL = { high:"Must have", medium:"Would love", low:"Nice to have" };
 
-function GroupBuyBar({ item }) {
-  const pct = item.targetAmount > 0 ? Math.min(100, Math.round((item.collectedAmount / item.targetAmount) * 100)) : 0;
-  const remaining = Math.max(0, (item.targetAmount || item.price) - (item.collectedAmount || 0));
+function GroupBuyBar({ item, accent }) {
+  const target = item.targetAmount || item.price;
+  const collected = item.collectedAmount || 0;
+  const pct = target > 0 ? Math.min(100, Math.round((collected / target) * 100)) : 0;
+  const remaining = Math.max(0, target - collected);
   return (
-    <div style={{ background: "rgba(201,150,42,0.08)", border: "1px solid rgba(201,150,42,0.2)", borderRadius: 10, padding: "12px 14px", marginTop: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
-        <span style={{ color: "#9a7020" }}>👥 Group gift — {pct}% funded</span>
-        <span style={{ color: "#c9962a" }}>{item.currency} {(item.collectedAmount || 0).toFixed(0)} / {(item.targetAmount || item.price).toFixed(0)}</span>
+    <div style={{ background:"rgba(0,0,0,0.04)", border:`1px solid ${accent}30`, borderRadius:10, padding:"10px 12px", marginTop:8 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:700, marginBottom:5 }}>
+        <span style={{ color: accent }}>👥 Group gift · {pct}%</span>
+        <span style={{ color:"var(--text2)" }}>{item.currency} {collected.toFixed(0)} / {target.toFixed(0)}</span>
       </div>
-      <div style={{ height: 6, background: "rgba(201,150,42,0.15)", borderRadius: 3, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg,#c9962a,#e8b84b)", borderRadius: 3, transition: "width 0.5s" }} />
+      <div style={{ height:5, background:"rgba(0,0,0,0.08)", borderRadius:3, overflow:"hidden" }}>
+        <div style={{ height:"100%", width:`${pct}%`, background:accent, borderRadius:3, transition:"width 0.5s" }} />
       </div>
-      {remaining > 0 && <div style={{ fontSize: 11, color: "#9a7020", marginTop: 5 }}>Still needs {item.currency} {remaining.toFixed(2)} more to be fully funded</div>}
+      {remaining > 0 && <p style={{ fontSize:11, color:"var(--gray)", marginTop:4, fontWeight:600 }}>Needs {item.currency} {remaining.toFixed(2)} more</p>}
     </div>
   );
 }
 
 export default function PublicRegistryClient({ registry }) {
-  const [claimModal, setClaimModal] = useState(null);
-  const [form, setForm] = useState({ gifterName: "", gifterEmail: "", message: "", contributionAmount: "" });
-  const [claiming, setClaiming] = useState(false);
+  const [claimModal, setClaimModal]   = useState(null);
+  const [form, setForm]               = useState({ gifterName:"", gifterEmail:"", message:"", contributionAmount:"" });
+  const [claiming, setClaiming]       = useState(false);
   const [claimResult, setClaimResult] = useState(null);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter]           = useState("all");
 
-  const expired = registry.expired;
-  const items = registry.items || [];
-  const contributions = registry.contributions || [];
-  const purchased = items.filter(i => i.status === "purchased").length;
-  const claimed = items.filter(i => i.status === "claimed").length;
-  const available = items.filter(i => i.status === "available").length;
-  const progress = items.length > 0 ? Math.round(((purchased + claimed) / items.length) * 100) : 0;
+  const expired    = registry.expired;
+  const items      = registry.items || [];
+  const contribs   = registry.contributions || [];
+  const purchased  = items.filter(i => i.status === "purchased").length;
+  const claimed    = items.filter(i => i.status === "claimed").length;
+  const available  = items.filter(i => i.status === "available").length;
+  const progress   = items.length > 0 ? Math.round(((purchased + claimed) / items.length) * 100) : 0;
+  const currency   = items[0]?.currency || "USD";
+  const gradient   = OCC_GRAD[registry.occasion]   || "linear-gradient(135deg,#c9962a,#7b1c2e)";
+  const accent     = OCC_ACCENT[registry.occasion] || "#c9962a";
+  const emoji      = OCC_EMOJI[registry.occasion]  || "🎁";
+  const daysUntil  = registry.eventDate && !expired
+    ? Math.ceil((new Date(registry.eventDate) - Date.now()) / 86400000) : null;
 
-  const daysUntil = registry.eventDate && !expired
-    ? Math.ceil((new Date(registry.eventDate) - Date.now()) / 86400000)
-    : null;
-
-  const emoji = OCC_EMOJI[registry.occasion] || "🎁";
-  const gradient = OCC_GRADIENT[registry.occasion] || "linear-gradient(135deg,#c9962a,#7b1c2e)";
-
-  // Gifter leaderboard
+  // Top gifters
   const gifterMap = {};
-  contributions.forEach(c => {
-    const k = c.gifterEmail || c.gifterName;
+  contribs.forEach(c => {
+    const k   = c.gifterEmail || c.gifterName;
     const amt = c.payment?.totalAmount || c.contributionAmount || c.amount || 0;
-    if (!gifterMap[k]) gifterMap[k] = { name: c.gifterName, total: 0, count: 0 };
+    if (!gifterMap[k]) gifterMap[k] = { name:c.gifterName, total:0, count:0 };
     gifterMap[k].total += amt;
     gifterMap[k].count++;
   });
-  const topGifters = Object.values(gifterMap).sort((a, b) => b.total - a.total).slice(0, 3);
-  const currency = items[0]?.currency || "USD";
-
+  const topGifters  = Object.values(gifterMap).sort((a,b) => b.total - a.total).slice(0,3);
   const filteredItems = items.filter(i =>
     filter === "available" ? i.status === "available" :
-    filter === "claimed" ? i.status !== "available" : true
+    filter === "claimed"   ? i.status !== "available" : true
   );
+
+  const openClaim = (item) => {
+    setClaimModal(item);
+    setClaimResult(null);
+    setForm({ gifterName:"", gifterEmail:"", message:"", contributionAmount:"" });
+  };
 
   const handleClaim = async () => {
     if (!form.gifterName || !form.gifterEmail) return;
@@ -77,8 +86,8 @@ export default function PublicRegistryClient({ registry }) {
     setClaiming(true);
     try {
       const res = await fetch("/api/registry/claim", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
           itemId: claimModal.id,
           gifterName: form.gifterName,
           gifterEmail: form.gifterEmail,
@@ -87,209 +96,260 @@ export default function PublicRegistryClient({ registry }) {
         }),
       });
       const data = await res.json();
-      if (res.ok) setClaimResult(data);
-      else setClaimResult({ error: data.error });
-    } catch { setClaimResult({ error: "Network error. Please try again." }); }
+      setClaimResult(res.ok ? data : { error: data.error });
+    } catch { setClaimResult({ error:"Network error. Please try again." }); }
     setClaiming(false);
   };
 
-  const s = {
-    inp: { padding: "11px 14px", border: "1.5px solid rgba(0,0,0,0.15)", borderRadius: 10, fontSize: 14, fontFamily: "inherit", outline: "none", width: "100%", background: "#f8f4ef", color: "#0f0d0b" },
-  };
+  const inp = { padding:"11px 14px", border:"1.5px solid var(--border2)", borderRadius:"var(--r-md)", fontSize:14, fontFamily:"inherit", outline:"none", width:"100%", background:"var(--white)", color:"var(--black)", fontWeight:500 };
+  const lbl = { display:"block", fontSize:11, fontWeight:700, color:"var(--text)", marginBottom:5, letterSpacing:"0.05em", textTransform:"uppercase" };
 
   return (
     <div>
-      {/* ── Festive Hero ── */}
-      <div style={{ position: "relative", overflow: "hidden" }}>
-        {/* Occasion gradient banner */}
-        <div style={{ background: gradient, padding: "52px 24px 80px", textAlign: "center", position: "relative" }}>
-          <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "radial-gradient(circle at 1px 1px,#fff 1px,transparent 0)", backgroundSize: "24px 24px" }} />
+      <style>{`
+        .reg-hero        { background:${gradient}; padding:48px 24px 52px; text-align:center; position:relative; overflow:hidden; }
+        .reg-hero-dot    { position:absolute; inset:0; opacity:0.05; background-image:radial-gradient(circle at 1px 1px,#fff 1px,transparent 0); background-size:24px 24px; pointer-events:none; }
+        .reg-stats       { display:grid; grid-template-columns:repeat(4,1fr); gap:0; background:#0f0d0b; border-radius:var(--r-lg); margin:0 24px; position:relative; z-index:2; box-shadow:0 8px 32px rgba(0,0,0,0.25); }
+        .reg-stat        { padding:18px 12px; text-align:center; border-right:1px solid rgba(255,255,255,0.07); }
+        .reg-stat:last-child { border-right:none; }
+        .reg-body        { max-width:1100px; margin:0 auto; padding:24px 24px 60px; }
+        .reg-gifters-row { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
+        .reg-gifter-chip { display:flex; align-items:center; gap:0; background:var(--white); border:1px solid var(--border2); border-radius:var(--r-lg); overflow:hidden; box-shadow:var(--shadow-xs); flex-shrink:0; }
+        .reg-items       { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
 
-          {expired && (
-            <div style={{ display: "inline-block", padding: "5px 14px", background: "rgba(0,0,0,0.35)", borderRadius: 100, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em", marginBottom: 14 }}>
-              ⚠️ THIS REGISTRY HAS EXPIRED
-            </div>
-          )}
+        @media(max-width:768px){
+          .reg-hero   { padding:36px 16px 40px; }
+          .reg-stats  { margin:0 16px; grid-template-columns:repeat(2,1fr); }
+          .reg-stat   { border-right:1px solid rgba(255,255,255,0.07); border-bottom:1px solid rgba(255,255,255,0.07); }
+          .reg-stat:nth-child(2) { border-right:none; }
+          .reg-stat:nth-child(3) { border-bottom:none; }
+          .reg-stat:last-child   { border-right:none; border-bottom:none; }
+          .reg-body   { padding:16px 16px 48px; }
+          .reg-items  { grid-template-columns:1fr 1fr; gap:10px; }
+        }
+        @media(max-width:400px){
+          .reg-items  { grid-template-columns:1fr; }
+        }
+      `}</style>
 
-          <div style={{ fontSize: 64, marginBottom: 12, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.25))" }}>{emoji}</div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "rgba(255,255,255,0.75)", textTransform: "uppercase", marginBottom: 12 }}>{registry.occasion} Registry</div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 5vw, 54px)", fontWeight: 900, color: "#fff", lineHeight: 1.08, marginBottom: 12, letterSpacing: "-0.02em" }}>
-            {registry.title}
-          </h1>
-          <div style={{ fontSize: 15, color: "rgba(255,255,255,0.8)", marginBottom: 6 }}>Created by <strong style={{ color: "#fff" }}>{registry.ownerName}</strong></div>
-          {registry.eventDate && (
-            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", marginBottom: daysUntil > 0 ? 8 : 0 }}>
-              📅 {new Date(registry.eventDate).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-            </div>
-          )}
-          {daysUntil !== null && daysUntil >= 0 && (
-            <div style={{ display: "inline-block", padding: "6px 18px", background: "rgba(255,255,255,0.2)", borderRadius: 100, fontSize: 13, fontWeight: 700, color: "#fff", marginTop: 6, backdropFilter: "blur(8px)" }}>
-              {daysUntil === 0 ? "🎉 Today is the day!" : `🗓 ${daysUntil} days to go`}
-            </div>
-          )}
-          {registry.description && <p style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", maxWidth: 500, margin: "16px auto 0", lineHeight: 1.7 }}>{registry.description}</p>}
+      {/* ── HERO ── */}
+      <div className="reg-hero">
+        <div className="reg-hero-dot" />
+        {expired && (
+          <div style={{ display:"inline-block", padding:"5px 14px", background:"rgba(0,0,0,0.4)", borderRadius:100, fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.8)", letterSpacing:"0.08em", marginBottom:14 }}>
+            ⚠️ THIS REGISTRY HAS EXPIRED
+          </div>
+        )}
+        <div style={{ fontSize:56, marginBottom:10, filter:"drop-shadow(0 4px 8px rgba(0,0,0,0.25))" }}>{emoji}</div>
+        <div style={{ fontSize:11, fontWeight:800, letterSpacing:"0.16em", color:"rgba(255,255,255,0.75)", textTransform:"uppercase", marginBottom:10 }}>{registry.occasion} Registry</div>
+        <h1 style={{ fontFamily:"var(--font-display)", fontSize:"clamp(26px,5vw,52px)", fontWeight:900, color:"#fff", lineHeight:1.08, marginBottom:10, letterSpacing:"-0.02em" }}>
+          {registry.title}
+        </h1>
+        <p style={{ fontSize:15, fontWeight:600, color:"rgba(255,255,255,0.85)", marginBottom:6 }}>
+          by <strong style={{ color:"#fff" }}>{registry.ownerName}</strong>
+        </p>
+        {registry.eventDate && (
+          <p style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,0.75)", marginBottom: daysUntil >= 0 ? 10 : 0 }}>
+            📅 {new Date(registry.eventDate).toLocaleDateString("en-US",{ weekday:"long", month:"long", day:"numeric", year:"numeric" })}
+          </p>
+        )}
+        {daysUntil !== null && daysUntil >= 0 && (
+          <div style={{ display:"inline-block", padding:"7px 20px", background:"rgba(255,255,255,0.18)", borderRadius:100, fontSize:14, fontWeight:800, color:"#fff", marginTop:2, backdropFilter:"blur(8px)" }}>
+            {daysUntil === 0 ? "🎉 Today is the day!" : `🗓 ${daysUntil} day${daysUntil!==1?"s":""} to go`}
+          </div>
+        )}
+        {registry.description && (
+          <p style={{ fontSize:14, fontWeight:500, color:"rgba(255,255,255,0.82)", maxWidth:520, margin:"16px auto 0", lineHeight:1.75 }}>
+            {registry.description}
+          </p>
+        )}
+      </div>
+
+      {/* ── STATS BAR ── */}
+      <div className="reg-stats">
+        {[
+          { label:"Total",     value:items.length, color:"#f5f0e8" },
+          { label:"Available", value:available,    color:"#5dd68c" },
+          { label:"Claimed",   value:claimed,      color:"#e8b84b" },
+          { label:"Purchased", value:purchased,    color:"#60a5fa" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="reg-stat">
+            <div style={{ fontFamily:"var(--font-display)", fontSize:28, fontWeight:900, color, lineHeight:1 }}>{value}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:"#6b6560", marginTop:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</div>
+          </div>
+        ))}
+      </div>
+      {/* Progress under stats */}
+      <div style={{ background:"#0f0d0b", margin:"0 24px", borderRadius:"0 0 var(--r-lg) var(--r-lg)", padding:"12px 20px 16px", boxShadow:"0 8px 32px rgba(0,0,0,0.25)" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:700, color:"#6b6560", marginBottom:6 }}>
+          <span>{purchased+claimed} of {items.length} gifts taken</span>
+          <span style={{ color:accent }}>{progress}%</span>
         </div>
-
-        {/* Progress card floating */}
-        <div style={{ background: "#0f0d0b", margin: "0 24px", borderRadius: "var(--radius-xl)", padding: "20px 24px", transform: "translateY(-30px)", boxShadow: "0 8px 32px rgba(0,0,0,0.3)", maxWidth: 860, marginLeft: "auto", marginRight: "auto", position: "relative" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 16 }}>
-            {[
-              { label: "Total Gifts", value: items.length, color: "#f5f0e8" },
-              { label: "Available", value: available, color: "#5dd68c" },
-              { label: "Claimed", value: claimed, color: "#e8b84b" },
-              { label: "Purchased", value: purchased, color: "#60a5fa" },
-            ].map(({ label, value, color }) => (
-              <div key={label} style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: 30, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
-                <div style={{ fontSize: 10, color: "#5a5650", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>{label}</div>
-              </div>
-            ))}
-          </div>
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#5a5650", marginBottom: 6 }}>
-              <span>{purchased + claimed} of {items.length} gifts taken</span>
-              <span style={{ color: "#c9962a", fontWeight: 700 }}>{progress}%</span>
-            </div>
-            <div style={{ height: 6, background: "#1e1b18", borderRadius: 3, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg,#c9962a,#a02540)", borderRadius: 3, transition: "width 0.5s" }} />
-            </div>
-          </div>
+        <div style={{ height:5, background:"#1e1b18", borderRadius:3, overflow:"hidden" }}>
+          <div style={{ height:"100%", width:`${progress}%`, background:`linear-gradient(90deg,${accent},var(--maroon))`, borderRadius:3, transition:"width 0.5s" }} />
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "-10px auto 0", padding: "0 24px 60px" }}>
+      {/* ── BODY ── */}
+      <div className="reg-body">
 
         {/* Top gifters */}
         {topGifters.length > 0 && topGifters.some(g => g.total > 0) && (
-          <div style={{ background: "var(--gold-bg)", border: "1px solid rgba(201,150,42,0.2)", borderRadius: "var(--radius-xl)", padding: "18px 22px", marginBottom: 28, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "var(--gold-dk)", letterSpacing: "0.1em", flexShrink: 0 }}>🏆 TOP GIFTERS</div>
-            {topGifters.map((g, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 18 }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</span>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--black)" }}>{g.name}</div>
-                  {g.total > 0 && <div style={{ fontSize: 11, color: "var(--gold-dk)" }}>{currency} {g.total.toFixed(0)}</div>}
+          <div style={{ background:"var(--gold-bg)", border:`1px solid ${accent}30`, borderRadius:"var(--r-lg)", padding:"14px 18px", marginBottom:20 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"var(--gold-dk)", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:12 }}>🏆 Top Gifters</div>
+            <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+              {topGifters.map((g, i) => (
+                <div key={i} style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <span style={{ fontSize:20 }}>{i===0?"🥇":i===1?"🥈":"🥉"}</span>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:800, color:"var(--black)" }}>{g.name}</div>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--gold-dk)" }}>{g.count} gift{g.count!==1?"s":""}{g.total>0?` · ${currency} ${g.total.toFixed(0)}`:""}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Gifter activity strip */}
-        {contributions.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, overflowX: "auto", paddingBottom: 4 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray)", letterSpacing: "0.08em", flexShrink: 0, textTransform: "uppercase" }}>Recent gifters</div>
-            {contributions.slice(0, 8).map((c, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, background: "var(--white)", border: "1px solid var(--border2)", borderRadius: 100, padding: "5px 12px 5px 5px", flexShrink: 0, boxShadow: "var(--shadow-sm)" }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--maroon)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff" }}>
-                  {c.gifterName[0].toUpperCase()}
+        {/* Recent gifters — NOW shows item gifted */}
+        {contribs.length > 0 && (
+          <div style={{ marginBottom:24 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"var(--gray)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>
+              Recent Gifters
+            </div>
+            <div className="reg-gifters-row">
+              {contribs.slice(0, 10).map((c, i) => (
+                <div key={i} className="reg-gifter-chip">
+                  {/* Avatar */}
+                  <div style={{ width:42, height:42, background:"var(--maroon)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"var(--font-display)", fontWeight:900, fontSize:16, color:"#fff", flexShrink:0 }}>
+                    {(c.gifterName||"?")[0].toUpperCase()}
+                  </div>
+                  {/* Info */}
+                  <div style={{ padding:"8px 12px", minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--black)", whiteSpace:"nowrap" }}>{c.gifterName}</div>
+                    {/* Item they gifted */}
+                    {c.item?.title && (
+                      <div style={{ fontSize:11, fontWeight:600, color:"var(--maroon)", whiteSpace:"nowrap", maxWidth:180, overflow:"hidden", textOverflow:"ellipsis", marginTop:1 }}>
+                        🎁 {c.item.title}
+                      </div>
+                    )}
+                    <div style={{ display:"flex", alignItems:"center", gap:5, marginTop:2 }}>
+                      {c.status === "purchased"
+                        ? <span style={{ fontSize:10, fontWeight:700, color:"var(--green)", background:"var(--green-bg)", padding:"1px 7px", borderRadius:100 }}>✅ Purchased</span>
+                        : <span style={{ fontSize:10, fontWeight:700, color:"var(--yellow)", background:"var(--yellow-bg)", padding:"1px 7px", borderRadius:100 }}>🔖 Claimed</span>
+                      }
+                      {(c.payment?.totalAmount || c.contributionAmount || c.amount || 0) > 0 && (
+                        <span style={{ fontSize:10, fontWeight:700, color:"var(--gold-dk)" }}>
+                          {currency} {(c.payment?.totalAmount || c.contributionAmount || c.amount || 0).toFixed(0)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <span style={{ fontSize: 12, color: "var(--text2)", fontWeight: 500 }}>{c.gifterName.split(" ")[0]}</span>
-                {c.status === "purchased" && <span style={{ fontSize: 10 }}>✅</span>}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Filter bar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "var(--black)" }}>Gift List <span style={{ fontWeight: 400, fontStyle: "italic", color: "var(--gray)" }}>({items.length})</span></h2>
-          <div style={{ display: "flex", gap: 6 }}>
-            {[["all","All"], ["available",`Available (${available})`], ["claimed",`Taken (${claimed+purchased})`]].map(([k, l]) => (
+        {/* Filter + heading */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16, flexWrap:"wrap", gap:10 }}>
+          <h2 style={{ fontFamily:"var(--font-display)", fontSize:"clamp(20px,3vw,26px)", fontWeight:800 }}>
+            Gift List
+            <span style={{ fontWeight:500, fontStyle:"italic", color:"var(--gray)", fontSize:"0.75em", marginLeft:8 }}>({items.length})</span>
+          </h2>
+          <div style={{ display:"flex", gap:6 }}>
+            {[["all","All"],["available",`Available (${available})`],["claimed",`Taken (${claimed+purchased})`]].map(([k,l]) => (
               <button key={k} onClick={() => setFilter(k)} style={{
-                padding: "7px 14px", borderRadius: 100, cursor: "pointer",
-                fontSize: 12, fontFamily: "inherit", fontWeight: filter === k ? 700 : 400,
-                border: `1px solid ${filter === k ? "var(--maroon)" : "var(--border2)"}`,
-                background: filter === k ? "var(--maroon)" : "var(--white)",
-                color: filter === k ? "#fff" : "var(--text2)",
+                padding:"7px 14px", borderRadius:"var(--r-full)", cursor:"pointer",
+                fontSize:12, fontFamily:"inherit", fontWeight: filter===k ? 800 : 600,
+                border:`1.5px solid ${filter===k ? "var(--maroon)" : "var(--border2)"}`,
+                background: filter===k ? "var(--maroon)" : "var(--white)",
+                color: filter===k ? "#fff" : "var(--text2)",
+                transition:"all 0.15s",
               }}>{l}</button>
             ))}
           </div>
         </div>
 
-        {/* Gift items grid */}
+        {/* Gift grid */}
         {filteredItems.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "var(--gray)" }}>
-            <div style={{ fontSize: 48, marginBottom: 14 }}>🎁</div>
-            <p>No items in this filter.</p>
+          <div style={{ textAlign:"center", padding:"52px 0", color:"var(--gray)" }}>
+            <div style={{ fontSize:44, marginBottom:12 }}>🎁</div>
+            <p style={{ fontSize:15, fontWeight:600 }}>No items in this filter</p>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+          <div className="reg-items">
             {filteredItems.map(item => {
               const isAvailable = item.status === "available" || (item.groupBuy && item.status !== "purchased");
               const isPurchased = item.status === "purchased";
-              const groupPct = item.groupBuy && item.targetAmount > 0
-                ? Math.min(100, Math.round(((item.collectedAmount || 0) / item.targetAmount) * 100))
-                : 0;
-
+              const isClaimed   = item.status === "claimed" && !item.groupBuy;
               return (
                 <div key={item.id} style={{
-                  background: "#0f0d0b",
-                  borderRadius: "var(--radius-xl)", overflow: "hidden",
+                  background:"#0f0d0b", borderRadius:"var(--r-lg)", overflow:"hidden",
                   opacity: isPurchased ? 0.8 : 1,
-                  transition: "all 0.2s",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
-                }}
-                onMouseEnter={e => isAvailable && (e.currentTarget.style.transform = "translateY(-3px)")}
-                onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0)")}>
-                  {/* Top accent */}
-                  <div style={{ height: 3, background: isPurchased ? "#2e7d4f" : item.groupBuy ? "linear-gradient(90deg,#c9962a,#e8b84b)" : "linear-gradient(90deg,var(--gold),var(--maroon))" }} />
+                  display:"flex", flexDirection:"column",
+                  boxShadow:"0 2px 10px rgba(0,0,0,0.12)",
+                }}>
+                  {/* Accent strip */}
+                  <div style={{ height:3, background: isPurchased ? "#1e9e5e" : isClaimed ? "#b7680f" : item.groupBuy ? `linear-gradient(90deg,${accent},#e8b84b)` : `linear-gradient(90deg,${accent},var(--maroon))` }} />
 
                   {/* Image */}
-                  <div style={{ position: "relative", aspectRatio: "4/3", background: "#1a1614", overflow: "hidden" }}>
-                    {item.imageUrl && <img src={item.imageUrl} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: isPurchased ? "brightness(0.6)" : "none" }} />}
-                    {!item.imageUrl && <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, opacity: 0.4 }}>🎁</div>}
-
+                  <div style={{ position:"relative", aspectRatio:"4/3", background:"#1a1614", overflow:"hidden" }}>
+                    {item.imageUrl
+                      ? <img src={item.imageUrl} alt={item.title} style={{ width:"100%", height:"100%", objectFit:"cover", filter:isPurchased?"brightness(0.5)":"none" }} />
+                      : <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:40, opacity:0.35 }}>🎁</div>
+                    }
+                    {/* Status overlay */}
                     {isPurchased && (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)" }}>
-                        <div style={{ padding: "8px 20px", background: "#2e7d4f", color: "#fff", borderRadius: 100, fontSize: 12, fontWeight: 800 }}>✅ Fully gifted!</div>
+                      <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <div style={{ padding:"7px 18px", background:"#1e9e5e", color:"#fff", borderRadius:100, fontSize:13, fontWeight:800 }}>✅ Gifted!</div>
                       </div>
                     )}
-                    {item.status === "claimed" && !item.groupBuy && (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)" }}>
-                        <div style={{ padding: "8px 20px", background: "#b7680f", color: "#fff", borderRadius: 100, fontSize: 12, fontWeight: 800 }}>🔖 Claimed</div>
+                    {isClaimed && (
+                      <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.4)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <div style={{ padding:"7px 18px", background:"#b7680f", color:"#fff", borderRadius:100, fontSize:13, fontWeight:800 }}>🔖 Claimed</div>
                       </div>
                     )}
-
                     {/* Priority badge */}
-                    <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 8px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", borderRadius: 6, fontSize: 10, color: PRIORITY_COLORS[item.priority] || "#c9962a", fontWeight: 700 }}>
-                      {PRIORITY_LABELS[item.priority] || "Gift"}
+                    <div style={{ position:"absolute", top:8, left:8, padding:"3px 8px", background:"rgba(0,0,0,0.65)", borderRadius:6, fontSize:10, fontWeight:800, color: PRI_COLOR[item.priority] || "#e8b84b" }}>
+                      {PRI_LABEL[item.priority] || "Gift"}
                     </div>
-
                     {/* Group buy badge */}
                     {item.groupBuy && (
-                      <div style={{ position: "absolute", top: 10, right: 10, padding: "3px 8px", background: "rgba(201,150,42,0.9)", borderRadius: 6, fontSize: 10, color: "#fff", fontWeight: 800 }}>
+                      <div style={{ position:"absolute", top:8, right:8, padding:"3px 8px", background:"rgba(201,150,42,0.9)", borderRadius:6, fontSize:10, fontWeight:800, color:"#fff" }}>
                         👥 GROUP
                       </div>
                     )}
                   </div>
 
-                  <div style={{ padding: "14px 16px 16px" }}>
-                    <div style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 700, color: "#f5f0e8", marginBottom: 4, lineHeight: 1.3 }}>{item.title}</div>
-                    {item.note && <p style={{ fontSize: 11, color: "#7a7268", marginBottom: 8, fontStyle: "italic", lineHeight: 1.5 }}>{item.note}</p>}
-                    <div style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 800, color: "#e8b84b", marginBottom: 8 }}>
+                  {/* Card body */}
+                  <div style={{ padding:"12px 14px 14px", flex:1, display:"flex", flexDirection:"column", gap:6 }}>
+                    <div style={{ fontFamily:"var(--font-display)", fontSize:14, fontWeight:700, color:"#f5f0e8", lineHeight:1.3 }}>{item.title}</div>
+                    {item.note && <p style={{ fontSize:11, fontWeight:500, color:"#7a7268", lineHeight:1.5, fontStyle:"italic" }}>{item.note}</p>}
+                    <div style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:800, color:"#e8b84b", marginTop:2 }}>
                       {item.currency} {item.price.toFixed(2)}
                     </div>
 
-                    {/* Group buy progress */}
-                    {item.groupBuy && <GroupBuyBar item={item} />}
+                    {item.groupBuy && <GroupBuyBar item={item} accent={accent} />}
 
-                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                    <div style={{ display:"flex", gap:8, marginTop:"auto", paddingTop:8 }}>
                       {isAvailable && !isPurchased ? (
-                        <button onClick={() => { setClaimModal(item); setClaimResult(null); setForm({ gifterName: "", gifterEmail: "", message: "", contributionAmount: "" }); }} style={{
-                          flex: 1, padding: "11px", background: "var(--maroon)", color: "#fff",
-                          borderRadius: "var(--radius-lg)", border: "none",
-                          fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 14, cursor: "pointer",
-                          transition: "background 0.15s",
+                        <button onClick={() => openClaim(item)} style={{
+                          flex:1, padding:"10px", background:"var(--maroon)", color:"#fff",
+                          borderRadius:"var(--r-lg)", border:"none", fontFamily:"var(--font-display)",
+                          fontWeight:800, fontSize:13, cursor:"pointer",
                         }}>
                           {item.groupBuy ? "👥 Contribute" : "🎁 Gift this"}
                         </button>
                       ) : (
-                        <div style={{ flex: 1, padding: "11px", background: "#1a1614", borderRadius: "var(--radius-lg)", textAlign: "center", fontSize: 13, color: "#5a5650" }}>
-                          {isPurchased ? "Fully gifted ✅" : "Claimed 🔖"}
+                        <div style={{ flex:1, padding:"10px", background:"#1e1b18", borderRadius:"var(--r-lg)", textAlign:"center", fontSize:12, fontWeight:700, color:"#5a5650" }}>
+                          {isPurchased ? "✅ Gifted" : "🔖 Claimed"}
                         </div>
                       )}
-                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer" style={{ padding: "11px 14px", background: "#1a1614", borderRadius: "var(--radius-lg)", color: "#7a7268", fontSize: 13, fontWeight: 600 }}>↗</a>
+                      <a href={item.productUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ padding:"10px 13px", background:"#1e1b18", borderRadius:"var(--r-lg)", color:"#9a9690", fontSize:13, fontWeight:700 }}>
+                        ↗
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -300,117 +360,133 @@ export default function PublicRegistryClient({ registry }) {
 
         {/* Thank you message */}
         {registry.thankYouMsg && (
-          <div style={{ textAlign: "center", padding: "48px 24px 0", borderTop: "1px solid var(--border)", marginTop: 48 }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>💌</div>
-            <p style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--text2)", lineHeight: 1.8, fontStyle: "italic", maxWidth: 480, margin: "0 auto" }}>"{registry.thankYouMsg}"</p>
-            <p style={{ fontSize: 14, color: "var(--gray)", marginTop: 10 }}>— {registry.ownerName}</p>
+          <div style={{ textAlign:"center", padding:"44px 20px 0", borderTop:"1px solid var(--border)", marginTop:44 }}>
+            <div style={{ fontSize:32, marginBottom:10 }}>💌</div>
+            <p style={{ fontFamily:"var(--font-display)", fontSize:17, fontWeight:600, color:"var(--text2)", lineHeight:1.8, fontStyle:"italic", maxWidth:480, margin:"0 auto" }}>
+              "{registry.thankYouMsg}"
+            </p>
+            <p style={{ fontSize:14, fontWeight:700, color:"var(--maroon)", marginTop:10 }}>— {registry.ownerName}</p>
           </div>
         )}
       </div>
 
-      {/* ── Claim / Contribute Modal ── */}
+      {/* ── CLAIM / CONTRIBUTE MODAL ── */}
       {claimModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setClaimModal(null)}>
-          <div style={{ background: "#0f0d0b", borderRadius: "var(--radius-xl)", padding: 0, maxWidth: 500, width: "100%", maxHeight: "92vh", overflowY: "auto", boxShadow: "0 24px 64px rgba(0,0,0,0.6)" }} onClick={e => e.stopPropagation()}>
+        <div onClick={() => setClaimModal(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.65)", zIndex:1000, display:"flex", alignItems:"flex-end", justifyContent:"center", padding:"0" }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background:"var(--white)", borderRadius:"var(--r-xl) var(--r-xl) 0 0",
+            width:"100%", maxWidth:540, maxHeight:"90vh", overflowY:"auto",
+            boxShadow:"0 -8px 48px rgba(0,0,0,0.3)",
+            animation:"slideUp 0.28s ease",
+          }}>
+            <style>{`@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
 
-            {/* Modal header */}
-            <div style={{ height: 4, background: claimModal.groupBuy ? "linear-gradient(90deg,#c9962a,#e8b84b)" : "linear-gradient(90deg,var(--maroon),#a02540)", borderRadius: "20px 20px 0 0" }} />
-            <div style={{ padding: "22px 24px 0" }}>
-              <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 20 }}>
-                {claimModal.imageUrl && <div style={{ width: 68, height: 68, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}><img src={claimModal.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, color: "#c9962a", fontWeight: 800, letterSpacing: "0.1em", marginBottom: 4 }}>{claimModal.groupBuy ? "👥 GROUP GIFT CONTRIBUTION" : "🎁 YOU ARE GIFTING"}</div>
-                  <div style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "#f5f0e8", marginBottom: 4, lineHeight: 1.3 }}>{claimModal.title}</div>
-                  <div style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 800, color: "#e8b84b" }}>{claimModal.currency} {claimModal.price.toFixed(2)}</div>
+            {/* Pull handle */}
+            <div style={{ padding:"12px 0 4px", display:"flex", justifyContent:"center" }}>
+              <div style={{ width:36, height:4, borderRadius:99, background:"var(--border2)" }} />
+            </div>
+
+            {/* Item preview */}
+            <div style={{ display:"flex", gap:14, alignItems:"center", padding:"12px 20px 16px", borderBottom:"1px solid var(--border)" }}>
+              {claimModal.imageUrl && (
+                <div style={{ width:60, height:60, borderRadius:"var(--r-md)", overflow:"hidden", flexShrink:0 }}>
+                  <img src={claimModal.imageUrl} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                 </div>
-                <button onClick={() => setClaimModal(null)} style={{ color: "#5a5650", fontSize: 20, padding: 4, flexShrink: 0, marginLeft: 4 }}>✕</button>
+              )}
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:10, fontWeight:800, color:accent, letterSpacing:"0.1em", marginBottom:3 }}>
+                  {claimModal.groupBuy ? "👥 GROUP GIFT CONTRIBUTION" : "🎁 YOU ARE GIFTING"}
+                </div>
+                <div style={{ fontFamily:"var(--font-display)", fontSize:16, fontWeight:800, color:"var(--black)", lineHeight:1.3 }}>{claimModal.title}</div>
+                <div style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:900, color:"var(--maroon)", marginTop:2 }}>
+                  {claimModal.currency} {claimModal.price.toFixed(2)}
+                </div>
               </div>
-
-              {claimModal.groupBuy && !claimResult && <GroupBuyBar item={claimModal} />}
+              <button onClick={() => setClaimModal(null)} style={{ color:"var(--gray)", fontSize:20, padding:4, flexShrink:0, background:"none", border:"none", cursor:"pointer" }}>✕</button>
             </div>
 
             {!claimResult ? (
-              <div style={{ padding: "20px 24px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ padding:"20px", display:"flex", flexDirection:"column", gap:14 }}>
+                {/* Group buy info */}
                 {claimModal.groupBuy && (
-                  <div style={{ padding: "12px 14px", background: "rgba(201,150,42,0.08)", border: "1px solid rgba(201,150,42,0.2)", borderRadius: 10, fontSize: 13, color: "#c9962a", lineHeight: 1.6 }}>
-                    This is a group gift! Multiple people can contribute any amount. The item will be marked as fully gifted once the target is reached.
-                  </div>
-                )}
-                {!claimModal.groupBuy && (
-                  <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.05)", borderRadius: 10, fontSize: 13, color: "#7a7268", lineHeight: 1.6 }}>
-                    Claiming this item lets others know it's taken. You'll be directed to complete payment after claiming.
-                  </div>
+                  <>
+                    <GroupBuyBar item={claimModal} accent={accent} />
+                    <div style={{ padding:"12px 14px", background:accent+"12", border:`1px solid ${accent}30`, borderRadius:"var(--r-md)", fontSize:13, fontWeight:600, color:"var(--text2)", lineHeight:1.6 }}>
+                      Multiple people can contribute any amount. The item is marked gifted when the target is reached.
+                    </div>
+                  </>
                 )}
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
                   <div>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#7a7268", marginBottom: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Your name *</label>
-                    <input value={form.gifterName} onChange={e => setForm(f => ({ ...f, gifterName: e.target.value }))} placeholder="Your name" style={s.inp} />
+                    <label style={lbl}>Your name *</label>
+                    <input value={form.gifterName} onChange={e => setForm(f=>({...f,gifterName:e.target.value}))} placeholder="Jane" style={inp} />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#7a7268", marginBottom: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Your email *</label>
-                    <input type="email" value={form.gifterEmail} onChange={e => setForm(f => ({ ...f, gifterEmail: e.target.value }))} placeholder="your@email.com" style={s.inp} />
+                    <label style={lbl}>Your email *</label>
+                    <input type="email" value={form.gifterEmail} onChange={e => setForm(f=>({...f,gifterEmail:e.target.value}))} placeholder="jane@email.com" style={inp} />
                   </div>
                 </div>
 
                 {claimModal.groupBuy && (
                   <div>
-                    <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#7a7268", marginBottom: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Your contribution amount * ({claimModal.currency})</label>
-                    <input type="number" min="1" step="0.01" value={form.contributionAmount} onChange={e => setForm(f => ({ ...f, contributionAmount: e.target.value }))} placeholder={`e.g. ${(claimModal.price / 4).toFixed(0)}`} style={s.inp} />
-                    <div style={{ fontSize: 11, color: "#5a5650", marginTop: 4 }}>
-                      Remaining: {claimModal.currency} {Math.max(0, (claimModal.targetAmount || claimModal.price) - (claimModal.collectedAmount || 0)).toFixed(2)}
-                    </div>
+                    <label style={lbl}>Your contribution ({claimModal.currency}) *</label>
+                    <input type="number" min="1" step="0.01" value={form.contributionAmount} onChange={e => setForm(f=>({...f,contributionAmount:e.target.value}))}
+                      placeholder={`e.g. ${Math.round(claimModal.price/4)}`} style={inp} />
+                    <p style={{ fontSize:11, fontWeight:600, color:"var(--gray)", marginTop:5 }}>
+                      Still needed: {claimModal.currency} {Math.max(0,(claimModal.targetAmount||claimModal.price)-(claimModal.collectedAmount||0)).toFixed(2)}
+                    </p>
                   </div>
                 )}
 
                 <div>
-                  <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#7a7268", marginBottom: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>Message (optional)</label>
-                  <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder={`A message for ${registry.ownerName}...`} rows={2} style={{ ...s.inp, resize: "vertical" }} />
+                  <label style={lbl}>Message (optional)</label>
+                  <textarea value={form.message} onChange={e => setForm(f=>({...f,message:e.target.value}))}
+                    placeholder={`A warm message for ${registry.ownerName}...`} rows={2}
+                    style={{ ...inp, resize:"vertical", lineHeight:1.6 }} />
                 </div>
 
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button onClick={handleClaim} disabled={claiming || !form.gifterName || !form.gifterEmail || (claimModal.groupBuy && !form.contributionAmount)} style={{
-                    flex: 1, padding: "14px", background: claiming ? "#2a2520" : "var(--maroon)", color: claiming ? "#5a5650" : "#fff",
-                    borderRadius: "var(--radius-xl)", border: "none",
-                    fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 15, cursor: claiming ? "not-allowed" : "pointer",
-                  }}>
-                    {claiming ? "Processing..." : claimModal.groupBuy ? `Contribute ${form.contributionAmount ? claimModal.currency + " " + parseFloat(form.contributionAmount).toFixed(2) : ""}` : "Claim & Gift →"}
+                <div style={{ display:"flex", gap:10 }}>
+                  <button onClick={handleClaim}
+                    disabled={claiming || !form.gifterName || !form.gifterEmail || (claimModal.groupBuy && !form.contributionAmount)}
+                    className="btn-primary"
+                    style={{ flex:1, opacity:(claiming||!form.gifterName||!form.gifterEmail)?0.65:1, fontSize:15 }}>
+                    {claiming ? "Processing..." : claimModal.groupBuy ? "Contribute →" : "Claim & Gift →"}
                   </button>
-                  <button onClick={() => setClaimModal(null)} style={{ padding: "14px 18px", background: "#1a1614", borderRadius: "var(--radius-xl)", color: "#7a7268", fontSize: 14 }}>Cancel</button>
+                  <button onClick={() => setClaimModal(null)} style={{ padding:"14px 18px", background:"var(--cream)", borderRadius:"var(--r-xl)", color:"var(--text2)", fontSize:14, fontWeight:700, border:"none", cursor:"pointer" }}>
+                    Cancel
+                  </button>
                 </div>
               </div>
             ) : claimResult.error ? (
-              <div style={{ padding: "24px", textAlign: "center" }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>😕</div>
-                <p style={{ color: "#f07070", marginBottom: 16 }}>{claimResult.error}</p>
-                <button onClick={() => setClaimModal(null)} style={{ padding: "10px 24px", background: "#1a1614", borderRadius: "var(--radius-lg)", color: "#7a7268", fontSize: 13 }}>Close</button>
+              <div style={{ padding:"32px 20px", textAlign:"center" }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>😕</div>
+                <p style={{ color:"var(--red)", fontWeight:700, fontSize:15, marginBottom:16 }}>{claimResult.error}</p>
+                <button onClick={() => setClaimResult(null)} className="btn-outline" style={{ margin:"0 auto", width:"auto", padding:"11px 28px" }}>Try again</button>
               </div>
             ) : (
-              <div style={{ padding: "24px", textAlign: "center" }}>
-                <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
-                <h3 style={{ fontFamily: "var(--font-display)", fontSize: 22, color: "#5dd68c", marginBottom: 10 }}>
+              <div style={{ padding:"32px 20px", textAlign:"center" }}>
+                <div style={{ fontSize:56, marginBottom:14 }}>🎉</div>
+                <h3 style={{ fontFamily:"var(--font-display)", fontSize:22, fontWeight:900, color:"var(--green)", marginBottom:10 }}>
                   {claimResult.targetMet ? "Gift fully funded! 🎊" : claimResult.groupBuy ? "Contribution received!" : "Gift claimed!"}
                 </h3>
-                <p style={{ fontSize: 14, color: "#7a7268", marginBottom: 20, lineHeight: 1.7 }}>{claimResult.message}</p>
-
+                <p style={{ fontSize:14, fontWeight:600, color:"var(--text2)", marginBottom:20, lineHeight:1.7 }}>{claimResult.message}</p>
                 {claimResult.groupBuy && !claimResult.targetMet && (
-                  <div style={{ padding: "12px 16px", background: "rgba(201,150,42,0.1)", border: "1px solid rgba(201,150,42,0.2)", borderRadius: 10, marginBottom: 20 }}>
-                    <div style={{ fontSize: 13, color: "#c9962a", fontWeight: 700 }}>
-                      {claimResult.newCollected?.toFixed(2)} / {claimResult.targetAmount?.toFixed(2)} {claimModal.currency} raised
+                  <div style={{ padding:"12px 16px", background:"var(--gold-bg)", border:"1px solid rgba(201,150,42,0.25)", borderRadius:"var(--r-md)", marginBottom:20 }}>
+                    <div style={{ fontFamily:"var(--font-display)", fontSize:15, fontWeight:800, color:"var(--gold-dk)", marginBottom:6 }}>
+                      {currency} {claimResult.newCollected?.toFixed(2)} raised of {currency} {claimResult.targetAmount?.toFixed(2)}
                     </div>
-                    <div style={{ height: 4, background: "#1e1b18", borderRadius: 2, overflow: "hidden", marginTop: 8 }}>
-                      <div style={{ height: "100%", width: `${Math.min(100, (claimResult.newCollected / claimResult.targetAmount) * 100)}%`, background: "linear-gradient(90deg,#c9962a,#e8b84b)", borderRadius: 2 }} />
+                    <div style={{ height:5, background:"var(--cream2)", borderRadius:3, overflow:"hidden" }}>
+                      <div style={{ height:"100%", width:`${Math.min(100,(claimResult.newCollected/claimResult.targetAmount)*100)}%`, background:"var(--gold)", borderRadius:3 }} />
                     </div>
                   </div>
                 )}
-
                 {!claimResult.groupBuy && claimResult.contribution?.id && (
-                  <Link href={`/pay/${claimResult.contribution.id}`} style={{ display: "inline-block", padding: "13px 32px", background: "var(--maroon)", color: "#fff", borderRadius: "var(--radius-xl)", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 15, marginBottom: 12 }}>
+                  <Link href={`/pay/${claimResult.contribution.id}`} className="btn-primary" style={{ justifyContent:"center", marginBottom:12 }}>
                     Complete Payment →
                   </Link>
                 )}
-                <br />
-                <button onClick={() => setClaimModal(null)} style={{ padding: "8px 20px", background: "transparent", border: "none", color: "#5a5650", cursor: "pointer", fontSize: 13, marginTop: 8 }}>
+                <button onClick={() => setClaimModal(null)} style={{ background:"none", border:"none", color:"var(--gray)", cursor:"pointer", fontSize:13, fontWeight:600, padding:"8px 0", display:"block", margin:"8px auto 0" }}>
                   Back to registry
                 </button>
               </div>
