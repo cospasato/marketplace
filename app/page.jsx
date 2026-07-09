@@ -8,265 +8,171 @@ async function getHomeData() {
       where: { isPublic: true },
       include: { items: { select: { status: true } } },
       orderBy: { createdAt: "desc" },
-      take: 6,
+      take: 8,
     }).catch(() => []);
-
-    const totalItems = await db.registryItem.count().catch(() => 0);
     const totalContribs = await db.contribution.count().catch(() => 0);
-
-    return { registries, totalItems, totalContribs };
-  } catch {
-    return { registries: [], totalItems: 0, totalContribs: 0 };
-  }
+    return { registries, totalContribs };
+  } catch { return { registries: [], totalContribs: 0 }; }
 }
 
-const OCCASIONS = [
-  { emoji: "💍", label: "Wedding", gradient: "linear-gradient(135deg,#d4af37,#8b6914)", desc: "Plan your perfect wedding wishlist" },
-  { emoji: "🎂", label: "Birthday", gradient: "linear-gradient(135deg,#e8334a,#9e1c2e)", desc: "Celebrate another trip around the sun" },
-  { emoji: "👶", label: "Baby Shower", gradient: "linear-gradient(135deg,#7eb8f7,#2563a8)", desc: "Welcome the newest family member" },
-  { emoji: "🎓", label: "Graduation", gradient: "linear-gradient(135deg,#2e7d4f,#1a4f30)", desc: "Mark an incredible milestone" },
-  { emoji: "🏠", label: "Housewarming", gradient: "linear-gradient(135deg,#ea7c2b,#a0501a)", desc: "Make a new house a home" },
-  { emoji: "💝", label: "Anniversary", gradient: "linear-gradient(135deg,#9b59b6,#6c3483)", desc: "Celebrate years of love" },
-];
+function isExpired(r) {
+  return r.eventDate && new Date(r.eventDate) < new Date(Date.now() - 86400000);
+}
 
 const OCC_EMOJI = { Wedding:"💍", Birthday:"🎂", "Baby Shower":"👶", Christmas:"🎄", Graduation:"🎓", Housewarming:"🏠", Anniversary:"💝" };
+const OCC_GRAD  = {
+  Wedding: ["#c9a227","#7b6200"],
+  Birthday: ["#e8334a","#8b0020"],
+  "Baby Shower": ["#4aa3e8","#1a5a9a"],
+  Graduation: ["#2e9e5e","#135e32"],
+  Housewarming: ["#e87c2b","#8b3e00"],
+  Anniversary: ["#9b59b6","#5b1e8c"],
+  Christmas: ["#c0392b","#1e7a3c"],
+};
 
-function isExpired(reg) {
-  if (!reg.eventDate) return false;
-  return new Date(reg.eventDate) < new Date(Date.now() - 86400000);
-}
+const OCCASIONS = [
+  { label:"Wedding",     emoji:"💍" },
+  { label:"Birthday",    emoji:"🎂" },
+  { label:"Baby Shower", emoji:"👶" },
+  { label:"Graduation",  emoji:"🎓" },
+  { label:"Housewarming",emoji:"🏠" },
+  { label:"Anniversary", emoji:"💝" },
+];
 
 export default async function HomePage() {
-  const { registries, totalItems, totalContribs } = await getHomeData();
-  const activeRegs = registries.filter(r => !isExpired(r));
+  const { registries, totalContribs } = await getHomeData();
+  const active = registries.filter(r => !isExpired(r));
 
   return (
     <div>
-      {/* ── HERO ── */}
-      <section style={{ position: "relative", overflow: "hidden", minHeight: 600, display: "flex", alignItems: "center" }}>
-        {/* Background */}
-        <div style={{ position: "absolute", inset: 0, background: "var(--maroon-grd)" }} />
-        {/* Pattern overlay */}
-        <div style={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)", backgroundSize: "32px 32px" }} />
-        {/* Glow orbs */}
-        <div style={{ position: "absolute", top: -100, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,150,42,0.18) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", bottom: -120, left: -60, width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)" }} />
+      {/* ── Hero banner ── */}
+      <div style={{ background:"linear-gradient(160deg,var(--maroon-dk),var(--maroon),var(--maroon-lt))", padding:"28px 20px 36px", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", top:-60, right:-40, width:200, height:200, borderRadius:"50%", background:"rgba(255,255,255,0.04)" }} />
+        <div style={{ position:"absolute", bottom:-80, left:-20, width:240, height:240, borderRadius:"50%", background:"rgba(255,255,255,0.03)" }} />
 
-        <div style={{ position: "relative", maxWidth: 1100, margin: "0 auto", padding: "96px 24px 88px", width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+        <p style={{ fontSize:13, fontWeight:600, color:"rgba(255,255,255,0.7)", letterSpacing:"0.06em", marginBottom:10, fontFamily:"var(--font-body)" }}>
+          {active.length > 0 ? `${active.length} active registries` : "Start celebrating"}
+        </p>
+        <h1 style={{ fontFamily:"var(--font-display)", fontSize:32, fontWeight:900, color:"#fff", lineHeight:1.1, marginBottom:8, letterSpacing:"-0.02em" }}>
+          The gift they<br/><span style={{ color:"var(--gold-lt)", fontStyle:"italic" }}>actually want.</span>
+        </h1>
+        <p style={{ fontSize:14, color:"rgba(255,255,255,0.72)", marginBottom:24, lineHeight:1.6 }}>
+          Create a registry for any occasion. Share with everyone.
+        </p>
+        <div style={{ display:"flex", gap:10 }}>
+          <Link href="/registry?tab=create" style={{ flex:1, padding:"14px", background:"var(--gold)", color:"#fff", borderRadius:"var(--r-xl)", fontWeight:700, fontSize:15, textAlign:"center", display:"block" }}>
+            Create Registry
+          </Link>
+          <Link href="/registry" style={{ flex:1, padding:"14px", background:"rgba(255,255,255,0.15)", color:"#fff", border:"1px solid rgba(255,255,255,0.3)", borderRadius:"var(--r-xl)", fontWeight:600, fontSize:15, textAlign:"center", display:"block", backdropFilter:"blur(8px)" }}>
+            Find One 🔍
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Occasions horizontal scroll ── */}
+      <div style={{ padding:"24px 0 0" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 20px", marginBottom:14 }}>
+          <span style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:700 }}>Occasions</span>
+          <Link href="/registry" style={{ fontSize:13, color:"var(--maroon)", fontWeight:600 }}>See all</Link>
+        </div>
+        <div style={{ display:"flex", gap:12, paddingLeft:20, paddingRight:20, overflowX:"auto", paddingBottom:4 }}>
+          {OCCASIONS.map(({ label, emoji }) => {
+            const [c1, c2] = OCC_GRAD[label] || ["#c9962a","#7b1c2e"];
+            return (
+              <Link key={label} href={`/registry?occasion=${encodeURIComponent(label)}`} style={{ flexShrink:0, display:"flex", flexDirection:"column", alignItems:"center", gap:8, textDecoration:"none" }}>
+                <div style={{ width:70, height:70, borderRadius:22, background:`linear-gradient(145deg,${c1},${c2})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:30, boxShadow:`0 4px 16px ${c1}44` }}>
+                  {emoji}
+                </div>
+                <span style={{ fontSize:11, fontWeight:600, color:"var(--text2)", textAlign:"center", lineHeight:1.3 }}>{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Stats pill ── */}
+      {totalContribs > 0 && (
+        <div style={{ margin:"24px 20px 0", padding:"14px 18px", background:"var(--gold-bg)", border:"1px solid rgba(201,150,42,0.2)", borderRadius:"var(--r-lg)", display:"flex", alignItems:"center", gap:14 }}>
+          <div style={{ fontSize:28 }}>🎁</div>
           <div>
-            {/* Badge */}
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(201,150,42,0.2)", border: "1px solid rgba(201,150,42,0.4)", borderRadius: 100, padding: "6px 16px 6px 8px", marginBottom: 28 }}>
-              <span style={{ width: 22, height: 22, background: "var(--gold)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🎁</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#e8b84b", letterSpacing: "0.1em" }}>SELF SERVICE GIFT REGISTRY</span>
-            </div>
-            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(40px, 5.5vw, 72px)", fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: 20, letterSpacing: "-0.02em" }}>
-              The Gift They<br />
-              <span style={{ background: "var(--gold-shine)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontStyle: "italic" }}>
-                Actually Want.
-              </span>
-            </h1>
-            <p style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "rgba(255,255,255,0.78)", lineHeight: 1.8, marginBottom: 36, maxWidth: 480 }}>
-              Create a registry for weddings, birthdays, baby showers and more. Share with loved ones. Receive exactly what you wish for — no duplicates, no returns.
-            </p>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Link href="/registry" style={{ padding: "15px 36px", background: "var(--gold)", color: "#fff", borderRadius: "var(--radius-xl)", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 16, display: "inline-block", boxShadow: "var(--shadow-gold)", letterSpacing: "-0.01em" }}>
-                Create Free Registry →
-              </Link>
-              <Link href="/registry" style={{ padding: "15px 28px", background: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "var(--radius-xl)", fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 16, display: "inline-block", backdropFilter: "blur(8px)" }}>
-                Find a Registry 🔍
-              </Link>
-            </div>
-
-            {/* Mini stats */}
-            {totalItems > 0 && (
-              <div style={{ display: "flex", gap: 28, marginTop: 48, flexWrap: "wrap" }}>
-                {[
-                  { v: activeRegs.length + "+", l: "Active Registries" },
-                  { v: totalItems + "+", l: "Gift Items Listed" },
-                  { v: totalContribs + "+", l: "Gifts Exchanged" },
-                ].map(({ v, l }) => (
-                  <div key={l}>
-                    <div style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 800, color: "#e8b84b", lineHeight: 1 }}>{v}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 3, letterSpacing: "0.06em", textTransform: "uppercase" }}>{l}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right side visual */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }} className="hide-mobile">
-            {OCCASIONS.slice(0, 4).map(({ emoji, label, gradient }) => (
-              <Link key={label} href={`/registry?occasion=${encodeURIComponent(label)}`} style={{
-                background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 16, padding: "20px 16px", textAlign: "center", backdropFilter: "blur(8px)",
-                transition: "all 0.2s", display: "block",
-              }}>
-                <div style={{ fontSize: 36, marginBottom: 8 }}>{emoji}</div>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 600, color: "#fff" }}>{label}</div>
-              </Link>
-            ))}
+            <div style={{ fontFamily:"var(--font-display)", fontSize:20, fontWeight:800, color:"var(--maroon)", lineHeight:1 }}>{totalContribs}+ gifts given</div>
+            <div style={{ fontSize:12, color:"var(--gold-dk)", marginTop:2 }}>through NIZAWADIE registries</div>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* ── OCCASIONS ── */}
-      <section style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 52 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "var(--gold-dk)", textTransform: "uppercase", marginBottom: 14 }}>Every Occasion</div>
-          <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", marginBottom: 14 }}>Built for celebrations</h2>
-          <p style={{ fontSize: 16, color: "var(--gray)", maxWidth: 460, margin: "0 auto" }}>Whether it's a wedding or a housewarming, NIZAWADIE has you covered.</p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14 }}>
-          {OCCASIONS.map(({ emoji, label, gradient, desc }) => (
-            <Link key={label} href={`/registry?occasion=${encodeURIComponent(label)}`} style={{ display: "block" }}>
-              <div className="occasion-card" style={{ borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.22s", boxShadow: "var(--shadow-sm)" }}>
-                {/* Gradient top */}
-                <div style={{ background: gradient, padding: "28px 16px 20px", textAlign: "center" }}>
-                  <div style={{ fontSize: 44, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}>{emoji}</div>
-                </div>
-                {/* Label */}
-                <div style={{ background: "#0f0d0b", padding: "12px 14px" }}>
-                  <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 14, color: "#f5f0e8", marginBottom: 3 }}>{label}</div>
-                  <div style={{ fontSize: 11, color: "#7a7268", lineHeight: 1.4 }}>{desc}</div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section style={{ background: "#0f0d0b", padding: "80px 24px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, var(--gold), var(--maroon), var(--gold))" }} />
-        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "var(--gold)", textTransform: "uppercase", marginBottom: 14 }}>How It Works</div>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 4vw, 44px)", color: "#f5f0e8", fontWeight: 900 }}>
-              Gifting made <span style={{ color: "var(--gold-lt)", fontStyle: "italic" }}>beautifully</span> simple
-            </h2>
+      {/* ── Active registries ── */}
+      {active.length > 0 && (
+        <div style={{ marginTop:28, padding:"0 20px" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+            <span style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:700 }}>Active Registries</span>
+            <Link href="/registry" style={{ fontSize:13, color:"var(--maroon)", fontWeight:600 }}>View all</Link>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 2 }}>
-            {[
-              { n: "01", icon: "✍️", title: "Create in 60 seconds", desc: "Enter your name, pick your occasion, set your event date. No account needed to start." },
-              { n: "02", icon: "🛍", title: "Add any product", desc: "Browse our partner stores, or paste any product link from anywhere on the internet." },
-              { n: "03", icon: "🔗", title: "Share your link", desc: "Send your unique registry link via WhatsApp, email or social — works everywhere." },
-              { n: "04", icon: "🎉", title: "Celebrate perfectly", desc: "Guests claim gifts, contribute as a group, and you receive exactly what you wished for." },
-            ].map(({ n, icon, title, desc }, i) => (
-              <div key={n} style={{ padding: "32px 24px", borderRight: i < 3 ? "1px solid rgba(255,255,255,0.07)" : "none", background: "transparent", position: "relative" }}>
-                <div style={{ fontSize: 32, marginBottom: 16 }}>{icon}</div>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: 11, fontWeight: 700, color: "var(--gold)", letterSpacing: "0.1em", marginBottom: 10 }}>STEP {n}</div>
-                <h3 style={{ fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 700, color: "#f5f0e8", marginBottom: 10 }}>{title}</h3>
-                <p style={{ fontSize: 14, color: "#7a7268", lineHeight: 1.75 }}>{desc}</p>
-              </div>
-            ))}
-          </div>
-          <div style={{ textAlign: "center", marginTop: 52 }}>
-            <Link href="/registry" style={{ padding: "16px 48px", background: "var(--gold)", color: "#fff", borderRadius: "var(--radius-xl)", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 17, display: "inline-block", boxShadow: "var(--shadow-gold)", letterSpacing: "-0.01em" }}>
-              Start Your Free Registry →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── LIVE REGISTRIES ── */}
-      {activeRegs.length > 0 && (
-        <section style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 40, gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "var(--gold-dk)", textTransform: "uppercase", marginBottom: 12 }}>Live Now</div>
-              <h2 style={{ fontSize: "clamp(24px, 3.5vw, 36px)" }}>Active registries</h2>
-            </div>
-            <Link href="/registry" style={{ fontSize: 14, color: "var(--maroon)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4, borderBottom: "1px solid var(--maroon)", paddingBottom: 1 }}>
-              Browse all →
-            </Link>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-            {activeRegs.map(reg => {
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+            {active.slice(0, 5).map(reg => {
               const items = reg.items || [];
-              const pct = items.length > 0 ? Math.round((items.filter(i => i.status !== "available").length / items.length) * 100) : 0;
+              const taken = items.filter(i => i.status !== "available").length;
+              const pct = items.length > 0 ? Math.round((taken / items.length) * 100) : 0;
               const emoji = OCC_EMOJI[reg.occasion] || "🎁";
-              const daysUntil = reg.eventDate ? Math.ceil((new Date(reg.eventDate) - Date.now()) / 86400000) : null;
+              const [c1, c2] = OCC_GRAD[reg.occasion] || ["#c9962a","#7b1c2e"];
+              const days = reg.eventDate ? Math.ceil((new Date(reg.eventDate) - Date.now()) / 86400000) : null;
+
               return (
-                <Link key={reg.id} href={`/registry/${reg.slug}`} style={{ display: "block" }}>
-                  <div className="registry-card" style={{ background: "#0f0d0b", borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.2s", boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
-                    <div style={{ height: 3, background: "linear-gradient(90deg, var(--gold), var(--maroon))" }} />
-                    <div style={{ padding: "22px 20px 20px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-                        <div style={{ fontSize: 36 }}>{emoji}</div>
-                        <div style={{ fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 100, background: "rgba(201,150,42,0.18)", color: "#e8b84b", border: "1px solid rgba(201,150,42,0.28)" }}>{reg.occasion}</div>
-                      </div>
-                      <div style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "#f5f0e8", marginBottom: 5, lineHeight: 1.25 }}>{reg.title}</div>
-                      <div style={{ fontSize: 12, color: "#7a7268", marginBottom: 14 }}>
-                        by {reg.ownerName}
-                        {daysUntil !== null && daysUntil > 0 && <span style={{ marginLeft: 8, color: "#c9962a", fontWeight: 600 }}>· {daysUntil}d to go</span>}
-                        {daysUntil === 0 && <span style={{ marginLeft: 8, color: "#e8b84b", fontWeight: 700 }}>· Today! 🎉</span>}
-                      </div>
-                      {items.length > 0 && (
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#5a5650", marginBottom: 6 }}>
-                            <span>{items.length} gifts</span><span style={{ color: "#c9962a", fontWeight: 600 }}>{pct}% claimed</span>
-                          </div>
-                          <div style={{ height: 4, background: "#1e1b18", borderRadius: 2, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${pct}%`, background: "linear-gradient(90deg, var(--gold), var(--maroon-lt))", borderRadius: 2 }} />
-                          </div>
+                <Link key={reg.id} href={`/registry/${reg.slug}`} style={{ display:"block", background:"var(--black)", borderRadius:"var(--r-lg)", overflow:"hidden", boxShadow:"0 2px 12px rgba(0,0,0,0.12)", WebkitTapHighlightColor:"transparent" }}>
+                  <div style={{ height:4, background:`linear-gradient(90deg,${c1},${c2})` }} />
+                  <div style={{ padding:"16px" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                      <div style={{ width:48, height:48, borderRadius:14, background:`linear-gradient(135deg,${c1},${c2})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{emoji}</div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontFamily:"var(--font-display)", fontSize:15, fontWeight:700, color:"#f5f0e8", lineHeight:1.25, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{reg.title}</div>
+                        <div style={{ fontSize:12, color:"#7a7268", marginTop:2 }}>
+                          by {reg.ownerName}
+                          {days !== null && days >= 0 && <span style={{ color:c1, marginLeft:6, fontWeight:600 }}>· {days === 0 ? "Today! 🎉" : `${days}d away`}</span>}
                         </div>
-                      )}
+                      </div>
+                      <div style={{ fontSize:13, fontWeight:800, color:c1, fontFamily:"var(--font-display)", flexShrink:0 }}>{pct}%</div>
                     </div>
+                    {items.length > 0 && (
+                      <div style={{ height:3, background:"#1e1b18", borderRadius:2, overflow:"hidden", marginTop:12 }}>
+                        <div style={{ height:"100%", width:`${pct}%`, background:`linear-gradient(90deg,${c1},${c2})`, borderRadius:2 }} />
+                      </div>
+                    )}
                   </div>
                 </Link>
               );
             })}
           </div>
-        </section>
+        </div>
       )}
 
-      {/* ── FEATURES ── */}
-      <section style={{ background: "var(--cream)", borderTop: "1px solid var(--border)", padding: "80px 24px" }}>
-        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 52 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "var(--gold-dk)", textTransform: "uppercase", marginBottom: 14 }}>Why NIZAWADIE</div>
-            <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)" }}>Everything gifting needs</h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 28 }}>
-            {[
-              { icon: "👥", title: "Group purchasing", desc: "Too expensive for one person? Let guests pool money together for big-ticket gifts. Track contributions live." },
-              { icon: "🌐", title: "Any product, any store", desc: "Add items from our partner stores or paste any link from any website worldwide." },
-              { icon: "📱", title: "Live event screen", desc: "Project our live dashboard at your wedding. Confetti fires when someone gives a gift!" },
-              { icon: "🚫", title: "Zero duplicates", desc: "Guests claim before buying. Your registry updates instantly so nobody doubles up." },
-              { icon: "💳", title: "Easy payments", desc: "Pay via M-Pesa or bank transfer. We buy and deliver on your behalf. 5% service fee." },
-              { icon: "⏳", title: "Auto-expires", desc: "Registries automatically expire after your event date so guests know it's still active." },
-            ].map(({ icon, title, desc }) => (
-              <div key={title}>
-                <div style={{ width: 48, height: 48, borderRadius: "var(--radius-lg)", background: "var(--maroon-bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 16 }}>{icon}</div>
-                <h3 style={{ fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{title}</h3>
-                <p style={{ fontSize: 13, color: "var(--gray)", lineHeight: 1.75 }}>{desc}</p>
-              </div>
-            ))}
-          </div>
+      {/* ── How it works ── */}
+      <div style={{ margin:"32px 20px 0", background:"var(--black)", borderRadius:"var(--r-xl)", overflow:"hidden" }}>
+        <div style={{ padding:"20px 20px 4px", borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
+          <div style={{ fontSize:11, fontWeight:700, letterSpacing:"0.12em", color:"var(--gold)", textTransform:"uppercase", marginBottom:8, fontFamily:"var(--font-body)" }}>How it works</div>
+          <h2 style={{ fontFamily:"var(--font-display)", fontSize:22, fontWeight:800, color:"#f5f0e8" }}>Gifting in 4 steps</h2>
         </div>
-      </section>
+        {[
+          { n:"1", icon:"✍️", title:"Create in 60 sec", desc:"No account needed. Pick your occasion, enter your name, get a link instantly." },
+          { n:"2", icon:"🛍", title:"Add any product", desc:"From our stores or paste any link from any website worldwide." },
+          { n:"3", icon:"🔗", title:"Share your link", desc:"WhatsApp, email, social — it works everywhere on any device." },
+          { n:"4", icon:"🎉", title:"Receive what you love", desc:"Guests claim gifts before buying. No duplicates, ever." },
+        ].map(({ n, icon, title, desc }, i, arr) => (
+          <div key={n} style={{ display:"flex", gap:14, padding:"16px 20px", borderBottom: i < arr.length-1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+            <div style={{ width:40, height:40, borderRadius:12, background:`rgba(201,150,42,0.15)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>{icon}</div>
+            <div>
+              <div style={{ fontFamily:"var(--font-display)", fontSize:15, fontWeight:700, color:"#f5f0e8", marginBottom:3 }}>{title}</div>
+              <div style={{ fontSize:13, color:"#7a7268", lineHeight:1.6 }}>{desc}</div>
+            </div>
+          </div>
+        ))}
+        <div style={{ padding:"20px" }}>
+          <Link href="/registry?tab=create" style={{ display:"block", padding:"15px", background:"var(--gold)", color:"#fff", borderRadius:"var(--r-xl)", fontWeight:700, fontSize:15, textAlign:"center" }}>
+            Start Free Registry →
+          </Link>
+        </div>
+      </div>
 
-      {/* ── CTA ── */}
-      <section style={{ padding: "96px 24px", textAlign: "center", background: "var(--white)", position: "relative" }}>
-        <div style={{ maxWidth: 580, margin: "0 auto" }}>
-          <div style={{ fontSize: 60, marginBottom: 20, animation: "float 3s ease-in-out infinite" }}>🎁</div>
-          <style>{`@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }`}</style>
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(30px, 5vw, 52px)", fontWeight: 900, marginBottom: 16, lineHeight: 1.1 }}>
-            Ready to create<br /><span style={{ color: "var(--maroon)", fontStyle: "italic" }}>your registry?</span>
-          </h2>
-          <p style={{ fontSize: 16, color: "var(--gray)", marginBottom: 36, lineHeight: 1.75 }}>Free forever. No account required. Ready to share in under 60 seconds.</p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/registry" style={{ padding: "16px 44px", background: "var(--maroon)", color: "#fff", borderRadius: "var(--radius-xl)", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 17, display: "inline-block", boxShadow: "var(--shadow-maroon)" }}>
-              Create Your Registry →
-            </Link>
-            <Link href="/registry" style={{ padding: "16px 32px", color: "var(--maroon)", border: "2px solid var(--maroon)", borderRadius: "var(--radius-xl)", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 17, display: "inline-block" }}>
-              Find a Registry
-            </Link>
-          </div>
-        </div>
-      </section>
+      <div style={{ height:16 }} />
     </div>
   );
 }
