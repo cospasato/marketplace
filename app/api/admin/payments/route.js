@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET(request) {
+  try {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
 
@@ -21,6 +22,7 @@ export async function GET(request) {
   });
 
   return NextResponse.json(payments);
+  } catch(err) { return Response.json({error:err.message},{status:500}); }
 }
 
 export async function PUT(request) {

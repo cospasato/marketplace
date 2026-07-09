@@ -4,13 +4,20 @@ import { db } from "@/lib/db";
 
 async function getHomeData() {
   try {
-    const [registries, totalItems, totalContribs] = await Promise.all([
-      db.registry.findMany({ where: { isPublic: true }, include: { items: { select: { status: true } } }, orderBy: { createdAt: "desc" }, take: 6 }),
-      db.registryItem.count(),
-      db.contribution.count(),
-    ]);
+    const registries = await db.registry.findMany({
+      where: { isPublic: true },
+      include: { items: { select: { status: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }).catch(() => []);
+
+    const totalItems = await db.registryItem.count().catch(() => 0);
+    const totalContribs = await db.contribution.count().catch(() => 0);
+
     return { registries, totalItems, totalContribs };
-  } catch { return { registries: [], totalItems: 0, totalContribs: 0 }; }
+  } catch {
+    return { registries: [], totalItems: 0, totalContribs: 0 };
+  }
 }
 
 const OCCASIONS = [
@@ -114,9 +121,7 @@ export default async function HomePage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14 }}>
           {OCCASIONS.map(({ emoji, label, gradient, desc }) => (
             <Link key={label} href={`/registry?occasion=${encodeURIComponent(label)}`} style={{ display: "block" }}>
-              <div style={{ borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.22s", boxShadow: "var(--shadow-sm)" }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-5px)"; e.currentTarget.style.boxShadow = "var(--shadow-lg)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "var(--shadow-sm)"; }}>
+              <div style={{ borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.22s", boxShadow: "var(--shadow-sm)" }}}}>
                 {/* Gradient top */}
                 <div style={{ background: gradient, padding: "28px 16px 20px", textAlign: "center" }}>
                   <div style={{ fontSize: 44, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}>{emoji}</div>
@@ -185,9 +190,7 @@ export default async function HomePage() {
               const daysUntil = reg.eventDate ? Math.ceil((new Date(reg.eventDate) - Date.now()) / 86400000) : null;
               return (
                 <Link key={reg.id} href={`/registry/${reg.slug}`} style={{ display: "block" }}>
-                  <div style={{ background: "#0f0d0b", borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.2s", boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.25)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.15)"; }}>
+                  <div style={{ background: "#0f0d0b", borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.2s", boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}}}>
                     <div style={{ height: 3, background: "linear-gradient(90deg, var(--gold), var(--maroon))" }} />
                     <div style={{ padding: "22px 20px 20px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET() {
+  try {
   const logs = await db.syncLog.findMany({
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -15,4 +16,5 @@ export async function GET() {
     store: l.store || { storeName: "(deleted store)" },
   }));
   return NextResponse.json(safe);
+  } catch(err) { return Response.json({error:err.message},{status:500}); }
 }

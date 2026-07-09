@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET() {
+  try {
   const registries = await db.registry.findMany({
     include: {
       items: { select: { id: true, status: true, price: true } },
@@ -12,6 +13,7 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(registries);
+  } catch(err) { return Response.json({error:err.message},{status:500}); }
 }
 
 export async function PUT(request) {

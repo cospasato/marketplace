@@ -4,6 +4,11 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import PublicRegistryClient from "./PublicRegistryClient";
 
+function isExpired(registry) {
+  if (!registry.eventDate) return false;
+  return new Date(registry.eventDate) < new Date(Date.now() - 86400000);
+}
+
 export default async function PublicRegistryPage({ params }) {
   const { id } = params;
 
@@ -15,12 +20,23 @@ export default async function PublicRegistryPage({ params }) {
       },
       contributions: {
         where: { status: { in: ["claimed", "purchased"] } },
-        select: { gifterName: true, message: true, createdAt: true, status: true, item: { select: { title: true } } },
+        include: {
+          item: { select: { title: true } },
+          payment: { select: { status: true, totalAmount: true } },
+        },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
 
   if (!registry) notFound();
 
-  return <PublicRegistryClient registry={registry} />;
+  const expired = isExpired(registry);
+
+  // Auto-hide expired registries
+  if (expired && registry.isPublic) {
+    await db.registry.update({ where: { id: registry.id }, data: { isPublic: false } }).catch(() => {});
+  }
+
+  return <PublicRegistryClient registry={{ ...registry, expired }} />;
 }

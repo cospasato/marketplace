@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET() {
+  try {
   const methods = await db.paymentMethod.findMany({ orderBy: { createdAt: "asc" } });
   return NextResponse.json(methods);
+  } catch(err) { return Response.json({error:err.message},{status:500}); }
 }
 
 export async function POST(request) {
