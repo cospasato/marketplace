@@ -121,7 +121,7 @@ export default async function HomePage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14 }}>
           {OCCASIONS.map(({ emoji, label, gradient, desc }) => (
             <Link key={label} href={`/registry?occasion=${encodeURIComponent(label)}`} style={{ display: "block" }}>
-              <div style={{ borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.22s", boxShadow: "var(--shadow-sm)" }}}}>
+              <div className="occasion-card" style={{ borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.22s", boxShadow: "var(--shadow-sm)" }}>
                 {/* Gradient top */}
                 <div style={{ background: gradient, padding: "28px 16px 20px", textAlign: "center" }}>
                   <div style={{ fontSize: 44, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}>{emoji}</div>
@@ -190,7 +190,7 @@ export default async function HomePage() {
               const daysUntil = reg.eventDate ? Math.ceil((new Date(reg.eventDate) - Date.now()) / 86400000) : null;
               return (
                 <Link key={reg.id} href={`/registry/${reg.slug}`} style={{ display: "block" }}>
-                  <div style={{ background: "#0f0d0b", borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.2s", boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}}}>
+                  <div className="registry-card" style={{ background: "#0f0d0b", borderRadius: "var(--radius-xl)", overflow: "hidden", transition: "all 0.2s", boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
                     <div style={{ height: 3, background: "linear-gradient(90deg, var(--gold), var(--maroon))" }} />
                     <div style={{ padding: "22px 20px 20px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
