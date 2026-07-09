@@ -73,7 +73,12 @@ export async function GET(request) {
     include: { items: true, contributions: true },
     orderBy: { createdAt: "desc" },
   });
-  return NextResponse.json(registries);
+  // Add expired flag to each registry
+  const withExpiry = registries.map(r => ({
+    ...r,
+    expired: r.eventDate ? new Date(r.eventDate) < new Date(Date.now() - 24 * 60 * 60 * 1000) : false,
+  }));
+  return NextResponse.json(withExpiry);
 }
 
 export async function POST(request) {

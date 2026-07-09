@@ -25,6 +25,16 @@ async function main() {
     for (const t of ["AccountSession", "Payment"]) {
       try { await db.$executeRawUnsafe(`DELETE FROM "${t}" WHERE 1=0`); } catch {}
     }
+    // Add new columns if they don't exist (safe ALTER TABLE)
+    const alterStatements = [
+      `ALTER TABLE "RegistryItem" ADD COLUMN IF NOT EXISTS "groupBuy" BOOLEAN DEFAULT false`,
+      `ALTER TABLE "RegistryItem" ADD COLUMN IF NOT EXISTS "targetAmount" FLOAT`,
+      `ALTER TABLE "RegistryItem" ADD COLUMN IF NOT EXISTS "collectedAmount" FLOAT DEFAULT 0`,
+      `ALTER TABLE "Contribution" ADD COLUMN IF NOT EXISTS "contributionAmount" FLOAT`,
+    ];
+    for (const sql of alterStatements) {
+      try { await db.$executeRawUnsafe(sql); } catch {}
+    }
     console.log("Cleanup complete.");
   } catch (err) {
     console.log("Cleanup skipped:", err.message);

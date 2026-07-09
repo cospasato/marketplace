@@ -155,9 +155,12 @@ model RegistryItem {
   claimedBy     String?
   claimedAt     DateTime?
   purchasedAt   DateTime?
-  shopifyOrderId String?
-  createdAt     DateTime       @default(now())
-  contributions Contribution[]
+  shopifyOrderId  String?
+  groupBuy        Boolean        @default(false)
+  targetAmount    Float?
+  collectedAmount Float          @default(0)
+  createdAt       DateTime       @default(now())
+  contributions   Contribution[]
 
   @@index([registryId])
   @@index([status])
@@ -172,8 +175,9 @@ model Contribution {
   gifterName   String
   gifterEmail  String
   message      String?
-  amount       Float?
-  status       String       @default("pending")
+  amount            Float?
+  contributionAmount Float?     
+  status            String       @default("pending")
   shopifyOrderId String?
   createdAt    DateTime     @default(now())
   payment      Payment?

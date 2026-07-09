@@ -3,6 +3,15 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+// Helper: check if registry is expired
+function isExpired(registry) {
+  if (!registry.eventDate) return false;
+  const event = new Date(registry.eventDate);
+  const now = new Date();
+  // Grace period: expire 1 day after event
+  return event < new Date(now - 24 * 60 * 60 * 1000);
+}
+
 export async function GET(request, { params }) {
   const { id } = params;
 
@@ -15,13 +24,24 @@ export async function GET(request, { params }) {
       },
       contributions: {
         orderBy: { createdAt: "desc" },
-        take: 20,
+        take: 30,
+        include: {
+          item: { select: { title: true } },
+          payment: { select: { status: true, totalAmount: true } },
+        },
       },
     },
   });
 
   if (!registry) return NextResponse.json({ error: "Registry not found" }, { status: 404 });
-  return NextResponse.json(registry);
+
+  // Auto-mark expired if event date passed
+  const expired = isExpired(registry);
+  if (expired && registry.isPublic) {
+    await db.registry.update({ where: { id: registry.id }, data: { isPublic: false } }).catch(() => {});
+  }
+
+  return NextResponse.json({ ...registry, expired });
 }
 
 export async function PUT(request, { params }) {
@@ -31,13 +51,13 @@ export async function PUT(request, { params }) {
   const registry = await db.registry.update({
     where: { id },
     data: {
-      title: body.title,
-      occasion: body.occasion,
-      eventDate: body.eventDate ? new Date(body.eventDate) : null,
-      description: body.description,
-      coverImage: body.coverImage,
-      thankYouMsg: body.thankYouMsg,
-      isPublic: body.isPublic,
+      ...(body.title !== undefined && { title: body.title }),
+      ...(body.occasion !== undefined && { occasion: body.occasion }),
+      ...(body.eventDate !== undefined && { eventDate: body.eventDate ? new Date(body.eventDate) : null }),
+      ...(body.description !== undefined && { description: body.description }),
+      ...(body.coverImage !== undefined && { coverImage: body.coverImage }),
+      ...(body.thankYouMsg !== undefined && { thankYouMsg: body.thankYouMsg }),
+      ...(body.isPublic !== undefined && { isPublic: body.isPublic }),
       updatedAt: new Date(),
     },
   });
@@ -48,8 +68,11 @@ export async function POST(request, { params }) {
   const { id } = params;
   const body = await request.json();
 
-  // Add item to registry
-  const { productId, storeId, title, imageUrl, productUrl, price, currency, quantity, priority, note } = body;
+  const { productId, storeId, title, imageUrl, productUrl, price, currency, quantity, priority, note, groupBuy, targetAmount } = body;
+
+  if (!title || !productUrl || price === undefined) {
+    return NextResponse.json({ error: "title, productUrl and price are required" }, { status: 400 });
+  }
 
   const item = await db.registryItem.create({
     data: {
@@ -59,11 +82,14 @@ export async function POST(request, { params }) {
       title,
       imageUrl: imageUrl || null,
       productUrl,
-      price,
+      price: parseFloat(price),
       currency: currency || "USD",
       quantity: quantity || 1,
       priority: priority || "medium",
       note: note || null,
+      groupBuy: groupBuy || false,
+      targetAmount: targetAmount || null,
+      collectedAmount: 0,
       status: "available",
     },
   });
