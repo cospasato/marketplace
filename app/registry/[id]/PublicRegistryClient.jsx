@@ -28,12 +28,12 @@ function GroupBuyBar({ item, accent }) {
     <div style={{ background:"rgba(0,0,0,0.04)", border:`1px solid ${accent}30`, borderRadius:10, padding:"10px 12px", marginTop:8 }}>
       <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:700, marginBottom:5 }}>
         <span style={{ color: accent }}>👥 Group gift · {pct}%</span>
-        <span style={{ color:"var(--text2)" }}>{item.currency} {collected.toFixed(0)} / {target.toFixed(0)}</span>
+        <span style={{ color:"var(--text2)" }}>{item.currency} {collected.toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})} / {target.toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}</span>
       </div>
       <div style={{ height:5, background:"rgba(0,0,0,0.08)", borderRadius:3, overflow:"hidden" }}>
         <div style={{ height:"100%", width:`${pct}%`, background:accent, borderRadius:3, transition:"width 0.5s" }} />
       </div>
-      {remaining > 0 && <p style={{ fontSize:11, color:"var(--gray)", marginTop:4, fontWeight:600 }}>Needs {item.currency} {remaining.toFixed(2)} more</p>}
+      {remaining > 0 && <p style={{ fontSize:11, color:"var(--gray)", marginTop:4, fontWeight:600 }}>Needs {item.currency} {remaining.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} more</p>}
     </div>
   );
 }
@@ -203,7 +203,7 @@ export default function PublicRegistryClient({ registry }) {
                   <span style={{ fontSize:20 }}>{i===0?"🥇":i===1?"🥈":"🥉"}</span>
                   <div>
                     <div style={{ fontSize:14, fontWeight:800, color:"var(--black)" }}>{g.name}</div>
-                    <div style={{ fontSize:12, fontWeight:700, color:"var(--gold-dk)" }}>{g.count} gift{g.count!==1?"s":""}{g.total>0?` · ${currency} ${g.total.toFixed(0)}`:""}</div>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--gold-dk)" }}>{g.count} gift{g.count!==1?"s":""}{g.total>0?` · ${currency} ${g.total.toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}`:""}</div>
                   </div>
                 </div>
               ))}
@@ -240,7 +240,7 @@ export default function PublicRegistryClient({ registry }) {
                       }
                       {(c.payment?.totalAmount || c.contributionAmount || c.amount || 0) > 0 && (
                         <span style={{ fontSize:10, fontWeight:700, color:"var(--gold-dk)" }}>
-                          {currency} {(c.payment?.totalAmount || c.contributionAmount || c.amount || 0).toFixed(0)}
+                          {currency} {(c.payment?.totalAmount || c.contributionAmount || c.amount || 0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}
                         </span>
                       )}
                     </div>
@@ -327,7 +327,7 @@ export default function PublicRegistryClient({ registry }) {
                     <div style={{ fontFamily:"var(--font-display)", fontSize:14, fontWeight:700, color:"#f5f0e8", lineHeight:1.3 }}>{item.title}</div>
                     {item.note && <p style={{ fontSize:11, fontWeight:500, color:"#7a7268", lineHeight:1.5, fontStyle:"italic" }}>{item.note}</p>}
                     <div style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:800, color:"#e8b84b", marginTop:2 }}>
-                      {item.currency} {item.price.toFixed(2)}
+                      {item.currency} {item.price.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
                     </div>
 
                     {item.groupBuy && <GroupBuyBar item={item} accent={accent} />}
@@ -399,7 +399,7 @@ export default function PublicRegistryClient({ registry }) {
                 </div>
                 <div style={{ fontFamily:"var(--font-display)", fontSize:16, fontWeight:800, color:"var(--black)", lineHeight:1.3 }}>{claimModal.title}</div>
                 <div style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:900, color:"var(--maroon)", marginTop:2 }}>
-                  {claimModal.currency} {claimModal.price.toFixed(2)}
+                  {claimModal.currency} {claimModal.price.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
                 </div>
               </div>
               <button onClick={() => setClaimModal(null)} style={{ color:"var(--gray)", fontSize:20, padding:4, flexShrink:0, background:"none", border:"none", cursor:"pointer" }}>✕</button>

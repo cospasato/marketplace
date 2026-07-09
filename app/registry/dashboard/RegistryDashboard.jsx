@@ -313,7 +313,7 @@ export default function RegistryDashboard() {
                     <div style={{ fontSize: 11, color: "#c9962a", marginBottom: 4 }}>{PRIORITY_LABELS[item.priority]}</div>
                     <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, color: "#f5f0e8", marginBottom: 6, lineHeight: 1.3 }}>{item.title}</div>
                     <div style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 800, color: "#e8b84b", marginBottom: 6 }}>
-                      {item.currency || "USD"} {(item.price || 0).toFixed(2)}
+                      {item.currency || "USD"} {(item.price || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
                     </div>
                     {item.note && <p style={{ fontSize: 11, color: "#6b6560", marginBottom: 8, lineHeight: 1.5, fontStyle: "italic" }}>{item.note}</p>}
 
@@ -489,7 +489,7 @@ export default function RegistryDashboard() {
                     <div style={{ padding: "10px 12px" }}>
                       <div style={{ fontSize: 10, color: "var(--gold-dk)", marginBottom: 2, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>{product.store?.storeName}</div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "var(--black)", marginBottom: 6, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{product.title}</div>
-                      <div style={{ fontFamily: "var(--font-display)", fontSize: 13, fontWeight: 800, color: "var(--maroon)", marginBottom: 8 }}>{product.currency} {(product.price || 0).toFixed(2)}</div>
+                      <div style={{ fontFamily: "var(--font-display)", fontSize: 13, fontWeight: 800, color: "var(--maroon)", marginBottom: 8 }}>{product.currency} {(product.price || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
                       <button onClick={() => !inRegistry && !isAdding && addToRegistry(product)} disabled={inRegistry || isAdding} style={{
                         width: "100%", padding: "7px", border: "none", borderRadius: "var(--radius)", cursor: inRegistry || isAdding ? "default" : "pointer",
                         background: inRegistry ? "var(--green-bg)" : "var(--maroon)", color: inRegistry ? "var(--green)" : "var(--white)",

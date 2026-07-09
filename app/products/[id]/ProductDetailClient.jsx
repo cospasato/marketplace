@@ -136,11 +136,11 @@ export default function ProductDetailClient({ product, related }) {
           {/* Price */}
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}>
             <span style={{ fontFamily: "var(--font-display)", fontSize: 32, fontWeight: 800, color: "var(--gold)" }}>
-              {product.currency} {product.price.toFixed(2)}
+              {product.currency} {product.price.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
             </span>
             {product.comparePrice && product.comparePrice > product.price && (
               <span style={{ fontSize: 18, color: "var(--gray)", textDecoration: "line-through" }}>
-                {product.currency} {product.comparePrice.toFixed(2)}
+                {product.currency} {product.comparePrice.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
               </span>
             )}
           </div>
@@ -339,7 +339,7 @@ export default function ProductDetailClient({ product, related }) {
                   </div>
                   <div style={{ padding: "12px 14px" }}>
                     <div style={{ fontSize: 12, fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--black)", marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>{p.currency} {p.price.toFixed(2)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)" }}>{p.currency} {p.price.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
                   </div>
                 </div>
               </Link>

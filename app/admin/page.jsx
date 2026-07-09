@@ -338,7 +338,7 @@ export default function AdminPage() {
                         <div style={{ fontSize: 11, color: C.text3 }}>{o.customerName} · {o.deliveryCity} · {o.store?.storeName}</div>
                       </div>
                       <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <div style={{ fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 14, color: C.accent }}>{o.currency} {(o.productPrice * o.quantity).toFixed(2)}</div>
+                        <div style={{ fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 14, color: C.accent }}>{o.currency} {(o.productPrice * o.quantity).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
                         <span style={badge(STATUS_COLORS[o.deliveryStatus] || C.text3)}>{o.deliveryStatus}</span>
                       </div>
                     </div>
@@ -369,7 +369,7 @@ export default function AdminPage() {
                     {selectedOrder.notes && <div style={{ background: C.bg2, borderRadius: 10, padding: "12px 14px", marginBottom: 12, fontSize: 13, color: C.text2 }}>{selectedOrder.notes}</div>}
                     <div style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20`, borderRadius: 10, padding: "14px", marginBottom: 16 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 18, color: C.accent }}>
-                        <span>Total</span><span>{selectedOrder.currency} {(selectedOrder.productPrice * selectedOrder.quantity).toFixed(2)}</span>
+                        <span>Total</span><span>{selectedOrder.currency} {(selectedOrder.productPrice * selectedOrder.quantity).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
                       </div>
                     </div>
                     <div style={{ marginBottom: 14 }}>

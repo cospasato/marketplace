@@ -32,8 +32,8 @@ export default function PaymentClient({ contributionId }) {
   }, [contributionId]);
 
   const price = contribution?.item?.price || 0;
-  const fee = parseFloat((price * SERVICE_FEE).toFixed(2));
-  const total = parseFloat((price + fee).toFixed(2));
+  const fee = parseFloat((price * SERVICE_FEE).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}));
+  const total = parseFloat((price + fee).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}));
   const currency = contribution?.item?.currency || "USD";
 
   const submit = async () => {
@@ -74,9 +74,9 @@ export default function PaymentClient({ contributionId }) {
       </p>
       <div style={{ background: "var(--off-white)", border: "1px solid var(--border)", borderRadius: 14, padding: "16px 20px", marginBottom: 24, textAlign: "left" }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gray)", marginBottom: 10, letterSpacing: "0.08em" }}>PAYMENT SUMMARY</div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text2)", marginBottom: 6 }}><span>Gift price</span><span>{currency} {price.toFixed(2)}</span></div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text2)", marginBottom: 6 }}><span>Service fee (5%)</span><span>{currency} {fee.toFixed(2)}</span></div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700, color: "var(--gold)", paddingTop: 8, borderTop: "1px solid var(--border2)" }}><span>Total paid</span><span>{currency} {total.toFixed(2)}</span></div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text2)", marginBottom: 6 }}><span>Gift price</span><span>{currency} {price.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text2)", marginBottom: 6 }}><span>Service fee (5%)</span><span>{currency} {fee.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700, color: "var(--gold)", paddingTop: 8, borderTop: "1px solid var(--border2)" }}><span>Total paid</span><span>{currency} {total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
       </div>
       <Link href={`/registry/${contribution.registry?.slug}`} style={{ display: "inline-block", padding: "12px 28px", background: "var(--gold)", color: "var(--white)", borderRadius: 10, fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>
         Back to registry →
@@ -108,13 +108,13 @@ export default function PaymentClient({ contributionId }) {
       {/* Price breakdown */}
       <div style={{ background: "rgba(232,213,176,0.04)", border: "1px solid rgba(232,213,176,0.12)", borderRadius: 14, padding: "18px 20px", marginBottom: 28 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--gold-dk)", marginBottom: 12, letterSpacing: "0.08em" }}>AMOUNT TO PAY</div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "var(--text2)", marginBottom: 8 }}><span>Gift price</span><span>{currency} {price.toFixed(2)}</span></div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "var(--text2)", marginBottom: 8 }}><span>Gift price</span><span>{currency} {price.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, color: "var(--text2)", marginBottom: 10 }}>
           <span>Service fee <span style={{ fontSize: 11, background: "rgba(196,168,112,0.1)", color: "var(--gold-dk)", padding: "1px 6px", borderRadius: 4 }}>5%</span></span>
-          <span>{currency} {fee.toFixed(2)}</span>
+          <span>{currency} {fee.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 20, fontWeight: 800, fontFamily: "Georgia, serif", color: "var(--gold)", paddingTop: 12, borderTop: "1px solid rgba(232,213,176,0.12)" }}>
-          <span>Total</span><span>{currency} {total.toFixed(2)}</span>
+          <span>Total</span><span>{currency} {total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
         </div>
       </div>
 
@@ -174,11 +174,11 @@ export default function PaymentClient({ contributionId }) {
       {error && <div style={{ padding: "12px 16px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 10, fontSize: 13, color: "var(--red)", marginBottom: 16 }}>{error}</div>}
 
       <button onClick={submit} disabled={submitting} style={{ width: "100%", padding: "16px", background: submitting ? "var(--gray-bg)" : "var(--gold)", color: submitting ? "var(--gray)" : "var(--white)", borderRadius: 12, border: "none", fontFamily: "Georgia, serif", fontWeight: 800, fontSize: 16, cursor: submitting ? "not-allowed" : "pointer", transition: "all 0.15s" }}>
-        {submitting ? "Submitting..." : `Submit Payment — ${currency} ${total.toFixed(2)}`}
+        {submitting ? "Submitting..." : `Submit Payment — ${currency} ${total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`}
       </button>
 
       <p style={{ fontSize: 11, color: "var(--gray)", textAlign: "center", marginTop: 12, lineHeight: 1.6 }}>
-        By submitting, you confirm you have sent {currency} {total.toFixed(2)} via the selected method. We will verify and purchase the gift within 24 hours.
+        By submitting, you confirm you have sent {currency} {total.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} via the selected method. We will verify and purchase the gift within 24 hours.
       </p>
     </div>
   );

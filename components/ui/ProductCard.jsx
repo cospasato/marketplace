@@ -76,7 +76,7 @@ export default function ProductCard({ product, size = "md" }) {
           </span>
           {product.comparePrice && product.comparePrice > product.price && (
             <span style={{ fontSize: 12, color: "var(--gray-lt)", textDecoration: "line-through" }}>
-              {product.comparePrice.toFixed(2)}
+              {product.comparePrice.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
             </span>
           )}
         </div>
