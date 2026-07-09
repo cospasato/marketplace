@@ -174,7 +174,9 @@ model Contribution {
   item         RegistryItem? @relation(fields: [itemId], references: [id])
   gifterName   String
   gifterEmail  String
+  gifterPhone  String?
   message      String?
+  isCashGift   Boolean  @default(false)
   amount            Float?
   contributionAmount Float?     
   status            String       @default("pending")

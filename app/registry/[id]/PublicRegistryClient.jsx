@@ -40,7 +40,11 @@ function GroupBuyBar({ item, accent }) {
 
 export default function PublicRegistryClient({ registry }) {
   const [claimModal, setClaimModal]   = useState(null);
-  const [form, setForm]               = useState({ gifterName:"", gifterEmail:"", message:"", contributionAmount:"" });
+  const [form, setForm]               = useState({ gifterName:"", gifterEmail:"", gifterPhone:"", message:"", contributionAmount:"" });
+  const [cashModal, setCashModal]       = useState(false);
+  const [cashForm, setCashForm]         = useState({ amount:"", message:"" });
+  const [giftingCash, setGiftingCash]   = useState(false);
+  const [cashResult, setCashResult]     = useState(null);
   const [claiming, setClaiming]       = useState(false);
   const [claimResult, setClaimResult] = useState(null);
   const [filter, setFilter]           = useState("all");
@@ -77,7 +81,7 @@ export default function PublicRegistryClient({ registry }) {
   const openClaim = (item) => {
     setClaimModal(item);
     setClaimResult(null);
-    setForm({ gifterName:"", gifterEmail:"", message:"", contributionAmount:"" });
+    setForm({ gifterName:"", gifterEmail:"", gifterPhone:"", message:"", contributionAmount:"" });
   };
 
   const handleClaim = async () => {
@@ -91,6 +95,7 @@ export default function PublicRegistryClient({ registry }) {
           itemId: claimModal.id,
           gifterName: form.gifterName,
           gifterEmail: form.gifterEmail,
+          gifterPhone: form.gifterPhone || undefined,
           message: form.message,
           contributionAmount: claimModal.groupBuy ? parseFloat(form.contributionAmount) : undefined,
         }),
@@ -99,6 +104,30 @@ export default function PublicRegistryClient({ registry }) {
       setClaimResult(res.ok ? data : { error: data.error });
     } catch { setClaimResult({ error:"Network error. Please try again." }); }
     setClaiming(false);
+  };
+
+  const handleCashGift = async () => {
+    const amt = parseFloat(cashForm.amount);
+    if (!form.gifterName || !form.gifterEmail) { return; }
+    if (!amt || amt <= 0) { return; }
+    setGiftingCash(true);
+    try {
+      const res = await fetch("/api/registry/claim", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isCashGift: true,
+          registryId: registry.id,
+          gifterName: form.gifterName,
+          gifterEmail: form.gifterEmail,
+          gifterPhone: form.gifterPhone || undefined,
+          message: cashForm.message,
+          cashAmount: amt,
+        }),
+      });
+      const data = await res.json();
+      setCashResult(res.ok ? data : { error: data.error });
+    } catch { setCashResult({ error: "Network error. Please try again." }); }
+    setGiftingCash(false);
   };
 
   const inp = { padding:"11px 14px", border:"1.5px solid var(--border2)", borderRadius:"var(--r-md)", fontSize:14, fontFamily:"inherit", outline:"none", width:"100%", background:"var(--white)", color:"var(--black)", fontWeight:500 };
@@ -248,6 +277,20 @@ export default function PublicRegistryClient({ registry }) {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* 💵 Cash gift banner */}
+        {!expired && (
+          <div style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 18px", background:"linear-gradient(135deg,var(--gold-bg),var(--maroon-bg))", border:"1px solid rgba(201,150,42,0.25)", borderRadius:"var(--r-lg)", marginBottom:20 }}>
+            <div style={{ fontSize:28, flexShrink:0 }}>💵</div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:14, fontWeight:800, color:"var(--text)" }}>Gift money instead</div>
+              <div style={{ fontSize:12, fontWeight:600, color:"var(--gray)", marginTop:2 }}>Send any amount directly to {registry.ownerName} as a cash gift</div>
+            </div>
+            <button onClick={() => { setCashModal(true); setCashResult(null); setCashForm({ amount:"", message:"" }); }} style={{ padding:"10px 18px", background:"var(--maroon)", color:"#fff", borderRadius:"var(--r-lg)", border:"none", fontFamily:"var(--font-body)", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0 }}>
+              💵 Gift Money
+            </button>
           </div>
         )}
 
@@ -420,12 +463,16 @@ export default function PublicRegistryClient({ registry }) {
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
                   <div>
                     <label style={lbl}>Your name *</label>
-                    <input value={form.gifterName} onChange={e => setForm(f=>({...f,gifterName:e.target.value}))} placeholder="Jane" style={inp} />
+                    <input value={form.gifterName} onChange={e => setForm(f=>({...f,gifterName:e.target.value}))} placeholder="Jane Doe" style={inp} />
                   </div>
                   <div>
-                    <label style={lbl}>Your email *</label>
-                    <input type="email" value={form.gifterEmail} onChange={e => setForm(f=>({...f,gifterEmail:e.target.value}))} placeholder="jane@email.com" style={inp} />
+                    <label style={lbl}>Phone number *</label>
+                    <input type="tel" value={form.gifterPhone} onChange={e => setForm(f=>({...f,gifterPhone:e.target.value}))} placeholder="+255 7xx xxx xxx" style={inp} />
                   </div>
+                </div>
+                <div>
+                  <label style={lbl}>Email address *</label>
+                  <input type="email" value={form.gifterEmail} onChange={e => setForm(f=>({...f,gifterEmail:e.target.value}))} placeholder="jane@email.com" style={inp} />
                 </div>
 
                 {claimModal.groupBuy && (
@@ -448,9 +495,9 @@ export default function PublicRegistryClient({ registry }) {
 
                 <div style={{ display:"flex", gap:10 }}>
                   <button onClick={handleClaim}
-                    disabled={claiming || !form.gifterName || !form.gifterEmail || (claimModal.groupBuy && !form.contributionAmount)}
+                    disabled={claiming || !form.gifterName || !form.gifterEmail || !form.gifterPhone || (claimModal.groupBuy && !form.contributionAmount)}
                     className="btn-primary"
-                    style={{ flex:1, opacity:(claiming||!form.gifterName||!form.gifterEmail)?0.65:1, fontSize:15 }}>
+                    style={{ flex:1, opacity:(claiming||!form.gifterName||!form.gifterEmail||!form.gifterPhone)?0.65:1, fontSize:15 }}>
                     {claiming ? "Processing..." : claimModal.groupBuy ? "Contribute →" : "Claim & Gift →"}
                   </button>
                   <button onClick={() => setClaimModal(null)} style={{ padding:"14px 18px", background:"var(--cream)", borderRadius:"var(--r-xl)", color:"var(--text2)", fontSize:14, fontWeight:700, border:"none", cursor:"pointer" }}>

@@ -35,6 +35,14 @@ async function main() {
     for (const sql of alterStatements) {
       try { await db.$executeRawUnsafe(sql); } catch {}
     }
+    // Add new columns safely
+    const newCols = [
+      `ALTER TABLE "Contribution" ADD COLUMN IF NOT EXISTS "gifterPhone" TEXT`,
+      `ALTER TABLE "Contribution" ADD COLUMN IF NOT EXISTS "isCashGift" BOOLEAN DEFAULT false`,
+    ];
+    for (const sql of newCols) {
+      try { await db.$executeRawUnsafe(sql); } catch {}
+    }
     console.log("Cleanup complete.");
   } catch (err) {
     console.log("Cleanup skipped:", err.message);
