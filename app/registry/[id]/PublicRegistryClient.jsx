@@ -4,17 +4,17 @@ import Link from "next/link";
 
 const OCC_EMOJI = { Wedding:"💍", Birthday:"🎂", "Baby Shower":"👶", Christmas:"🎄", Graduation:"🎓", Housewarming:"🏠", Anniversary:"💝" };
 const OCC_GRAD  = {
-  Wedding:      "linear-gradient(135deg,#c9a227,#7b6200)",
-  Birthday:     "linear-gradient(135deg,#e8334a,#9e1c2e)",
-  "Baby Shower":"linear-gradient(135deg,#4aa3e8,#1a5a9a)",
-  Graduation:   "linear-gradient(135deg,#2e9e5e,#135e32)",
-  Housewarming: "linear-gradient(135deg,#e87c2b,#8b3e00)",
-  Anniversary:  "linear-gradient(135deg,#9b59b6,#5b1e8c)",
-  Christmas:    "linear-gradient(135deg,#c0392b,#1e7a3c)",
+  Wedding:      "linear-gradient(135deg,#7b1c2e,#4a0e1a)",
+  Birthday:     "linear-gradient(135deg,#7b1c2e,#3d0e2a)",
+  "Baby Shower":"linear-gradient(135deg,#7b1c2e,#2a1a4a)",
+  Graduation:   "linear-gradient(135deg,#7b1c2e,#1a3a2a)",
+  Housewarming: "linear-gradient(135deg,#7b1c2e,#3a1a0a)",
+  Anniversary:  "linear-gradient(135deg,#7b1c2e,#2a1040)",
+  Christmas:    "linear-gradient(135deg,#7b1c2e,#1a3a1a)",
 };
 const OCC_ACCENT = {
-  Wedding:"#c9a227", Birthday:"#e8334a", "Baby Shower":"#4aa3e8",
-  Graduation:"#2e9e5e", Housewarming:"#e87c2b", Anniversary:"#9b59b6", Christmas:"#c0392b",
+  Wedding:"#e8b84b", Birthday:"#e8b84b", "Baby Shower":"#e8b84b",
+  Graduation:"#e8b84b", Housewarming:"#e8b84b", Anniversary:"#e8b84b", Christmas:"#e8b84b",
 };
 const PRI_COLOR = { high:"#c0392b", medium:"#b7680f", low:"#1e9e5e" };
 const PRI_LABEL = { high:"Must have", medium:"Would love", low:"Nice to have" };
@@ -107,10 +107,10 @@ export default function PublicRegistryClient({ registry }) {
   return (
     <div>
       <style>{`
-        .reg-hero        { background:${gradient}; padding:48px 24px 52px; text-align:center; position:relative; overflow:hidden; }
+        .reg-hero        { background:${gradient}; padding:32px 24px 36px; text-align:center; position:relative; overflow:hidden; }
         .reg-hero-dot    { position:absolute; inset:0; opacity:0.05; background-image:radial-gradient(circle at 1px 1px,#fff 1px,transparent 0); background-size:24px 24px; pointer-events:none; }
-        .reg-stats       { display:grid; grid-template-columns:repeat(4,1fr); gap:0; background:#0f0d0b; border-radius:var(--r-lg); margin:0 24px; position:relative; z-index:2; box-shadow:0 8px 32px rgba(0,0,0,0.25); }
-        .reg-stat        { padding:18px 12px; text-align:center; border-right:1px solid rgba(255,255,255,0.07); }
+        .reg-stats       { display:grid; grid-template-columns:repeat(4,1fr); gap:0; background:var(--maroon-dk); border-radius:var(--r-lg); margin:0 24px; position:relative; z-index:2; box-shadow:0 8px 32px rgba(0,0,0,0.25); }
+        .reg-stat        { padding:16px 10px; text-align:center; border-right:1px solid rgba(255,255,255,0.15); }
         .reg-stat:last-child { border-right:none; }
         .reg-body        { max-width:1100px; margin:0 auto; padding:24px 24px 60px; }
         .reg-gifters-row { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
@@ -118,8 +118,8 @@ export default function PublicRegistryClient({ registry }) {
         .reg-items       { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
 
         @media(max-width:768px){
-          .reg-hero   { padding:36px 16px 40px; }
-          .reg-stats  { margin:0 16px; grid-template-columns:repeat(2,1fr); }
+          .reg-hero   { padding:24px 16px 28px; }
+          .reg-stats  { margin:0 14px; grid-template-columns:repeat(2,1fr); }
           .reg-stat   { border-right:1px solid rgba(255,255,255,0.07); border-bottom:1px solid rgba(255,255,255,0.07); }
           .reg-stat:nth-child(2) { border-right:none; }
           .reg-stat:nth-child(3) { border-bottom:none; }
@@ -175,18 +175,18 @@ export default function PublicRegistryClient({ registry }) {
         ].map(({ label, value, color }) => (
           <div key={label} className="reg-stat">
             <div style={{ fontFamily:"var(--font-display)", fontSize:28, fontWeight:900, color, lineHeight:1 }}>{value}</div>
-            <div style={{ fontSize:10, fontWeight:700, color:"#6b6560", marginTop:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</div>
+            <div style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,0.65)", marginTop:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</div>
           </div>
         ))}
       </div>
       {/* Progress under stats */}
-      <div style={{ background:"#0f0d0b", margin:"0 24px", borderRadius:"0 0 var(--r-lg) var(--r-lg)", padding:"12px 20px 16px", boxShadow:"0 8px 32px rgba(0,0,0,0.25)" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:700, color:"#6b6560", marginBottom:6 }}>
+      <div style={{ background:"var(--white)", margin:"0 24px", borderRadius:"0 0 var(--r-lg) var(--r-lg)", padding:"14px 22px 18px", boxShadow:"var(--shadow-md)", border:"1px solid var(--border)", borderTop:"none" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:13, fontWeight:700, color:"var(--text2)", marginBottom:8 }}>
           <span>{purchased+claimed} of {items.length} gifts taken</span>
-          <span style={{ color:accent }}>{progress}%</span>
+          <span style={{ color:"var(--maroon)", fontWeight:900 }}>{progress}%</span>
         </div>
-        <div style={{ height:5, background:"#1e1b18", borderRadius:3, overflow:"hidden" }}>
-          <div style={{ height:"100%", width:`${progress}%`, background:`linear-gradient(90deg,${accent},var(--maroon))`, borderRadius:3, transition:"width 0.5s" }} />
+        <div style={{ height:8, background:"var(--cream2)", borderRadius:99, overflow:"hidden" }}>
+          <div style={{ height:"100%", width:`${progress}%`, background:"linear-gradient(90deg,var(--gold),var(--maroon))", borderRadius:99, transition:"width 0.7s ease", boxShadow:"0 0 8px rgba(201,150,42,0.4)" }} />
         </div>
       </div>
 
