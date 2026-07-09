@@ -2,147 +2,235 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-const NAV = [
-  { href: "/",                  label: "Home",     icon: <HomeIcon /> },
-  { href: "/registry",          label: "Registry", icon: <GiftIcon /> },
-  { href: "/products",          label: "Shop",     icon: <ShopIcon /> },
-  { href: "/search",            label: "Search",   icon: <SearchIcon /> },
-  { href: "/account/dashboard", label: "Account",  icon: <UserIcon /> },
+const NAV_LINKS = [
+  { href: "/",                  label: "Home"     },
+  { href: "/registry",          label: "Registry" },
+  { href: "/products",          label: "Shop"     },
+  { href: "/search",            label: "Search"   },
+  { href: "/account/dashboard", label: "Account"  },
 ];
+
+const TAB_ICONS = {
+  "/":                  <HomeIcon />,
+  "/registry":          <GiftIcon />,
+  "/products":          <ShopIcon />,
+  "/search":            <SearchIcon />,
+  "/account/dashboard": <UserIcon />,
+};
 
 export default function AppShell({ children }) {
   const path = usePathname();
-  const isAdmin = path.startsWith("/admin");
-  const isLive  = path.startsWith("/registry/live");
 
   // Admin — full width, no chrome
-  if (isAdmin) return (
-    <div style={{ minHeight: "100vh", background: "#faf8f5" }}>
-      {children}
-    </div>
-  );
+  if (path.startsWith("/admin")) {
+    return <div style={{ minHeight:"100vh", background:"#faf8f5" }}>{children}</div>;
+  }
 
   // Live dashboard — completely full screen
-  if (isLive) return <div style={{ minHeight: "100vh" }}>{children}</div>;
+  if (path.startsWith("/registry/live")) {
+    return <div style={{ minHeight:"100vh" }}>{children}</div>;
+  }
 
   const isHome = path === "/";
-  const active = (href) => href === "/" ? isHome : path.startsWith(href);
-  const pageTitle = getPageTitle(path);
+  const isActive = (href) => href === "/" ? isHome : path.startsWith(href);
 
   return (
-    <div className="layout-root">
-
-      {/* ══════════════════════════════════════
-          DESKTOP SIDEBAR
-      ══════════════════════════════════════ */}
-      <aside className="layout-sidebar">
+    <>
+      {/* ══════════════════════════════════════════
+          TOP NAV BAR — Desktop only (CSS hides on mobile)
+      ══════════════════════════════════════════ */}
+      <header className="topnav">
         {/* Brand */}
-        <Link href="/" style={{ padding: "20px 20px 16px", display: "block", borderBottom: "1px solid var(--border)", textDecoration: "none" }}>
-          <div style={{ fontFamily: "var(--font-display)", fontWeight: 900, fontSize: 20, color: "var(--maroon)", lineHeight: 1 }}>NIZAWADIE</div>
-          <div style={{ fontSize: 9, fontWeight: 700, color: "var(--gold)", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 3 }}>
-            Self Service Platform
-          </div>
+        <Link href="/" className="topnav-brand">
+          <span className="topnav-brand-name">NIZAWADIE</span>
+          <span className="topnav-brand-sub">Self Service Platform</span>
         </Link>
 
         {/* Nav links */}
-        <nav style={{ padding: "12px 10px", flex: 1 }}>
-          {NAV.map(({ href, label, icon }) => {
-            const on = active(href);
-            return (
-              <Link key={href} href={href} className={`sidebar-link${on ? " sidebar-link--active" : ""}`}>
-                <span style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {icon}
-                </span>
-                {label}
-              </Link>
-            );
-          })}
+        <nav className="topnav-links">
+          {NAV_LINKS.map(({ href, label }) => (
+            <Link key={href} href={href} className={`topnav-link${isActive(href) ? " topnav-link--active" : ""}`}>
+              {label}
+            </Link>
+          ))}
         </nav>
 
-        {/* Sidebar footer */}
-        <div style={{ padding: "12px 10px", borderTop: "1px solid var(--border)" }}>
-          <Link href="/registry?tab=create" className="btn-primary" style={{ fontSize: 13, padding: "11px 14px", borderRadius: "var(--r-lg)", justifyContent: "flex-start", gap: 8 }}>
-            <span>🎁</span> New Registry
+        {/* Right actions */}
+        <div className="topnav-actions">
+          <Link href="/registry?tab=create" className="topnav-cta">+ Create Registry</Link>
+          <Link href="/admin" className="topnav-admin">Admin</Link>
+        </div>
+      </header>
+
+      {/* ══════════════════════════════════════════
+          MOBILE HEADER — Mobile only (CSS hides on desktop)
+      ══════════════════════════════════════════ */}
+      <header className="mobilenav">
+        <Link href="/" style={{ display:"flex", flexDirection:"column", lineHeight:1, textDecoration:"none" }}>
+          <span style={{ fontFamily:"var(--font-display)", fontWeight:900, fontSize:18, color:"var(--maroon)" }}>NIZAWADIE</span>
+          <span style={{ fontSize:8, fontWeight:700, color:"var(--gold)", letterSpacing:"0.14em", textTransform:"uppercase", marginTop:2 }}>Gift Registry</span>
+        </Link>
+        <div style={{ display:"flex", gap:8 }}>
+          <Link href="/registry?tab=create" style={{ height:34, padding:"0 14px", background:"var(--maroon)", color:"#fff", borderRadius:"var(--r-lg)", fontSize:13, fontWeight:700, display:"flex", alignItems:"center", fontFamily:"var(--font-body)" }}>
+            + Create
           </Link>
-          <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", marginTop: 4, borderRadius: "var(--r-md)", fontSize: 13, color: "var(--text3)", transition: "all 0.14s" }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--cream)"}
-            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <span>⚙️</span> Admin Portal
+          <Link href="/admin" style={{ width:34, height:34, background:"var(--cream)", borderRadius:"var(--r-md)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15 }}>
+            ⚙️
           </Link>
         </div>
-      </aside>
+      </header>
 
-      {/* ══════════════════════════════════════
-          MAIN CONTENT AREA
-      ══════════════════════════════════════ */}
-      <div className="layout-main">
+      {/* ══════════════════════════════════════════
+          PAGE CONTENT
+      ══════════════════════════════════════════ */}
+      <main className="app-main">
+        {children}
+      </main>
 
-        {/* Desktop top bar */}
-        <div className="layout-topbar">
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" }}>
-              {pageTitle}
-            </h1>
-          </div>
-          <Link href="/registry?tab=create" className="btn-primary" style={{ padding: "9px 20px", fontSize: 13, borderRadius: "var(--r-lg)" }}>
-            + Create Registry
-          </Link>
-          <Link href="/account/dashboard" style={{ width: 36, height: 36, borderRadius: "var(--r-md)", background: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <UserIcon />
-          </Link>
-        </div>
-
-        {/* Mobile header */}
-        <div className="layout-mobileheader">
-          <Link href="/" style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-            <span style={{ fontFamily: "var(--font-display)", fontWeight: 900, fontSize: 18, color: "var(--maroon)" }}>NIZAWADIE</span>
-            <span style={{ fontSize: 8, fontWeight: 700, color: "var(--gold)", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 1 }}>Gift Registry</span>
-          </Link>
-          <div style={{ display: "flex", gap: 8 }}>
-            <Link href="/registry?tab=create" style={{ width: 34, height: 34, borderRadius: "var(--r-md)", background: "var(--maroon)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18, fontWeight: 700 }}>+</Link>
-            <Link href="/admin" style={{ width: 34, height: 34, borderRadius: "var(--r-md)", background: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>⚙️</Link>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <div className="layout-page">
-          {children}
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════
-          MOBILE BOTTOM TAB BAR
-      ══════════════════════════════════════ */}
-      <nav className="layout-tabbar">
-        {NAV.map(({ href, label, icon }) => {
-          const on = active(href);
+      {/* ══════════════════════════════════════════
+          BOTTOM TAB BAR — Mobile only
+      ══════════════════════════════════════════ */}
+      <nav className="tabbar">
+        {NAV_LINKS.map(({ href, label }) => {
+          const on = isActive(href);
           return (
-            <Link key={href} href={href} className={`tab-item${on ? " tab-item--active" : ""}`}>
-              <div className="tab-icon-wrap">{icon}</div>
-              <span>{label}</span>
+            <Link key={href} href={href} className={`tabbar-item${on ? " tabbar-item--active" : ""}`}>
+              <div className={`tabbar-icon${on ? " tabbar-icon--active" : ""}`}>
+                {TAB_ICONS[href]}
+              </div>
+              <span className="tabbar-label">{label}</span>
             </Link>
           );
         })}
       </nav>
 
-    </div>
+      {/* ══════════════════════════════════════════
+          ALL STYLES IN ONE PLACE
+      ══════════════════════════════════════════ */}
+      <style>{`
+        /* ── Top navbar (desktop) ── */
+        .topnav {
+          position: sticky; top: 0; z-index: 200;
+          height: 62px;
+          display: flex; align-items: center; gap: 0;
+          padding: 0 32px;
+          background: rgba(253,251,248,0.96);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-bottom: 1px solid var(--border);
+          box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+        }
+        .topnav-brand {
+          display: flex; flex-direction: column; line-height: 1;
+          text-decoration: none; margin-right: 32px; flex-shrink: 0;
+        }
+        .topnav-brand-name {
+          font-family: var(--font-display); font-weight: 900;
+          font-size: 19px; color: var(--maroon); letter-spacing: -0.01em;
+        }
+        .topnav-brand-sub {
+          font-size: 8px; font-weight: 700; color: var(--gold);
+          letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px;
+        }
+        .topnav-links {
+          display: flex; gap: 2px; flex: 1; align-items: center;
+        }
+        .topnav-link {
+          padding: 7px 14px; border-radius: var(--r-md);
+          font-size: 14px; font-weight: 400; color: var(--text2);
+          text-decoration: none; transition: all 0.15s; white-space: nowrap;
+        }
+        .topnav-link:hover { background: var(--cream); color: var(--text); }
+        .topnav-link--active { background: var(--maroon-bg) !important; color: var(--maroon) !important; font-weight: 600; }
+        .topnav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .topnav-cta {
+          padding: 9px 20px; background: var(--maroon); color: #fff;
+          border-radius: var(--r-lg); font-size: 13px; font-weight: 700;
+          text-decoration: none; white-space: nowrap; transition: all 0.15s;
+          font-family: var(--font-body);
+        }
+        .topnav-cta:hover { background: var(--maroon-lt); box-shadow: var(--shadow-maroon); color: #fff; }
+        .topnav-admin {
+          padding: 8px 14px; background: var(--cream); color: var(--text2);
+          border-radius: var(--r-md); font-size: 12px; font-weight: 500;
+          text-decoration: none; border: 1px solid var(--border2);
+          font-family: var(--font-body); transition: all 0.15s;
+        }
+        .topnav-admin:hover { background: var(--gray-bg); color: var(--text); }
+
+        /* ── Mobile header ── */
+        .mobilenav { display: none; }
+
+        /* ── Page content ── */
+        .app-main {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 32px 32px 64px;
+        }
+
+        /* ── Bottom tab bar ── */
+        .tabbar { display: none; }
+
+        /* ─────────────────────────────────────────
+           MOBILE (≤ 768px) — flip to mobile layout
+        ───────────────────────────────────────── */
+        @media (max-width: 768px) {
+          /* Hide desktop nav */
+          .topnav { display: none; }
+
+          /* Show mobile header */
+          .mobilenav {
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 200;
+            height: 54px; padding: 0 16px;
+            background: rgba(253,251,248,0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+          }
+
+          /* Content full-width, padded for tab bar */
+          .app-main {
+            max-width: 100%;
+            padding: 16px 16px calc(var(--tabbar-h, 68px) + env(safe-area-inset-bottom, 0px) + 16px);
+          }
+
+          /* Show bottom tab bar */
+          .tabbar {
+            display: flex;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: calc(68px + env(safe-area-inset-bottom, 0px));
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            align-items: flex-start;
+            padding-top: 6px;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            z-index: 200;
+          }
+          .tabbar-item {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; gap: 3px; padding: 4px 2px;
+            text-decoration: none; color: var(--gray-lt);
+            transition: color 0.15s;
+          }
+          .tabbar-item--active { color: var(--maroon); }
+          .tabbar-icon {
+            width: 30px; height: 30px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s;
+          }
+          .tabbar-icon--active { background: var(--maroon-bg); }
+          .tabbar-label { font-size: 10px; font-weight: 400; line-height: 1; }
+          .tabbar-item--active .tabbar-label { font-weight: 700; }
+        }
+      `}</style>
+    </>
   );
 }
 
-function getPageTitle(path) {
-  if (path === "/") return "Home";
-  if (path.startsWith("/registry/dashboard")) return "My Registry";
-  if (path.startsWith("/registry")) return "Gift Registry";
-  if (path.startsWith("/products")) return "Marketplace";
-  if (path.startsWith("/search")) return "Search";
-  if (path.startsWith("/account/dashboard")) return "My Account";
-  if (path.startsWith("/account/login")) return "Sign In";
-  if (path.startsWith("/account/signup")) return "Create Account";
-  if (path.startsWith("/pay")) return "Complete Payment";
-  return "NIZAWADIE";
-}
-
-/* ── SVG Icons ───────────────────────────────────────────────────────── */
+/* ── SVG Icons ─────────────────────────────────────── */
 function HomeIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
