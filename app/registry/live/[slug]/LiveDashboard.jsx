@@ -218,13 +218,15 @@ function speakSeq(parts, lang) {
   if (!parts.length) return;
   const [head, ...rest] = parts;
   const utt = new SpeechSynthesisUtterance(head.text);
-  utt.rate   = head.rate  || 0.76;
+  utt.rate   = head.rate  || 1.0;
   utt.pitch  = head.pitch || 1.05;
   utt.volume = 1;
   utt.lang   = lang === "sw" ? "sw-KE" : "en-US";
   const v = pickVoice(lang);
   if (v) utt.voice = v;
   utt.onend = () => {
+    // Fire onEnd callback (e.g. claps) before continuing
+    if (head.onEnd) head.onEnd();
     if (head.pauseAfter) setTimeout(() => speakSeq(rest, lang), head.pauseAfter);
     else speakSeq(rest, lang);
   };
@@ -239,21 +241,17 @@ function announce(gifterName, amount, currency, lang) {
   const amtInt = Math.round(amount || 0);
   const amtWords = lang === "sw" ? numToWordsSW(amtInt) : numToWordsEN(amtInt);
 
+  const amtText = amtInt > 0
+    ? (lang === "sw" ? `Shilingi ${amtWords}` : `${currency} ${amtWords}`)
+    : null;
+
+  // Sequence: name → brief pause → amount → then claps burst at the very end
   const parts = [
-    // 1. Gifter name — faster and energetic
-    { text: gifterName, rate: 1.05, pitch: 1.18, pauseAfter: 500 },
+    { text: gifterName, rate: 1.05, pitch: 1.18, pauseAfter: 300 },
+    ...(amtText ? [{ text: amtText, rate: 1.10, pitch: 1.05, pauseAfter: 0, onEnd: playClaps }] : []),
+    ...(!amtText ? [{ text: gifterName, rate: 1.05, pitch: 1.18, pauseAfter: 0, onEnd: playClaps }] : []),
   ];
 
-  if (amtInt > 0) {
-    // 2. Amount in words — after claps
-    const amtText = lang === "sw"
-      ? `Shilingi ${amtWords}`
-      : `${currency} ${amtWords}`;
-    parts.push({ text: amtText, rate: 1.10, pitch: 1.05, pauseAfter: 0 });
-  }
-
-  // Claps fire during the pause after the name
-  setTimeout(() => playClaps(), 600);
   speakSeq(parts, lang);
 }
 
