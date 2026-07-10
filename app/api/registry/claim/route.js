@@ -6,8 +6,8 @@ export async function POST(request) {
   const body = await request.json();
   const { itemId, gifterName, gifterEmail, gifterPhone, message, contributionAmount, isCashGift, cashAmount, registryId } = body;
 
-  if (!gifterName || !gifterEmail) {
-    return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
+  if (!gifterName || !gifterPhone) {
+    return NextResponse.json({ error: "Name and phone number are required" }, { status: 400 });
   }
 
   // ── Cash gift (no item, just money) ────────────────────────────────────
@@ -59,7 +59,7 @@ export async function POST(request) {
           registryId: item.registryId,
           itemId,
           gifterName,
-          gifterEmail,
+          gifterEmail: gifterEmail || null,
           gifterPhone: gifterPhone || null,
           message: message || null,
           contributionAmount: amount,

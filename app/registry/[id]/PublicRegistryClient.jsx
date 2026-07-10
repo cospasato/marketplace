@@ -85,7 +85,7 @@ export default function PublicRegistryClient({ registry }) {
   };
 
   const handleClaim = async () => {
-    if (!form.gifterName || !form.gifterEmail) return;
+    if (!form.gifterName || !form.gifterPhone) return;
     if (claimModal?.groupBuy && !form.contributionAmount) return;
     setClaiming(true);
     try {
@@ -108,7 +108,7 @@ export default function PublicRegistryClient({ registry }) {
 
   const handleCashGift = async () => {
     const amt = parseFloat(cashForm.amount);
-    if (!form.gifterName || !form.gifterEmail) { return; }
+    if (!form.gifterName || !form.gifterPhone) { return; }
     if (!amt || amt <= 0) { return; }
     setGiftingCash(true);
     try {
@@ -197,10 +197,10 @@ export default function PublicRegistryClient({ registry }) {
       {/* ── STATS BAR ── */}
       <div className="reg-stats">
         {[
-          { label:"Total",     value:items.length, color:"#f5f0e8" },
-          { label:"Available", value:available,    color:"#5dd68c" },
+          { label:"Purchased", value:purchased,    color:"#5dd68c" },
           { label:"Claimed",   value:claimed,      color:"#e8b84b" },
-          { label:"Purchased", value:purchased,    color:"#60a5fa" },
+          { label:"Available", value:available,    color:"#60a5fa" },
+          { label:"Total",     value:items.length, color:"rgba(255,255,255,0.75)" },
         ].map(({ label, value, color }) => (
           <div key={label} className="reg-stat">
             <div style={{ fontFamily:"var(--font-display)", fontSize:28, fontWeight:900, color, lineHeight:1 }}>{value}</div>
@@ -471,8 +471,8 @@ export default function PublicRegistryClient({ registry }) {
                   </div>
                 </div>
                 <div>
-                  <label style={lbl}>Email address *</label>
-                  <input type="email" value={form.gifterEmail} onChange={e => setForm(f=>({...f,gifterEmail:e.target.value}))} placeholder="jane@email.com" style={inp} />
+                  <label style={lbl}>Email address <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label>
+                  <input type="email" value={form.gifterEmail} onChange={e => setForm(f=>({...f,gifterEmail:e.target.value}))} placeholder="jane@email.com (optional)" style={inp} />
                 </div>
 
                 {claimModal.groupBuy && (
@@ -495,9 +495,9 @@ export default function PublicRegistryClient({ registry }) {
 
                 <div style={{ display:"flex", gap:10 }}>
                   <button onClick={handleClaim}
-                    disabled={claiming || !form.gifterName || !form.gifterEmail || !form.gifterPhone || (claimModal.groupBuy && !form.contributionAmount)}
+                    disabled={claiming || !form.gifterName || !form.gifterPhone || (claimModal.groupBuy && !form.contributionAmount)}
                     className="btn-primary"
-                    style={{ flex:1, opacity:(claiming||!form.gifterName||!form.gifterEmail||!form.gifterPhone)?0.65:1, fontSize:15 }}>
+                    style={{ flex:1, opacity:(claiming||!form.gifterName||!form.gifterPhone)?0.65:1, fontSize:15 }}>
                     {claiming ? "Processing..." : claimModal.groupBuy ? "Contribute →" : "Claim & Gift →"}
                   </button>
                   <button onClick={() => setClaimModal(null)} style={{ padding:"14px 18px", background:"var(--cream)", borderRadius:"var(--r-xl)", color:"var(--text2)", fontSize:14, fontWeight:700, border:"none", cursor:"pointer" }}>
@@ -586,8 +586,8 @@ export default function PublicRegistryClient({ registry }) {
                   </div>
                 </div>
                 <div>
-                  <label style={lbl}>Email address *</label>
-                  <input type="email" value={form.gifterEmail} onChange={e => setForm(f=>({...f,gifterEmail:e.target.value}))} placeholder="jane@email.com" style={inp} />
+                  <label style={lbl}>Email address <span style={{fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label>
+                  <input type="email" value={form.gifterEmail} onChange={e => setForm(f=>({...f,gifterEmail:e.target.value}))} placeholder="jane@email.com (optional)" style={inp} />
                 </div>
 
                 {/* Amount */}
@@ -625,9 +625,9 @@ export default function PublicRegistryClient({ registry }) {
 
                 <button
                   onClick={handleCashGift}
-                  disabled={giftingCash || !form.gifterName || !form.gifterEmail || !form.gifterPhone || !cashForm.amount || parseFloat(cashForm.amount) <= 0}
+                  disabled={giftingCash || !form.gifterName || !form.gifterPhone || !cashForm.amount || parseFloat(cashForm.amount) <= 0}
                   className="btn-primary"
-                  style={{ opacity:(giftingCash||!form.gifterName||!form.gifterEmail||!form.gifterPhone||!cashForm.amount||parseFloat(cashForm.amount||0)<=0)?0.55:1, fontSize:15 }}>
+                  style={{ opacity:(giftingCash||!form.gifterName||!form.gifterPhone||!cashForm.amount||parseFloat(cashForm.amount||0)<=0)?0.55:1, fontSize:15 }}>
                   {giftingCash
                     ? "Processing…"
                     : cashForm.amount && parseFloat(cashForm.amount) > 0

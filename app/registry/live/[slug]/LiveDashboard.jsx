@@ -120,8 +120,8 @@ export default function LiveDashboard({ slug }) {
           setGift(newest);
           setShowBig(true);
           burst();
-          if (!muted) announce(newest.gifterName, newest.item?.title, amt, data.items?.[0]?.currency || "USD");
-          setTimeout(() => setShowBig(false), 8000);
+          if (!muted) announce(newest.gifterName, amt, data.items?.[0]?.currency || "USD");
+          setTimeout(() => setShowBig(false), 10000);
         }
         prevC.current = data.contributions || [];
         return data;
