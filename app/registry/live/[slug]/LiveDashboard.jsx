@@ -136,23 +136,64 @@ function numToWordsSW(n) {
   return result.trim();
 }
 
-/* ── Clap sounds via Web Audio ──────────────────────────────────────────── */
+/* ── Clap + crowd cheer via Web Audio ───────────────────────────────────── */
 function playClaps() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    for (let i = 0; i < 5; i++) {
-      const t = ctx.currentTime + i * 0.19;
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+
+    // Individual claps (8 claps)
+    for (let i = 0; i < 8; i++) {
+      const t = ctx.currentTime + i * 0.16;
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
       const d = buf.getChannelData(0);
-      for (let j = 0; j < d.length; j++) d[j] = (Math.random()*2-1) * Math.exp(-j/(ctx.sampleRate*0.03));
+      for (let j = 0; j < d.length; j++) d[j] = (Math.random()*2-1) * Math.exp(-j/(ctx.sampleRate*0.025));
       const src = ctx.createBufferSource();
       src.buffer = buf;
       const g = ctx.createGain();
-      g.gain.setValueAtTime(0.7, t);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+      g.gain.setValueAtTime(0.75, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
       src.connect(g); g.connect(ctx.destination);
       src.start(t);
     }
+
+    // Crowd cheer — layered filtered noise that swells and fades (3 seconds)
+    const duration = 3.0;
+    const cheerBuf = ctx.createBuffer(2, ctx.sampleRate * duration, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = cheerBuf.getChannelData(ch);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const cheer = ctx.createBufferSource();
+    cheer.buffer = cheerBuf;
+
+    // Bandpass filter to shape white noise into crowd-like sound
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 1200;
+    bp.Q.value = 0.6;
+
+    // Low-frequency modulation for crowd "waves"
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 3.5;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 180;
+    lfo.connect(lfoGain);
+    lfoGain.connect(bp.frequency);
+    lfo.start();
+
+    // Master gain with envelope: swell up → sustain → fade
+    const masterGain = ctx.createGain();
+    const now = ctx.currentTime;
+    masterGain.gain.setValueAtTime(0, now);
+    masterGain.gain.linearRampToValueAtTime(0.22, now + 0.4);   // swell up
+    masterGain.gain.setValueAtTime(0.20, now + 1.6);             // sustain
+    masterGain.gain.linearRampToValueAtTime(0, now + duration);  // fade out
+
+    cheer.connect(bp);
+    bp.connect(masterGain);
+    masterGain.connect(ctx.destination);
+    cheer.start();
+    cheer.stop(now + duration);
   } catch {}
 }
 
@@ -199,8 +240,8 @@ function announce(gifterName, amount, currency, lang) {
   const amtWords = lang === "sw" ? numToWordsSW(amtInt) : numToWordsEN(amtInt);
 
   const parts = [
-    // 1. Gifter name — slow and dramatic
-    { text: gifterName, rate: 0.70, pitch: 1.12, pauseAfter: 700 },
+    // 1. Gifter name — faster and energetic
+    { text: gifterName, rate: 1.05, pitch: 1.18, pauseAfter: 500 },
   ];
 
   if (amtInt > 0) {
@@ -208,11 +249,11 @@ function announce(gifterName, amount, currency, lang) {
     const amtText = lang === "sw"
       ? `Shilingi ${amtWords}`
       : `${currency} ${amtWords}`;
-    parts.push({ text: amtText, rate: 0.78, pitch: 1.0, pauseAfter: 0 });
+    parts.push({ text: amtText, rate: 1.10, pitch: 1.05, pauseAfter: 0 });
   }
 
   // Claps fire during the pause after the name
-  setTimeout(() => playClaps(), 850);
+  setTimeout(() => playClaps(), 600);
   speakSeq(parts, lang);
 }
 
@@ -333,7 +374,7 @@ export default function LiveDashboard({ slug }) {
       ═══════════════════════════════════════════════ */}
       {showBig && gift && (
         <div style={{ position:"fixed", inset:0, zIndex:250, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,0.82)", backdropFilter:"blur(6px)", animation:"fadeIn .3s ease" }}>
-          <div style={{ textAlign:"center", padding:"48px 40px", maxWidth:560 }}>
+          <div style={{ textAlign:"center", padding:"clamp(24px,5vw,48px) clamp(16px,5vw,40px)", maxWidth:560, width:"100%" }}>
             {/* Emoji burst */}
             <div style={{ fontSize:88, lineHeight:1, marginBottom:20, animation:"popIn .4s ease" }}>🎉</div>
             {/* "New gift!" label */}
@@ -368,7 +409,7 @@ export default function LiveDashboard({ slug }) {
       {/* ═══════════════════════════════════════════════
           TOP BAR
       ═══════════════════════════════════════════════ */}
-      <header style={{ position:"sticky", top:0, zIndex:100, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px", height:58, background:"rgba(7,6,6,0.9)", backdropFilter:"blur(20px)", borderBottom:`1px solid ${C.border}` }}>
+      <header style={{ position:"sticky", top:0, zIndex:100, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 14px", height:54, background:"rgba(7,6,6,0.9)", backdropFilter:"blur(20px)", borderBottom:`1px solid ${C.border}`, gap:8, flexWrap:"wrap", minHeight:54 }}>
 
         {/* Live badge + counter */}
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
@@ -378,14 +419,14 @@ export default function LiveDashboard({ slug }) {
               {live ? "LIVE" : "RECONNECTING"}
             </span>
           </div>
-          <span style={{ fontSize:12, color:C.dim, fontWeight:600 }}>{polls} updates</span>
+          <span className="hide-mobile-live" style={{ fontSize:12, color:C.dim, fontWeight:600 }}>{polls} updates</span>
           {error && <span style={{ fontSize:11, color:C.red, fontWeight:700 }}>⚠ {error}</span>}
         </div>
 
-        {/* Title + occasion */}
+        {/* Title only — no "Birthday Registry" label */}
         <div style={{ textAlign:"center" }}>
-          <div style={{ fontSize:10, color:C.dim, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:2 }}>{registry.occasion} Registry</div>
           <div style={{ fontFamily:"Georgia,serif", fontSize:18, fontWeight:700, color:C.white }}>{registry.title}</div>
+          <div style={{ fontSize:11, color:C.dim, marginTop:2 }}>by {registry.ownerName}</div>
         </div>
 
         {/* Clock + controls */}
@@ -422,30 +463,13 @@ export default function LiveDashboard({ slug }) {
       {/* ═══════════════════════════════════════════════
           MAIN GRID
       ═══════════════════════════════════════════════ */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 380px", gap:18, padding:"18px 20px 80px", maxWidth:1440, margin:"0 auto" }}>
+      <div className="live-grid" style={{ display:"grid", gridTemplateColumns:"1fr 380px", gap:18, padding:"18px 20px 80px", maxWidth:1440, margin:"0 auto" }}>
 
         {/* ── LEFT ── */}
         <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
-          {/* Registry identity */}
-          <div style={{ display:"flex", alignItems:"center", gap:16, padding:"18px 22px", background:C.card, border:`1px solid ${C.border}`, borderRadius:18, position:"relative", overflow:"hidden" }}>
-            <div style={{ position:"absolute", inset:0, background:`linear-gradient(135deg,${occColor}0c,transparent 60%)`, pointerEvents:"none" }} />
-            <div style={{ fontSize:52, lineHeight:1, flexShrink:0 }}>{occEmoji}</div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontFamily:"Georgia,serif", fontSize:"clamp(18px,3vw,26px)", fontWeight:800, color:C.white, lineHeight:1.2, marginBottom:4 }}>{registry.title}</div>
-              <div style={{ fontSize:14, color:C.mid, fontWeight:600 }}>
-                by {registry.ownerName}
-                {registry.eventDate && (
-                  <span style={{ marginLeft:12, color:occColor }}>
-                    · {new Date(registry.eventDate).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Stat cards */}
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
+          <div className="live-stats-grid">
             {[
               { label:"Total",     value:total,     color:C.light,  bg:"rgba(255,255,255,0.05)", icon:"🎁" },
               { label:"Purchased", value:purchased, color:C.green,  bg:"rgba(74,222,128,0.08)",  icon:"✅" },
@@ -643,6 +667,24 @@ export default function LiveDashboard({ slug }) {
         @keyframes ticker  { from{transform:translateX(0)} to{transform:translateX(-50%)} }
         @keyframes spin    { to{transform:rotate(360deg)} }
         @keyframes pingOut { 0%{transform:scale(1);opacity:.6} 100%{transform:scale(2.5);opacity:0} }
+
+        /* ── Responsive ── */
+        .live-grid { display: grid; grid-template-columns: 1fr 380px; }
+        .live-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+
+        @media (max-width: 900px) {
+          .live-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 768px) {
+          .live-stats-grid { grid-template-columns: repeat(2,1fr) !important; gap: 8px; }
+          .live-grid { padding: 12px 12px 100px !important; gap: 12px; }
+        }
+        @media (max-width: 480px) {
+          .live-stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+        }
+        @media (max-width: 640px) {
+          .hide-mobile-live { display: none !important; }
+        }
       `}</style>
     </div>
   );
