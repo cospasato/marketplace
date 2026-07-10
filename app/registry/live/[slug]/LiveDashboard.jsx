@@ -58,23 +58,162 @@ function useConfetti(ref) {
   }, [ref]);
 }
 
-/* ── Voice announcement ─────────────────────────────────────────────────── */
-function announce(gifterName, itemTitle, amount, currency) {
+/* ── Number to words ────────────────────────────────────────────────────── */
+
+// English number-to-words (no decimals)
+function numToWordsEN(n) {
+  n = Math.round(n);
+  if (n === 0) return "zero";
+  const ones = ["","one","two","three","four","five","six","seven","eight","nine",
+    "ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+  const tens = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+  function below1000(num) {
+    if (num < 20) return ones[num];
+    if (num < 100) return tens[Math.floor(num/10)] + (num%10 ? " " + ones[num%10] : "");
+    return ones[Math.floor(num/100)] + " hundred" + (num%100 ? " " + below1000(num%100) : "");
+  }
+  let result = "";
+  if (n >= 1000000000) { result += below1000(Math.floor(n/1000000000)) + " billion "; n %= 1000000000; }
+  if (n >= 1000000)    { result += below1000(Math.floor(n/1000000)) + " million "; n %= 1000000; }
+  if (n >= 1000)       { result += below1000(Math.floor(n/1000)) + " thousand "; n %= 1000; }
+  if (n > 0)           { result += below1000(n); }
+  return result.trim();
+}
+
+// Swahili number-to-words (no decimals)
+function numToWordsSW(n) {
+  n = Math.round(n);
+  if (n === 0) return "sifuri";
+
+  const ones = ["","moja","mbili","tatu","nne","tano","sita","saba","nane","tisa"];
+  const teens = ["kumi","kumi na moja","kumi na mbili","kumi na tatu","kumi na nne",
+    "kumi na tano","kumi na sita","kumi na saba","kumi na nane","kumi na tisa"];
+  const tensW = ["","","ishirini","thelathini","arobaini","hamsini","sitini","sabini","themanini","tisini"];
+
+  function below100(num) {
+    if (num === 0) return "";
+    if (num <= 9) return ones[num];
+    if (num <= 19) return teens[num - 10];
+    const t = tensW[Math.floor(num/10)];
+    const o = ones[num%10];
+    return o ? t + " na " + o : t;
+  }
+  function below1000(num) {
+    if (num < 100) return below100(num);
+    const h = Math.floor(num/100);
+    const rem = num % 100;
+    let res = (h === 1 ? "mia moja" : "mia " + ones[h]);
+    if (rem) res += " na " + below100(rem);
+    return res;
+  }
+
+  let result = "";
+  // Billions — bilioni
+  if (n >= 1000000000) {
+    const b = Math.floor(n/1000000000);
+    result += (b === 1 ? "bilioni moja" : "bilioni " + below1000(b)) + " ";
+    n %= 1000000000;
+  }
+  // Millions — milioni
+  if (n >= 1000000) {
+    const m = Math.floor(n/1000000);
+    result += (m === 1 ? "milioni moja" : "milioni " + below1000(m)) + " ";
+    n %= 1000000;
+  }
+  // Hundreds of thousands = laki (1 laki = 100,000)
+  if (n >= 100000) {
+    const lk = Math.floor(n/100000);
+    result += (lk === 1 ? "laki moja" : "laki " + ones[lk]) + " ";
+    n %= 100000;
+  }
+  // Tens of thousands — elfu
+  if (n >= 1000) {
+    const th = Math.floor(n/1000);
+    result += (th === 1 ? "elfu moja" : "elfu " + below100(th)) + " ";
+    n %= 1000;
+  }
+  if (n > 0) result += below1000(n);
+  return result.trim();
+}
+
+/* ── Clap sounds via Web Audio ──────────────────────────────────────────── */
+function playClaps() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    for (let i = 0; i < 5; i++) {
+      const t = ctx.currentTime + i * 0.19;
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < d.length; j++) d[j] = (Math.random()*2-1) * Math.exp(-j/(ctx.sampleRate*0.03));
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.7, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+      src.connect(g); g.connect(ctx.destination);
+      src.start(t);
+    }
+  } catch {}
+}
+
+/* ── Pick best voice for language ──────────────────────────────────────── */
+function pickVoice(lang) {
+  const voices = window.speechSynthesis.getVoices();
+  if (lang === "sw") {
+    // Try Swahili voice first, fall back to English
+    return voices.find(v => v.lang.startsWith("sw"))
+      || voices.find(v => v.lang === "en-US")
+      || voices.find(v => v.lang.startsWith("en"))
+      || null;
+  }
+  return voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female"))
+    || voices.find(v => v.lang === "en-US")
+    || voices.find(v => v.lang.startsWith("en"))
+    || null;
+}
+
+/* ── Speak a sequence with pauses ──────────────────────────────────────── */
+function speakSeq(parts, lang) {
+  if (!parts.length) return;
+  const [head, ...rest] = parts;
+  const utt = new SpeechSynthesisUtterance(head.text);
+  utt.rate   = head.rate  || 0.76;
+  utt.pitch  = head.pitch || 1.05;
+  utt.volume = 1;
+  utt.lang   = lang === "sw" ? "sw-KE" : "en-US";
+  const v = pickVoice(lang);
+  if (v) utt.voice = v;
+  utt.onend = () => {
+    if (head.pauseAfter) setTimeout(() => speakSeq(rest, lang), head.pauseAfter);
+    else speakSeq(rest, lang);
+  };
+  window.speechSynthesis.speak(utt);
+}
+
+/* ── Main announce function ─────────────────────────────────────────────── */
+function announce(gifterName, amount, currency, lang) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const amtStr = amount > 0 ? `, contributing ${currency} ${Math.round(amount)}` : "";
-  const msg = `${gifterName} just gifted ${itemTitle || "a gift"}${amtStr}. Thank you so much!`;
-  const utt = new SpeechSynthesisUtterance(msg);
-  utt.rate  = 0.88;
-  utt.pitch = 1.05;
-  utt.volume = 1;
-  // Try to pick a nice voice
-  const voices = window.speechSynthesis.getVoices();
-  const pick = voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("female"))
-    || voices.find(v => v.lang === "en-US")
-    || voices.find(v => v.lang.startsWith("en"));
-  if (pick) utt.voice = pick;
-  window.speechSynthesis.speak(utt);
+
+  const amtInt = Math.round(amount || 0);
+  const amtWords = lang === "sw" ? numToWordsSW(amtInt) : numToWordsEN(amtInt);
+
+  const parts = [
+    // 1. Gifter name — slow and dramatic
+    { text: gifterName, rate: 0.70, pitch: 1.12, pauseAfter: 700 },
+  ];
+
+  if (amtInt > 0) {
+    // 2. Amount in words — after claps
+    const amtText = lang === "sw"
+      ? `Shilingi ${amtWords}`
+      : `${currency} ${amtWords}`;
+    parts.push({ text: amtText, rate: 0.78, pitch: 1.0, pauseAfter: 0 });
+  }
+
+  // Claps fire during the pause after the name
+  setTimeout(() => playClaps(), 850);
+  speakSeq(parts, lang);
 }
 
 /* ── Pulse dot ──────────────────────────────────────────────────────────── */
@@ -91,7 +230,8 @@ export default function LiveDashboard({ slug }) {
   const cvRef  = useRef(null);
   const burst  = useConfetti(cvRef);
   const prevC  = useRef([]);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted]   = useState(false);
+  const [lang,  setLang]    = useState("en");  // "en" or "sw"
 
   const [registry, setReg]    = useState(null);
   const [error,    setError]  = useState("");
@@ -120,14 +260,14 @@ export default function LiveDashboard({ slug }) {
           setGift(newest);
           setShowBig(true);
           burst();
-          if (!muted) announce(newest.gifterName, amt, data.items?.[0]?.currency || "USD");
+          if (!muted) announce(newest.gifterName, amt, data.items?.[0]?.currency || "USD", lang);
           setTimeout(() => setShowBig(false), 10000);
         }
         prevC.current = data.contributions || [];
         return data;
       });
     } catch { setLive(false); }
-  }, [slug, burst, muted]);
+  }, [slug, burst, muted, lang]);
 
   useEffect(() => {
     if (!slug) { setError("No registry slug."); return; }
@@ -250,6 +390,18 @@ export default function LiveDashboard({ slug }) {
 
         {/* Clock + controls */}
         <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+          {/* Mute toggle */}
+          {/* Language toggle */}
+          <div style={{ display:"flex", alignItems:"center", background:"rgba(255,255,255,0.05)", border:`1px solid ${C.border}`, borderRadius:10, overflow:"hidden" }}>
+            <button onClick={()=>setLang("en")}
+              style={{ padding:"5px 12px", background: lang==="en" ? C.gold : "transparent", color: lang==="en" ? C.bg : C.dim, border:"none", cursor:"pointer", fontSize:12, fontWeight:800, letterSpacing:"0.06em", fontFamily:"sans-serif" }}>
+              EN
+            </button>
+            <button onClick={()=>setLang("sw")}
+              style={{ padding:"5px 12px", background: lang==="sw" ? C.gold : "transparent", color: lang==="sw" ? C.bg : C.dim, border:"none", cursor:"pointer", fontSize:12, fontWeight:800, letterSpacing:"0.06em", fontFamily:"sans-serif" }}>
+              SW
+            </button>
+          </div>
           {/* Mute toggle */}
           <button onClick={()=>setMuted(m=>!m)} title={muted?"Unmute announcements":"Mute announcements"}
             style={{ width:34, height:34, borderRadius:10, background: muted?"rgba(255,255,255,0.05)":"rgba(74,222,128,0.12)", border:`1px solid ${muted?C.border:C.green+"44"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, cursor:"pointer", color: muted?C.dim:C.green }}>
