@@ -286,7 +286,7 @@ export default function PublicRegistryClient({ registry }) {
             <div style={{ fontSize:28, flexShrink:0 }}>💵</div>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontSize:14, fontWeight:800, color:"var(--text)" }}>Gift money instead</div>
-              <div style={{ fontSize:12, fontWeight:600, color:"var(--gray)", marginTop:2 }}>Send any amount directly to {registry.ownerName} as a cash gift</div>
+              <div style={{ fontSize:12, fontWeight:600, color:"var(--gray)", marginTop:2 }}>Money as a gift for <strong style={{color:"var(--maroon)"}}>{registry.title}</strong></div>
             </div>
             <button onClick={() => { setCashModal(true); setCashResult(null); setCashForm({ amount:"", message:"" }); }} style={{ padding:"10px 18px", background:"var(--maroon)", color:"#fff", borderRadius:"var(--r-lg)", border:"none", fontFamily:"var(--font-body)", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0 }}>
               💵 Gift Money
@@ -536,6 +536,137 @@ export default function PublicRegistryClient({ registry }) {
                 <button onClick={() => setClaimModal(null)} style={{ background:"none", border:"none", color:"var(--gray)", cursor:"pointer", fontSize:13, fontWeight:600, padding:"8px 0", display:"block", margin:"8px auto 0" }}>
                   Back to registry
                 </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── CASH GIFT MODAL ── */}
+      {cashModal && (
+        <div onClick={() => setCashModal(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.65)", zIndex:1000, display:"flex", alignItems:"flex-end", justifyContent:"center", padding:0 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background:"var(--white)", borderRadius:"var(--r-xl) var(--r-xl) 0 0", width:"100%", maxWidth:500, maxHeight:"92vh", overflowY:"auto", boxShadow:"0 -8px 48px rgba(0,0,0,0.3)" }}>
+            <style>{`@keyframes slideUpCash{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+
+            {/* Pull handle */}
+            <div style={{ padding:"12px 0 2px", display:"flex", justifyContent:"center" }}>
+              <div style={{ width:36, height:4, borderRadius:99, background:"var(--border2)" }} />
+            </div>
+
+            {/* Header */}
+            <div style={{ padding:"8px 20px 16px", borderBottom:"1px solid var(--border)" }}>
+              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:10, fontWeight:800, color:"var(--gold-dk)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>💵 Cash Gift</div>
+                  <h3 style={{ fontFamily:"var(--font-display)", fontSize:19, fontWeight:900, color:"var(--text)", lineHeight:1.2 }}>Money gift for {registry.title}</h3>
+                  <p style={{ fontSize:13, fontWeight:600, color:"var(--gray)", marginTop:5, lineHeight:1.6 }}>
+                    Send money as a gift for this {registry.occasion.toLowerCase()} celebration. A 5% service fee applies.
+                  </p>
+                </div>
+                <button onClick={() => setCashModal(false)} style={{ color:"var(--gray-lt)", fontSize:22, padding:4, background:"none", border:"none", cursor:"pointer", flexShrink:0, lineHeight:1 }}>✕</button>
+              </div>
+            </div>
+
+            {!cashResult ? (
+              <div style={{ padding:"18px 20px 28px", display:"flex", flexDirection:"column", gap:14 }}>
+
+                {/* Who is gifting */}
+                <div style={{ padding:"10px 14px", background:"var(--cream)", border:"1px solid var(--border)", borderRadius:"var(--r-md)", fontSize:13, fontWeight:600, color:"var(--text2)" }}>
+                  👤 Your details — so {registry.ownerName} knows who gifted them
+                </div>
+
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                  <div>
+                    <label style={lbl}>Your name *</label>
+                    <input value={form.gifterName} onChange={e => setForm(f=>({...f,gifterName:e.target.value}))} placeholder="Jane Doe" style={inp} />
+                  </div>
+                  <div>
+                    <label style={lbl}>Phone number *</label>
+                    <input type="tel" value={form.gifterPhone} onChange={e => setForm(f=>({...f,gifterPhone:e.target.value}))} placeholder="+255 7xx xxx xxx" style={inp} />
+                  </div>
+                </div>
+                <div>
+                  <label style={lbl}>Email address *</label>
+                  <input type="email" value={form.gifterEmail} onChange={e => setForm(f=>({...f,gifterEmail:e.target.value}))} placeholder="jane@email.com" style={inp} />
+                </div>
+
+                {/* Amount */}
+                <div>
+                  <label style={lbl}>Gift amount ({currency}) *</label>
+                  <div style={{ position:"relative" }}>
+                    <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:14, fontWeight:700, color:"var(--gray)", pointerEvents:"none" }}>{currency}</span>
+                    <input
+                      type="number" min="1" step="any"
+                      value={cashForm.amount}
+                      onChange={e => setCashForm(f=>({...f,amount:e.target.value}))}
+                      placeholder="0.00"
+                      style={{ ...inp, paddingLeft: currency.length > 3 ? 58 : 52 }}
+                    />
+                  </div>
+                  {cashForm.amount > 0 && !isNaN(parseFloat(cashForm.amount)) && (
+                    <div style={{ fontSize:12, fontWeight:600, color:"var(--gray)", marginTop:6, padding:"8px 12px", background:"var(--gold-bg)", borderRadius:"var(--r-md)", border:"1px solid rgba(201,150,42,0.2)" }}>
+                      Service fee (5%): <strong>{currency} {(parseFloat(cashForm.amount)*0.05).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
+                      {" · "}Total you pay: <strong style={{color:"var(--maroon)"}}>{currency} {(parseFloat(cashForm.amount)*1.05).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
+                    </div>
+                  )}
+                </div>
+
+                {/* Message */}
+                <div>
+                  <label style={lbl}>Celebration message (optional)</label>
+                  <textarea
+                    value={cashForm.message}
+                    onChange={e => setCashForm(f=>({...f,message:e.target.value}))}
+                    placeholder={`Congratulations on your ${registry.occasion.toLowerCase()}! Wishing you all the best…`}
+                    rows={2}
+                    style={{ ...inp, resize:"vertical", lineHeight:1.65 }}
+                  />
+                </div>
+
+                <button
+                  onClick={handleCashGift}
+                  disabled={giftingCash || !form.gifterName || !form.gifterEmail || !form.gifterPhone || !cashForm.amount || parseFloat(cashForm.amount) <= 0}
+                  className="btn-primary"
+                  style={{ opacity:(giftingCash||!form.gifterName||!form.gifterEmail||!form.gifterPhone||!cashForm.amount||parseFloat(cashForm.amount||0)<=0)?0.55:1, fontSize:15 }}>
+                  {giftingCash
+                    ? "Processing…"
+                    : cashForm.amount && parseFloat(cashForm.amount) > 0
+                      ? `💵 Send ${currency} ${parseFloat(cashForm.amount).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})} as Gift →`
+                      : "💵 Send Money Gift →"
+                  }
+                </button>
+
+                <button onClick={() => setCashModal(false)} style={{ background:"none", border:"none", color:"var(--gray)", fontSize:13, fontWeight:600, cursor:"pointer", padding:"2px 0", fontFamily:"inherit" }}>
+                  Cancel
+                </button>
+              </div>
+            ) : cashResult.error ? (
+              <div style={{ padding:"36px 20px", textAlign:"center" }}>
+                <div style={{ fontSize:44, marginBottom:12 }}>😕</div>
+                <p style={{ color:"var(--red)", fontWeight:700, fontSize:15, marginBottom:18 }}>{cashResult.error}</p>
+                <button onClick={() => setCashResult(null)} className="btn-outline" style={{ margin:"0 auto", width:"auto", padding:"11px 28px" }}>
+                  Try again
+                </button>
+              </div>
+            ) : (
+              <div style={{ padding:"36px 20px", textAlign:"center" }}>
+                <div style={{ fontSize:60, marginBottom:14 }}>🎉</div>
+                <h3 style={{ fontFamily:"var(--font-display)", fontSize:24, fontWeight:900, color:"var(--green)", marginBottom:10 }}>
+                  Cash gift recorded!
+                </h3>
+                <p style={{ fontSize:14, fontWeight:600, color:"var(--text2)", marginBottom:24, lineHeight:1.7 }}>
+                  {cashResult.message}
+                </p>
+                {cashResult.contribution?.id && (
+                  <Link href={`/pay/${cashResult.contribution.id}`} className="btn-primary" style={{ display:"inline-flex", justifyContent:"center", marginBottom:12, textDecoration:"none" }}>
+                    Complete Payment →
+                  </Link>
+                )}
+                <div>
+                  <button onClick={() => setCashModal(false)} style={{ background:"none", border:"none", color:"var(--gray)", cursor:"pointer", fontSize:13, fontWeight:600, padding:"10px 0", fontFamily:"inherit" }}>
+                    ← Back to registry
+                  </button>
+                </div>
               </div>
             )}
           </div>
