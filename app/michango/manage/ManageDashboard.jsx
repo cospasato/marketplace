@@ -226,20 +226,78 @@ export default function ManageDashboard() {
             {vendorBal <= 0 && vendors.length>0 && <div style={{ marginTop:12, padding:"10px 14px", background:"var(--green-bg)", border:"1px solid rgba(30,158,94,.2)", borderRadius:"var(--r-md)", fontSize:13, fontWeight:700, color:"var(--green)" }}>✅ All vendors paid!</div>}
           </div>
 
-          {/* Recent contributors */}
+          {/* Recent contributors with quick approve/reject */}
           <div style={S.card}>
-            <div style={{ fontSize:12, fontWeight:800, color:"var(--maroon)", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:14 }}>👥 Recent Contributors</div>
-            {contributors.length===0 ? <p style={{ color:"var(--gray)", fontSize:13 }}>No contributions yet. Share your fund link!</p>
-              : contributors.slice(0,5).map(c=>(
-              <div key={c.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom:"1px solid var(--border)" }}>
-                <div style={{ width:34, height:34, borderRadius:"50%", background:"var(--maroon-bg)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"var(--font-display)", fontWeight:900, fontSize:14, color:"var(--maroon)", flexShrink:0 }}>{c.name[0].toUpperCase()}</div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--text)" }}>{c.anonymous?"Anonymous":c.name}</div>
-                  <div style={{ fontSize:11, fontWeight:600, color:"var(--gray)" }}>{MODE_ICONS[c.paymentMode]||"💳"} {c.paymentMode} · {new Date(c.paidAt||c.createdAt).toLocaleDateString("en-GB")}</div>
-                </div>
-                <div style={{ fontFamily:"var(--font-display)", fontSize:14, fontWeight:900, color:"var(--maroon)", flexShrink:0 }}>{money(c.amount,cur)}</div>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+              <div style={{ fontSize:12, fontWeight:800, color:"var(--maroon)", textTransform:"uppercase", letterSpacing:"0.1em" }}>
+                Recent Contributors
+                {contributors.filter(x=>x.status==="pending").length > 0 && (
+                  <span style={{ marginLeft:8, padding:"2px 8px", borderRadius:100, background:"var(--yellow-bg)", color:"var(--yellow)", fontSize:10 }}>
+                    {contributors.filter(x=>x.status==="pending").length} pending
+                  </span>
+                )}
               </div>
-            ))}
+              {contributors.filter(x=>x.status==="pending").length > 0 && (
+                <button
+                  onClick={async()=>{ for(const p of contributors.filter(x=>x.status==="pending")){ await approveContrib(p.id,"approve"); } }}
+                  style={{ fontSize:11, fontWeight:800, padding:"4px 12px", background:"var(--green-bg)", border:"1px solid rgba(30,158,94,.25)", borderRadius:"var(--r-md)", color:"var(--green)", cursor:"pointer", fontFamily:"inherit" }}>
+                  Confirm all
+                </button>
+              )}
+            </div>
+            {contributors.length===0
+              ? <p style={{ color:"var(--gray)", fontSize:13 }}>No contributions yet. Share your fund link!</p>
+              : contributors.slice(0,8).map((c,i) => {
+                const isPending  = c.status==="pending";
+                const isApproved = c.status==="approved";
+                const paid = c.amountPaid||c.amount||0;
+                return (
+                  <div key={c.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 0", borderBottom:i<Math.min(contributors.length,8)-1?"1px solid var(--border)":"none" }}>
+                    <div style={{ width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"var(--font-display)", fontWeight:900, fontSize:14, flexShrink:0,
+                      background:isPending?"var(--yellow-bg)":isApproved?"var(--green-bg)":"var(--red-bg)",
+                      color:isPending?"#b7680f":isApproved?"var(--green)":"var(--red)",
+                      border:"2px solid "+(isPending?"#b7680f":isApproved?"var(--green)":"var(--red)"),
+                    }}>
+                      {(c.anonymous?"A":c.name[0]).toUpperCase()}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:800, color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{c.anonymous?"Anonymous":c.name}</div>
+                      <div style={{ fontSize:11, fontWeight:600, color:"var(--gray)", display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
+                        <span>{MODE_ICONS[c.paymentMode]||"💳"} {c.paymentMode}</span>
+                        {c.pledgeAmount > paid && <span style={{ color:"#b7680f" }}>pledge: {money(c.pledgeAmount,cur)}</span>}
+                        {c.receiptUrl && <span title="Has receipt attached">📎</span>}
+                      </div>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+                      <div style={{ textAlign:"right" }}>
+                        <div style={{ fontFamily:"var(--font-display)", fontSize:14, fontWeight:900, color:"var(--maroon)" }}>{money(paid,cur)}</div>
+                        <div style={{ fontSize:9, fontWeight:800, padding:"1px 6px", borderRadius:100, marginTop:2,
+                          background:isPending?"var(--yellow-bg)":isApproved?"var(--green-bg)":"var(--red-bg)",
+                          color:isPending?"#b7680f":isApproved?"var(--green)":"var(--red)",
+                        }}>{(c.status||"pending").toUpperCase()}</div>
+                      </div>
+                      {isPending && (
+                        <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+                          <button onClick={()=>approveContrib(c.id,"approve")} disabled={approvingC===c.id} title="Confirm payment"
+                            style={{ width:28, height:28, borderRadius:7, background:"var(--green-bg)", border:"1px solid rgba(30,158,94,.3)", color:"var(--green)", fontSize:15, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, opacity:approvingC===c.id?0.5:1 }}>
+                            ✓
+                          </button>
+                          <button onClick={()=>approveContrib(c.id,"reject")} disabled={approvingC===c.id} title="Reject"
+                            style={{ width:28, height:28, borderRadius:7, background:"var(--red-bg)", border:"1px solid rgba(192,57,43,.3)", color:"var(--red)", fontSize:14, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, opacity:approvingC===c.id?0.5:1 }}>
+                            ✕
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            }
+            {contributors.length > 8 && (
+              <button onClick={()=>setTab("contributors")} style={{ width:"100%", marginTop:12, padding:"9px", background:"var(--cream)", border:"none", borderRadius:"var(--r-md)", fontSize:13, fontWeight:700, color:"var(--maroon)", cursor:"pointer", fontFamily:"inherit" }}>
+                View all {contributors.length} contributors →
+              </button>
+            )}
           </div>
         </div>
       )}
