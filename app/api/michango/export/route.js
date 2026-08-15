@@ -25,14 +25,16 @@ export async function GET(req) {
   let csv = "";
 
   if (type === "contributors") {
-    const headers = ["#","Name","Phone","Email","Amount ("+cur+")","Payment Mode","Reference","Note","Date","Anonymous"];
+    const headers = ["#","Name","Phone","Email","Pledge ("+cur+")","Paid ("+cur+")","Balance ("+cur+")","Payment Mode","Reference","Note","Date","Status","Anonymous"];
     csv = [csvRow(headers)];
     let total = 0;
     fund.contributors.forEach((c, i) => {
-      total += c.amount;
-      csv.push(csvRow([i+1, c.anonymous ? "Anonymous" : c.name, c.anonymous ? "" : (c.phone||""), c.anonymous ? "" : (c.email||""), c.amount.toLocaleString("en-US"), c.paymentMode, c.reference||"", c.note||"", c.paidAt ? new Date(c.paidAt).toLocaleDateString("en-GB") : ""]));
+      const paid = c.amountPaid||c.amount||0;
+      const bal = c.pledgeAmount - paid;
+      total += paid;
+      csv.push(csvRow([i+1, c.anonymous ? "Anonymous" : c.name, c.anonymous ? "" : (c.phone||""), c.anonymous ? "" : (c.email||""), (c.pledgeAmount||0).toLocaleString("en-US"), paid.toLocaleString("en-US"), bal.toLocaleString("en-US"), c.paymentMode, c.reference||"", c.note||"", c.paidAt ? new Date(c.paidAt).toLocaleDateString("en-GB") : "", (c.status||"pending").toUpperCase(), c.anonymous?"Yes":"No"]));
     });
-    csv.push(csvRow(["","TOTAL","","",total.toLocaleString("en-US"),"","","",""]));
+    csv.push(csvRow(["","TOTAL","","","",total.toLocaleString("en-US"),"","","","","","",""]));
     const title = `Michango — ${fund.title}`;
     csv.unshift(csvRow([title]), csvRow(["Organiser:", fund.organiserName, "Phone:", fund.organiserPhone]), csvRow(["Event Date:", fund.eventDate ? new Date(fund.eventDate).toLocaleDateString("en-GB") : "TBA"]), csvRow(["Exported:", new Date().toLocaleString("en-GB")]), "");
   }

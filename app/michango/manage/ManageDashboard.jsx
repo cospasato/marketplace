@@ -25,6 +25,11 @@ export default function ManageDashboard() {
   const [cForm, setCForm] = useState({ name:"", phone:"", email:"", amount:"", paymentMode:"cash", reference:"", note:"", anonymous:false });
   const [savingC, setSavingC] = useState(false);
   const [deleteC, setDeleteC] = useState(null);
+  const [approvingC, setApprovingC] = useState(null);
+  const [addPayModal, setAddPayModal] = useState(null);
+  const [addPayAmount, setAddPayAmount] = useState("");
+  const [addPayReceipt, setAddPayReceipt] = useState("");
+  const addPayFileRef = typeof window !== 'undefined' ? null : null;
 
   // Vendor form
   const [addVendor, setAddVendor] = useState(false);
@@ -57,7 +62,7 @@ export default function ManageDashboard() {
   const budgetLines  = fund.budgetLines  || [];
   const cur = fund.currency || "TZS";
 
-  const raised       = contributors.reduce((s,c)=>s+c.amount, 0);
+  const raised       = contributors.filter(c=>c.status==="approved").reduce((s,c)=>s+(c.amountPaid||c.amount||0), 0);
   const vendorTotal  = vendors.reduce((s,v)=>s+v.totalAmount, 0);
   const vendorPaid   = vendors.reduce((s,v)=>s+v.paidAmount, 0);
   const vendorBal    = vendorTotal - vendorPaid;
@@ -76,6 +81,27 @@ export default function ManageDashboard() {
   const deleteContrib = async (id) => {
     await fetch(`/api/michango/contributors?id=${id}`,{method:"DELETE"});
     flash("Removed"); setDeleteC(null); await load();
+  };
+
+  const approveContrib = async (id, action) => {
+    setApprovingC(id);
+    await fetch("/api/michango/contributors", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, action, approvedBy: fund.organiserName }),
+    });
+    flash(action === "approve" ? "✅ Contribution confirmed" : "Contribution rejected");
+    setApprovingC(null);
+    await load();
+  };
+
+  const addPayToContrib = async (contrib) => {
+    if (!addPayAmount) return;
+    const res = await fetch("/api/michango/contributors", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: contrib.id, action: "pay", additionalPayment: parseFloat(addPayAmount), receiptUrl: addPayReceipt || undefined }),
+    });
+    if (res.ok) { flash("Payment recorded ✓"); setAddPayModal(null); setAddPayAmount(""); setAddPayReceipt(""); await load(); }
+    else { const d = await res.json(); flash(d.error || "Error", "error"); }
   };
 
   const saveVendor = async () => {
@@ -272,39 +298,97 @@ export default function ManageDashboard() {
               <p style={{ fontSize:15, fontWeight:700 }}>No contributors yet</p>
               <p style={{ fontSize:13, marginTop:4 }}>Share your fund link or add contributors manually</p>
             </div>
-          ) : (
-            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-              {contributors.map((c,i)=>(
-                <div key={c.id} style={{ background:"var(--white)", borderRadius:"var(--r-lg)", padding:"12px 14px", boxShadow:"var(--shadow-xs)", display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:32, height:32, borderRadius:"50%", background:"var(--maroon-bg)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"var(--font-display)", fontWeight:900, fontSize:13, color:"var(--maroon)", flexShrink:0 }}>{(c.anonymous?"A":c.name[0]).toUpperCase()}</div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:14, fontWeight:800, color:"var(--text)", display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                      {c.anonymous ? "Anonymous" : c.name}
-                      {c.anonymous && <span style={{ fontSize:9, fontWeight:700, padding:"2px 6px", background:"var(--cream)", borderRadius:100, color:"var(--gray)" }}>ANON</span>}
-                    </div>
-                    <div style={{ fontSize:11, fontWeight:600, color:"var(--gray)", marginTop:1 }}>
-                      {c.anonymous?"":c.phone?`📞 ${c.phone} · `:""}
-                      {MODE_ICONS[c.paymentMode]||"💳"} {c.paymentMode}
-                      {c.reference ? ` · Ref: ${c.reference}` : ""}
-                      {" · "}{new Date(c.paidAt||c.createdAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
-                    </div>
-                    {c.note && <div style={{ fontSize:11, color:"var(--gray)", fontStyle:"italic", marginTop:1 }}>"{c.note}"</div>}
-                  </div>
-                  <div style={{ textAlign:"right", flexShrink:0 }}>
-                    <div style={{ fontFamily:"var(--font-display)", fontSize:15, fontWeight:900, color:"var(--maroon)" }}>{money(c.amount,cur)}</div>
-                    {deleteC===c.id ? (
-                      <div style={{ display:"flex", gap:4, marginTop:4 }}>
-                        <button onClick={()=>deleteContrib(c.id)} style={{ fontSize:10, fontWeight:800, padding:"2px 8px", background:"var(--red-bg)", border:"1px solid rgba(192,57,43,.2)", borderRadius:100, color:"var(--red)", cursor:"pointer", fontFamily:"inherit" }}>Delete</button>
-                        <button onClick={()=>setDeleteC(null)} style={{ fontSize:10, fontWeight:700, padding:"2px 7px", background:"var(--cream)", border:"none", borderRadius:100, color:"var(--gray)", cursor:"pointer", fontFamily:"inherit" }}>✕</button>
-                      </div>
-                    ) : (
-                      <button onClick={()=>setDeleteC(c.id)} style={{ fontSize:11, color:"var(--gray-lt)", background:"none", border:"none", cursor:"pointer", marginTop:4 }}>✕</button>
-                    )}
-                  </div>
+          ) : (() => {
+            const pending  = contributors.filter(c=>c.status==="pending");
+            const approved = contributors.filter(c=>c.status==="approved");
+            const rejected = contributors.filter(c=>c.status==="rejected");
+            const groups   = [
+              { label:"⏳ Pending Confirmation", list:pending, accent:"var(--yellow)" },
+              { label:"✅ Confirmed",             list:approved, accent:"var(--green)" },
+              { label:"❌ Rejected",              list:rejected, accent:"var(--red)" },
+            ];
+            return groups.map(({ label, list, accent }) => list.length === 0 ? null : (
+              <div key={label} style={{ marginBottom:20 }}>
+                <div style={{ fontSize:12, fontWeight:800, color:accent, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:10, display:"flex", alignItems:"center", gap:8 }}>
+                  {label} <span style={{ background:"var(--cream)", color:"var(--gray)", padding:"1px 8px", borderRadius:100, fontSize:11, fontWeight:700 }}>{list.length}</span>
+                  {list===pending && (
+                    <button onClick={async()=>{ for(const c of pending){ await approveContrib(c.id,"approve"); } flash(`All ${pending.length} confirmed!`); }} style={{ marginLeft:"auto", padding:"4px 12px", background:"var(--green-bg)", border:"1px solid rgba(30,158,94,.25)", borderRadius:"var(--r-md)", fontSize:11, fontWeight:800, color:"var(--green)", cursor:"pointer", fontFamily:"inherit" }}>
+                      Confirm all
+                    </button>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {list.map(c => {
+                    const isPending  = c.status==="pending";
+                    const isApproved = c.status==="approved";
+                    const paid    = c.amountPaid||c.amount||0;
+                    const balance = c.pledgeAmount - paid;
+                    return (
+                      <div key={c.id} style={{ background:"var(--white)", borderRadius:"var(--r-lg)", padding:"12px 14px", boxShadow:"var(--shadow-xs)", border:`1px solid ${isPending?"rgba(183,104,15,.2)":isApproved?"rgba(30,158,94,.15)":"rgba(192,57,43,.15)"}` }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                          <div style={{ width:36, height:36, borderRadius:"50%", background:isPending?"var(--yellow-bg)":isApproved?"var(--green-bg)":"var(--red-bg)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"var(--font-display)", fontWeight:900, fontSize:14, color:accent, flexShrink:0 }}>
+                            {(c.anonymous?"A":c.name[0]).toUpperCase()}
+                          </div>
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ fontSize:14, fontWeight:800, color:"var(--text)", display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+                              {c.anonymous?"Anonymous":c.name}
+                              {c.anonymous && <span style={{ fontSize:9, fontWeight:700, padding:"2px 6px", background:"var(--cream)", borderRadius:100, color:"var(--gray)" }}>ANON</span>}
+                            </div>
+                            {!c.anonymous && c.phone && <div style={{ fontSize:12, fontWeight:700, color:"var(--text2)", marginTop:1 }}>📞 {c.phone}</div>}
+                            <div style={{ fontSize:11, fontWeight:600, color:"var(--gray)", marginTop:1 }}>
+                              {MODE_ICONS[c.paymentMode]||"💳"} {c.paymentMode}
+                              {c.reference ? ` · Ref: ${c.reference}` : ""}
+                              {" · "}{new Date(c.paidAt||c.createdAt).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}
+                            </div>
+                            {c.note && <div style={{ fontSize:11, color:"var(--gray)", fontStyle:"italic", marginTop:2 }}>"{c.note}"</div>}
+                            {/* Pledge vs paid */}
+                            {c.pledgeAmount > paid && (
+                              <div style={{ fontSize:11, fontWeight:700, color:"var(--yellow)", marginTop:4, padding:"4px 10px", background:"var(--yellow-bg)", borderRadius:"var(--r-md)", display:"inline-block" }}>
+                                Pledged: {money(c.pledgeAmount,cur)} · Paid: {money(paid,cur)} · Balance: {money(balance,cur)}
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ textAlign:"right", flexShrink:0 }}>
+                            <div style={{ fontFamily:"var(--font-display)", fontSize:16, fontWeight:900, color:isApproved?"var(--maroon)":"var(--text)" }}>{money(paid,cur)}</div>
+                            {c.pledgeAmount > paid && <div style={{ fontSize:10, fontWeight:700, color:"var(--gold-dk)" }}>pledged {money(c.pledgeAmount,cur)}</div>}
+                          </div>
+                        </div>
+
+                        {/* Receipt image */}
+                        {c.receiptUrl && (
+                          <div style={{ marginTop:10 }}>
+                            <div style={{ fontSize:10, fontWeight:700, color:"var(--gray)", textTransform:"uppercase", marginBottom:5 }}>Receipt / Proof</div>
+                            <img src={c.receiptUrl} alt="Receipt" onClick={()=>window.open(c.receiptUrl,"_blank")} style={{ maxHeight:100, borderRadius:8, border:"1px solid var(--border2)", cursor:"pointer", objectFit:"cover" }} />
+                          </div>
+                        )}
+
+                        {/* Action buttons */}
+                        <div style={{ display:"flex", gap:6, marginTop:10, flexWrap:"wrap" }}>
+                          {isPending && (
+                            <>
+                              <button onClick={()=>approveContrib(c.id,"approve")} disabled={approvingC===c.id} style={{ padding:"7px 14px", background:"var(--green-bg)", border:"1px solid rgba(30,158,94,.25)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:800, color:"var(--green)", cursor:"pointer", fontFamily:"inherit", opacity:approvingC===c.id?.7:1 }}>✅ Confirm</button>
+                              <button onClick={()=>approveContrib(c.id,"reject")} disabled={approvingC===c.id} style={{ padding:"7px 14px", background:"var(--red-bg)", border:"1px solid rgba(192,57,43,.25)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:800, color:"var(--red)", cursor:"pointer", fontFamily:"inherit", opacity:approvingC===c.id?.7:1 }}>❌ Reject</button>
+                            </>
+                          )}
+                          {isApproved && balance > 0 && (
+                            <button onClick={()=>{ setAddPayModal(c); setAddPayAmount(""); setAddPayReceipt(""); }} style={{ padding:"7px 14px", background:"var(--gold-bg)", border:"1px solid rgba(201,150,42,.25)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:800, color:"var(--gold-dk)", cursor:"pointer", fontFamily:"inherit" }}>💳 Add Payment</button>
+                          )}
+                          {deleteC===c.id ? (
+                            <>
+                              <button onClick={()=>deleteContrib(c.id)} style={{ padding:"7px 10px", background:"var(--red-bg)", border:"1px solid rgba(192,57,43,.2)", borderRadius:"var(--r-md)", fontSize:11, fontWeight:800, color:"var(--red)", cursor:"pointer", fontFamily:"inherit" }}>Delete</button>
+                              <button onClick={()=>setDeleteC(null)} style={{ padding:"7px 10px", background:"var(--cream)", border:"none", borderRadius:"var(--r-md)", fontSize:11, color:"var(--gray)", cursor:"pointer", fontFamily:"inherit" }}>Cancel</button>
+                            </>
+                          ) : (
+                            <button onClick={()=>setDeleteC(c.id)} style={{ marginLeft:"auto", fontSize:13, color:"var(--gray-lt)", background:"none", border:"none", cursor:"pointer" }}>✕</button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       )}
 
@@ -405,7 +489,29 @@ export default function ManageDashboard() {
             );
           })}
 
-          {/* Pay vendor modal */}
+          {/* Add payment to contributor modal */}
+      {addPayModal && (
+        <div onClick={()=>setAddPayModal(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:500, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+          <div onClick={e=>e.stopPropagation()} style={{ background:"var(--white)", borderRadius:"var(--r-xl) var(--r-xl) 0 0", width:"100%", maxWidth:480, padding:"20px 20px 32px", boxShadow:"0 -8px 48px rgba(0,0,0,0.3)" }}>
+            <div style={{ fontSize:10, fontWeight:800, color:"var(--gold-dk)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>Add Payment</div>
+            <h3 style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:900, marginBottom:4 }}>{addPayModal.name}</h3>
+            <p style={{ fontSize:13, fontWeight:600, color:"var(--gray)", marginBottom:18 }}>
+              Pledged: {money(addPayModal.pledgeAmount,cur)} · Paid so far: {money(addPayModal.amountPaid||addPayModal.amount||0,cur)} · Balance: {money(addPayModal.pledgeAmount-(addPayModal.amountPaid||addPayModal.amount||0),cur)}
+            </p>
+            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+              <div><label style={{ display:"block", fontSize:11, fontWeight:700, color:"var(--text)", marginBottom:5, letterSpacing:"0.06em", textTransform:"uppercase" }}>Amount now ({cur}) *</label>
+                <input type="number" value={addPayAmount} onChange={e=>setAddPayAmount(e.target.value)} placeholder={String(addPayModal.pledgeAmount-(addPayModal.amountPaid||0))} style={{ padding:"11px 14px", border:"1.5px solid var(--border2)", borderRadius:"var(--r-md)", fontSize:14, fontFamily:"inherit", fontWeight:500, outline:"none", width:"100%", color:"var(--text)", background:"var(--white)" }} autoFocus />
+              </div>
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={()=>addPayToContrib(addPayModal)} disabled={!addPayAmount} className="btn-primary" style={{ flex:1, opacity:!addPayAmount?.6:1 }}>Record Payment</button>
+                <button onClick={()=>setAddPayModal(null)} style={{ padding:"12px 18px", background:"var(--cream)", border:"1px solid var(--border2)", borderRadius:"var(--r-lg)", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit", color:"var(--gray)" }}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pay vendor modal */}
           {payVendor && (
             <div onClick={()=>setPayVendor(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:500, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
               <div onClick={e=>e.stopPropagation()} style={{ background:"var(--white)", borderRadius:"var(--r-xl) var(--r-xl) 0 0", width:"100%", maxWidth:480, padding:"20px 20px 32px", boxShadow:"0 -8px 48px rgba(0,0,0,0.3)" }}>

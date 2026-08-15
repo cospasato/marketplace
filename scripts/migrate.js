@@ -43,12 +43,21 @@ async function main() {
     for (const sql of newCols) {
       try { await db.$executeRawUnsafe(sql); } catch {}
     }
-    // Michango tables (safe)
-    const michangoMigrations = [
+    // Michango + registry columns (safe)
+    const safeAlters = [
       `ALTER TABLE "Contribution" ADD COLUMN IF NOT EXISTS "gifterPhone" TEXT`,
       `ALTER TABLE "Contribution" ADD COLUMN IF NOT EXISTS "isCashGift" BOOLEAN DEFAULT false`,
+      `ALTER TABLE "EventContributor" ADD COLUMN IF NOT EXISTS "pledgeAmount" FLOAT DEFAULT 0`,
+      `ALTER TABLE "EventContributor" ADD COLUMN IF NOT EXISTS "amountPaid" FLOAT DEFAULT 0`,
+      `ALTER TABLE "EventContributor" ADD COLUMN IF NOT EXISTS "receiptUrl" TEXT`,
+      `ALTER TABLE "EventContributor" ADD COLUMN IF NOT EXISTS "status" TEXT DEFAULT 'pending'`,
+      `ALTER TABLE "EventContributor" ADD COLUMN IF NOT EXISTS "approvedAt" TIMESTAMP`,
+      `ALTER TABLE "EventContributor" ADD COLUMN IF NOT EXISTS "approvedBy" TEXT`,
+      // Backfill: pledgeAmount = amount for existing rows
+      `UPDATE "EventContributor" SET "pledgeAmount" = amount WHERE "pledgeAmount" = 0`,
+      `UPDATE "EventContributor" SET "amountPaid"   = amount WHERE "amountPaid"   = 0`,
     ];
-    for (const sql of michangoMigrations) {
+    for (const sql of safeAlters) {
       try { await db.$executeRawUnsafe(sql); } catch {}
     }
     console.log("Cleanup complete.");

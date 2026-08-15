@@ -275,22 +275,29 @@ model EventFund {
 }
 
 model EventContributor {
-  id          String    @id @default(cuid())
-  fundId      String
-  fund        EventFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
-  name        String
-  phone       String?
-  email       String?
-  amount      Float
-  currency    String    @default("TZS")
-  paymentMode String    @default("cash")       // "cash","mpesa","tigopesa","airtel","bank"
-  reference   String?                          // M-Pesa reference, etc.
-  note        String?
-  anonymous   Boolean  @default(false)
-  paidAt      DateTime?
-  createdAt   DateTime @default(now())
+  id           String    @id @default(cuid())
+  fundId       String
+  fund         EventFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String?
+  email        String?
+  pledgeAmount Float                            // total amount pledged
+  amountPaid   Float     @default(0)            // amount paid so far
+  amount       Float                            // alias kept for compatibility (= amountPaid)
+  currency     String    @default("TZS")
+  paymentMode  String    @default("cash")       // "cash","mpesa","tigopesa","airtel","bank"
+  reference    String?                          // M-Pesa reference, etc.
+  receiptUrl   String?                          // uploaded receipt image URL
+  note         String?
+  anonymous    Boolean   @default(false)
+  status       String    @default("pending")    // "pending","approved","rejected"
+  approvedAt   DateTime?
+  approvedBy   String?
+  paidAt       DateTime?
+  createdAt    DateTime  @default(now())
 
   @@index([fundId])
+  @@index([status])
 }
 
 model EventVendor {
