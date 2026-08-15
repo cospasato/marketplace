@@ -246,3 +246,91 @@ model Payment {
   @@index([status])
   @@index([dropshipStatus])
 }
+
+// ═══════════════════════════════════════════
+// MICHANGO — Wedding & Event Contributions
+// ═══════════════════════════════════════════
+
+model EventFund {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String                          // "Harusi ya Bertha & John"
+  occasion      String                          // "Wedding","Birthday","Graduation"...
+  description   String?
+  organiserName  String
+  organiserEmail String?
+  organiserPhone String
+  eventDate     DateTime?
+  targetAmount  Float?                          // total budget target
+  currency      String   @default("TZS")
+  isPublic      Boolean  @default(true)
+  coverImage    String?
+  thankYouMsg   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contributors  EventContributor[]
+  vendors       EventVendor[]
+  budgetLines   EventBudgetLine[]
+}
+
+model EventContributor {
+  id          String    @id @default(cuid())
+  fundId      String
+  fund        EventFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  name        String
+  phone       String?
+  email       String?
+  amount      Float
+  currency    String    @default("TZS")
+  paymentMode String    @default("cash")       // "cash","mpesa","tigopesa","airtel","bank"
+  reference   String?                          // M-Pesa reference, etc.
+  note        String?
+  anonymous   Boolean  @default(false)
+  paidAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([fundId])
+}
+
+model EventVendor {
+  id          String    @id @default(cuid())
+  fundId      String
+  fund        EventFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  name        String                           // "Mapambo ya Meza — Binti Fatuma"
+  category    String                           // "Venue","Catering","Photography"...
+  phone       String?
+  totalAmount Float
+  paidAmount  Float     @default(0)
+  currency    String    @default("TZS")
+  dueDate     DateTime?
+  notes       String?
+  status      String    @default("unpaid")     // "unpaid","partial","paid"
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  payments    EventVendorPayment[]
+
+  @@index([fundId])
+}
+
+model EventVendorPayment {
+  id        String      @id @default(cuid())
+  vendorId  String
+  vendor    EventVendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  amount    Float
+  paidAt    DateTime    @default(now())
+  reference String?
+  note      String?
+}
+
+model EventBudgetLine {
+  id        String    @id @default(cuid())
+  fundId    String
+  fund      EventFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  category  String
+  estimated Float
+  currency  String    @default("TZS")
+  note      String?
+  order     Int       @default(0)
+}

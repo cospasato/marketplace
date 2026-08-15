@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/products",          label: "Shop"     },
   { href: "/search",            label: "Search"   },
   { href: "/account/dashboard", label: "Account"  },
+  { href: "/michango",           label: "💰 Michango" },
 ];
 
 const TAB_ICONS = {

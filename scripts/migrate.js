@@ -43,6 +43,14 @@ async function main() {
     for (const sql of newCols) {
       try { await db.$executeRawUnsafe(sql); } catch {}
     }
+    // Michango tables (safe)
+    const michangoMigrations = [
+      `ALTER TABLE "Contribution" ADD COLUMN IF NOT EXISTS "gifterPhone" TEXT`,
+      `ALTER TABLE "Contribution" ADD COLUMN IF NOT EXISTS "isCashGift" BOOLEAN DEFAULT false`,
+    ];
+    for (const sql of michangoMigrations) {
+      try { await db.$executeRawUnsafe(sql); } catch {}
+    }
     console.log("Cleanup complete.");
   } catch (err) {
     console.log("Cleanup skipped:", err.message);
