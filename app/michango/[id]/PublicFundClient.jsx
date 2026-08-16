@@ -2,6 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
+const SUPPORT_OCCASIONS = ["Funeral / Msiba","Sickness / Ugonjwa","Accident / Ajali","Fire / Moto","Displacement / Kukimbia","Hardship / Shida","Other Support"];
+function isSupport(fund) { return fund?.isSupport || SUPPORT_OCCASIONS.includes(fund?.occasion); }
+
 const MODES = ["mpesa","tigopesa","airtel","cash","bank","other"];
 const MODE_ICONS = { cash:"💵", mpesa:"📱", tigopesa:"📱", airtel:"📱", bank:"🏦", other:"💳" };
 const MODE_LABELS = { cash:"Cash", mpesa:"M-Pesa", tigopesa:"Tigo Pesa", airtel:"Airtel Money", bank:"Bank Transfer", other:"Other" };
@@ -91,10 +94,10 @@ export default function PublicFundClient({ slug }) {
   return (
     <div>
       {/* Hero */}
-      <div style={{ background:"linear-gradient(160deg,var(--maroon-dk),var(--maroon))", padding:"36px 20px 28px", textAlign:"center", position:"relative", overflow:"hidden" }}>
+      <div style={{ background: isSupport(fund) ? "linear-gradient(160deg,#0d1f35,#1a3a5c,#2a4a6a)" : "linear-gradient(160deg,var(--maroon-dk),var(--maroon))", padding:"36px 20px 28px", textAlign:"center", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", inset:0, opacity:0.04, backgroundImage:"radial-gradient(circle at 1px 1px,#fff 1px,transparent 0)", backgroundSize:"24px 24px", pointerEvents:"none" }} />
         <div style={{ fontSize:52, marginBottom:10 }}>{({Wedding:"💍",Birthday:"🎂",Graduation:"🎓",Funeral:"🕊️","Church Event":"⛪"})[fund.occasion]||"🎉"}</div>
-        <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.7)", letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:8 }}>{fund.occasion} · Michango</div>
+        <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.7)", letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:8 }}>{fund.occasion.split(" / ")[0]} · {isSupport(fund) ? "Matukio" : "Michango"}</div>
         <h1 style={{ fontFamily:"var(--font-display)", fontSize:"clamp(22px,5vw,40px)", fontWeight:900, color:"#fff", marginBottom:8, lineHeight:1.1, letterSpacing:"-0.02em" }}>{fund.title}</h1>
         <p style={{ fontSize:14, fontWeight:600, color:"rgba(255,255,255,0.8)" }}>Organised by <strong style={{color:"#fff"}}>{fund.organiserName}</strong></p>
         {fund.description && <p style={{ fontSize:13, fontWeight:500, color:"rgba(255,255,255,0.75)", maxWidth:480, margin:"10px auto 0", lineHeight:1.7 }}>{fund.description}</p>}
@@ -108,8 +111,8 @@ export default function PublicFundClient({ slug }) {
       {/* Stats bar */}
       <div style={{ background:"var(--maroon-dk)", padding:"14px 20px 16px", display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:0, boxShadow:"0 4px 20px rgba(0,0,0,0.2)" }}>
         {[
-          { label:"Raised",      value:money(raised,cur),   color:"var(--gold-lt)" },
-          { label:"Pledged",     value:money(pledged,cur),  color:"rgba(255,255,255,0.85)" },
+          { label: isSupport(fund)?"Mkusanyiko":"Raised", value:money(raised,cur), color: isSupport(fund)?"#a8c4e8":"var(--gold-lt)" },
+          { label: isSupport(fund)?"Waliohakikisha":"Pledged", value:money(pledged,cur), color:"rgba(255,255,255,0.85)" },
           { label:"Confirmed",   value:approved.length,     color:"#5dd68c" },
           { label:"Pending",     value:pendCount,            color:pendCount>0?"#fbbf24":"rgba(255,255,255,0.5)" },
         ].map(({label,value,color})=>(
@@ -128,7 +131,7 @@ export default function PublicFundClient({ slug }) {
             <span style={{ color:"var(--maroon)" }}>{money(Math.max(0,fund.targetAmount-raised),cur)} remaining</span>
           </div>
           <div style={{ height:10, background:"var(--cream2)", borderRadius:99, overflow:"hidden" }}>
-            <div style={{ height:"100%", width:`${pct}%`, background:"linear-gradient(90deg,var(--gold),var(--maroon))", borderRadius:99, transition:"width .7s ease", boxShadow:"0 0 8px rgba(201,150,42,0.3)" }} />
+            <div style={{ height:"100%", width:`${pct}%`, background: isSupport(fund)?"linear-gradient(90deg,#5a9fd4,#1a5a8a)":"linear-gradient(90deg,var(--gold),var(--maroon))", borderRadius:99, transition:"width .7s ease" }} />
           </div>
         </div>
       )}
@@ -142,15 +145,16 @@ export default function PublicFundClient({ slug }) {
           </div>
         )}
 
-        <button onClick={()=>{ setModal(true); setResult(null); setForm(initForm()); }} className="btn-primary" style={{ marginBottom:24, fontSize:16 }}>
-          💰 Contribute / Pledge Now
+        <button onClick={()=>{ setModal(true); setResult(null); setForm(initForm()); }}
+          style={{ marginBottom:24, fontSize:16, width:"100%", padding:"14px", borderRadius:"var(--r-xl)", border:"none", cursor:"pointer", fontFamily:"inherit", fontWeight:800, background: isSupport(fund)?"#1a5a8a":"var(--maroon)", color:"#fff" }}>
+          {isSupport(fund) ? "🤲 Toa Msaada / Give Support" : "💰 Contribute / Pledge Now"}
         </button>
 
         {/* Contributors list */}
         {visible.length > 0 && (
           <div>
             <h2 style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:800, marginBottom:14 }}>
-              Wachangiaji ({approved.length} approved{contributors.filter(c=>!c.anonymous&&c.status==="approved").length !== approved.length ? ` · ${contributors.filter(c=>c.anonymous&&c.status==="approved").length} anonymous` : ""})
+              {isSupport(fund) ? "Wasaidizi" : "Wachangiaji"} ({approved.length} {isSupport(fund)?"confirmed":"approved"}{contributors.filter(c=>!c.anonymous&&c.status==="approved").length !== approved.length ? ` · ${contributors.filter(c=>c.anonymous&&c.status==="approved").length} anonymous` : ""})
             </h2>
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
               {visible.map((c,i)=>{
@@ -201,10 +205,10 @@ export default function PublicFundClient({ slug }) {
             {!result ? (
               <div style={{ padding:"12px 20px 28px", display:"flex", flexDirection:"column", gap:14 }}>
                 <div>
-                  <div style={{ fontSize:10, fontWeight:800, color:"var(--gold-dk)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:4 }}>💰 Mchango wako</div>
-                  <h3 style={{ fontFamily:"var(--font-display)", fontSize:19, fontWeight:900, color:"var(--text)" }}>Contribute to {fund.title}</h3>
+                  <div style={{ fontSize:10, fontWeight:800, color: isSupport(fund)?"#1a5a8a":"var(--gold-dk)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:4 }}>{isSupport(fund)?"🤲 Msaada Wako":"💰 Mchango Wako"}</div>
+                  <h3 style={{ fontFamily:"var(--font-display)", fontSize:19, fontWeight:900, color:"var(--text)" }}>{isSupport(fund)?"Support":"Contribute to"} {fund.title}</h3>
                   <p style={{ fontSize:12, fontWeight:600, color:"var(--gray)", marginTop:4, lineHeight:1.6 }}>
-                    ⏳ Your contribution will show as <strong>Pending</strong> until the organiser confirms it.
+                    {isSupport(fund) ? "🙏 Your support will be confirmed by the organiser before showing on the page." : "⏳ Your contribution will show as Pending until the organiser confirms it."}
                   </p>
                 </div>
 
@@ -216,14 +220,14 @@ export default function PublicFundClient({ slug }) {
 
                 {/* Pledge amount */}
                 <div>
-                  <label style={S.lbl}>Pledge amount ({cur}) *</label>
+                  <label style={S.lbl}>{isSupport(fund)?"Amount / Kiasi cha Msaada":"Pledge amount"} ({cur}) *</label>
                   <input type="number" min="1" value={form.pledgeAmount} onChange={e=>setForm(f=>({...f,pledgeAmount:e.target.value,amountPaid:f.payingAll?e.target.value:f.amountPaid}))} placeholder="Total amount you promise to contribute" style={S.inp} />
-                  <p style={{ fontSize:11, fontWeight:600, color:"var(--gray)", marginTop:4 }}>This is your full commitment — you can pay now or in installments</p>
+                  <p style={{ fontSize:11, fontWeight:600, color:"var(--gray)", marginTop:4 }}>{isSupport(fund)?"The amount you wish to give — you can give all now or in parts":"This is your full commitment — you can pay now or in installments"}</p>
                 </div>
 
                 {/* Pay in full or partial */}
                 <div>
-                  <label style={S.lbl}>Paying today</label>
+                  <label style={S.lbl}>{isSupport(fund)?"Giving today":"Paying today"}</label>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom: form.payingAll ? 0 : 10 }}>
                     <button onClick={()=>setForm(f=>({...f,payingAll:true,amountPaid:f.pledgeAmount}))} style={{ padding:"11px", borderRadius:"var(--r-md)", border:`2px solid ${form.payingAll?"var(--maroon)":"var(--border2)"}`, background:form.payingAll?"var(--maroon-bg)":"var(--white)", color:form.payingAll?"var(--maroon)":"var(--text2)", fontFamily:"inherit", fontSize:13, fontWeight:form.payingAll?800:600, cursor:"pointer" }}>
                       ✅ Full pledge amount<br/><span style={{ fontSize:11, fontWeight:600 }}>{form.pledgeAmount?money(parseFloat(form.pledgeAmount),cur):"full amount"}</span>
@@ -299,9 +303,10 @@ export default function PublicFundClient({ slug }) {
                     const pledge = parseFloat(form.pledgeAmount||0);
                     const paid   = form.payingAll ? pledge : parseFloat(form.amountPaid||0);
                     if (!pledge) return "💰 Submit Contribution →";
-                    if (paid===pledge) return `💰 Pay ${money(paid,cur)} →`;
-                    if (paid>0) return `💰 Pay ${money(paid,cur)} · Pledge ${money(pledge,cur)} →`;
-                    return `🤝 Pledge ${money(pledge,cur)} →`;
+                    const sup = isSupport(fund);
+                    if (paid===pledge) return `${sup?"🤲 Give":"💰 Pay"} ${money(paid,cur)} →`;
+                    if (paid>0) return `${sup?"🤲 Give":"💰 Pay"} ${money(paid,cur)} · ${sup?"Promise":"Pledge"} ${money(pledge,cur)} →`;
+                    return `🤝 ${sup?"Promise":"Pledge"} ${money(pledge,cur)} →`;
                   })()}
                 </button>
                 <button onClick={()=>setModal(false)} style={{ background:"none", border:"none", color:"var(--gray)", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>Cancel</button>
@@ -315,11 +320,11 @@ export default function PublicFundClient({ slug }) {
             ) : (
               <div style={{ padding:"36px 20px", textAlign:"center" }}>
                 <div style={{ fontSize:56, marginBottom:14 }}>🎉</div>
-                <h3 style={{ fontFamily:"var(--font-display)", fontSize:22, fontWeight:900, color:"var(--yellow)", marginBottom:10 }}>Asante sana!</h3>
+                <h3 style={{ fontFamily:"var(--font-display)", fontSize:22, fontWeight:900, color:isSupport(fund)?"#1a5a8a":"var(--yellow)", marginBottom:10 }}>{isSupport(fund)?"🙏 Asante kwa Msaada":"Asante sana!"}</h3>
                 <div style={{ padding:"12px 16px", background:"var(--yellow-bg)", border:"1px solid rgba(183,104,15,.25)", borderRadius:"var(--r-lg)", marginBottom:16 }}>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--yellow)" }}>⏳ PENDING CONFIRMATION</div>
                   <p style={{ fontSize:13, fontWeight:600, color:"var(--text2)", marginTop:4, lineHeight:1.6 }}>
-                    Your contribution of <strong style={{color:"var(--maroon)"}}>{money(result.amountPaid||result.amount||0,cur)}</strong>
+                    {isSupport(fund)?"Your support of":"Your contribution of"} <strong style={{color:isSupport(fund)?"#1a5a8a":"var(--maroon)"}}>{money(result.amountPaid||result.amount||0,cur)}</strong>
                     {result.pledgeAmount>(result.amountPaid||0) && <> (pledged {money(result.pledgeAmount,cur)})</>} has been submitted and is awaiting confirmation by the organiser.
                   </p>
                 </div>

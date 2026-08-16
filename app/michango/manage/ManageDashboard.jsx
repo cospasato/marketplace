@@ -3,6 +3,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+const SUPPORT_OCCASIONS = ["Funeral / Msiba","Sickness / Ugonjwa","Accident / Ajali","Fire / Moto","Displacement / Kukimbia","Hardship / Shida","Other Support"];
+function isSupport(fund) { return fund?.isSupport || SUPPORT_OCCASIONS.includes(fund?.occasion); }
+
 const VENDOR_CATS = ["Venue","Catering / Chakula","Photography","Videography","Music / DJ","Flowers / Mapambo","Cake","MC / Host","Transport","Attire / Nguo","Printing","Security","Other"];
 const MODE_ICONS = { cash:"💵", mpesa:"📱", tigopesa:"📱", airtel:"📱", bank:"🏦", other:"💳" };
 const STATUS_COLOR = { paid:"var(--green)", partial:"var(--yellow)", unpaid:"var(--red)" };
@@ -153,7 +156,10 @@ export default function ManageDashboard() {
       <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20, gap:12, flexWrap:"wrap" }}>
         <div>
           <Link href="/michango" style={{ fontSize:13, fontWeight:700, color:"var(--maroon)", display:"flex", alignItems:"center", gap:4, marginBottom:6 }}>← All Funds</Link>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4, flexWrap:"wrap" }}>
           <h1 style={{ fontFamily:"var(--font-display)", fontSize:"clamp(18px,4vw,26px)", fontWeight:900, color:"var(--text)", lineHeight:1.2 }}>{fund.title}</h1>
+          {isSupport(fund) && <span style={{ padding:"3px 12px", background:"#dbeafe", border:"1px solid #93c5fd", borderRadius:100, fontSize:11, fontWeight:800, color:"#1a5a8a" }}>🤲 Matukio</span>}
+        </div>
           <p style={{ fontSize:13, fontWeight:600, color:"var(--gray)", marginTop:3 }}>
             {fund.organiserName} · {fund.occasion}
             {fund.eventDate && ` · ${new Date(fund.eventDate).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}`}
@@ -162,7 +168,8 @@ export default function ManageDashboard() {
         <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
           <Link href={`/michango/${fund.slug}`} target="_blank" style={{ padding:"8px 14px", background:"var(--cream)", border:"1px solid var(--border2)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:700, color:"var(--text2)", textDecoration:"none" }}>👁 Public Page</Link>
           <button onClick={()=>downloadCSV("contributors")} style={{ padding:"8px 14px", background:"var(--green-bg)", border:"1px solid rgba(30,158,94,.2)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:700, color:"var(--green)", cursor:"pointer", fontFamily:"inherit" }}>📥 Export Contributors</button>
-          <button onClick={()=>downloadCSV("vendors")} style={{ padding:"8px 14px", background:"var(--blue-bg)", border:"1px solid rgba(26,95,168,.2)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:700, color:"var(--blue)", cursor:"pointer", fontFamily:"inherit" }}>📥 Export Vendors</button>
+          <button onClick={()=>downloadCSV("vendors")} style={{ padding:"8px 14px", background:"var(--blue-bg)", border:"1px solid rgba(26,95,168,.2)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:700, color:"var(--blue)", cursor:"pointer", fontFamily:"inherit" }}>📥 Export {isSupport(fund)?"Expenses":"Vendors"}</button>
+          <button onClick={()=>window.print()} style={{ padding:"8px 14px", background:"var(--cream)", border:"1px solid var(--border2)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:700, color:"var(--text2)", cursor:"pointer", fontFamily:"inherit" }}>🖨️ Print</button>
         </div>
       </div>
 
@@ -322,7 +329,7 @@ export default function ManageDashboard() {
           {/* Add form */}
           {addContrib && (
             <div style={{ ...S.card, border:"1px solid rgba(201,150,42,.3)", marginBottom:16 }}>
-              <div style={{ fontSize:11, fontWeight:800, color:"var(--gold-dk)", marginBottom:14, letterSpacing:"0.08em", textTransform:"uppercase" }}>Add Contributor</div>
+              <div style={{ fontSize:11, fontWeight:800, color: isSupport(fund)?"#1a5a8a":"var(--gold-dk)", marginBottom:14, letterSpacing:"0.08em", textTransform:"uppercase" }}>{isSupport(fund)?"Add Supporter":"Add Contributor"}</div>
               <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                   <div><label style={S.lbl}>Name *</label><input value={cForm.name} onChange={e=>setCForm(f=>({...f,name:e.target.value}))} placeholder="Jina" style={S.inp} /></div>
@@ -454,7 +461,7 @@ export default function ManageDashboard() {
       {tab==="vendors" && (
         <div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16, flexWrap:"wrap", gap:10 }}>
-            <div style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:800 }}>Vendors / Watoa Huduma</div>
+            <div style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:800 }}>{isSupport(fund) ? "Expenses / Matumizi" : "Vendors / Watoa Huduma"}</div>
             <div style={{ display:"flex", gap:8 }}>
               <button onClick={()=>downloadCSV("vendors")} style={{ padding:"8px 14px", background:"var(--blue-bg)", border:"1px solid rgba(26,95,168,.2)", borderRadius:"var(--r-md)", fontSize:12, fontWeight:700, color:"var(--blue)", cursor:"pointer", fontFamily:"inherit" }}>📥 Export CSV</button>
               <button onClick={()=>setAddVendor(true)} className="btn-primary" style={{ padding:"9px 16px", fontSize:13 }}>+ Add Vendor</button>
@@ -481,7 +488,12 @@ export default function ManageDashboard() {
                   <div>
                     <label style={S.lbl}>Category</label>
                     <select value={vForm.category} onChange={e=>setVForm(f=>({...f,category:e.target.value}))} style={S.inp}>
-                      {VENDOR_CATS.map(c=><option key={c}>{c}</option>)}
+                      {(isSupport(fund) ? [
+                      "Funeral Expenses / Mazishi","Food / Chakula","Transport / Usafiri",
+                      "Medical / Dawa","Hospital Bills / Bili ya Hospitali","Coffin / Jeneza",
+                      "Tent & Chairs / Hema na Viti","Religious / Kidini","Communication",
+                      "Other / Nyingine"
+                    ] : VENDOR_CATS).map(c=><option key={c}>{c}</option>)}
                     </select>
                   </div>
                 </div>
@@ -595,7 +607,7 @@ export default function ManageDashboard() {
       {tab==="budget" && (
         <div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16, flexWrap:"wrap", gap:10 }}>
-            <div style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:800 }}>Budget Plan</div>
+            <div style={{ fontFamily:"var(--font-display)", fontSize:18, fontWeight:800 }}>{isSupport(fund) ? "Expense Plan / Mpango wa Matumizi" : "Budget Plan"}</div>
             <button onClick={()=>setAddBudget(true)} className="btn-primary" style={{ padding:"9px 16px", fontSize:13 }}>+ Add Line</button>
           </div>
 

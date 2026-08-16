@@ -3,8 +3,26 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const OCCASIONS = ["Wedding","Birthday","Graduation","Housewarming","Anniversary","Funeral","Church Event","Other"];
-const OCC_EMOJI = { Wedding:"💍", Birthday:"🎂", Graduation:"🎓", Housewarming:"🏠", Anniversary:"💝", Funeral:"🕊️", "Church Event":"⛪", Other:"🎉" };
+// Celebrations — Michango
+const CELEBRATION_OCCASIONS = ["Wedding","Birthday","Graduation","Housewarming","Anniversary","Engagement","Church Event","Other"];
+// Support — Matukio
+const SUPPORT_OCCASIONS = ["Funeral / Msiba","Sickness / Ugonjwa","Accident / Ajali","Fire / Moto","Displacement / Kukimbia","Hardship / Shida","Other Support"];
+
+const OCC_EMOJI = {
+  Wedding:"💍", Birthday:"🎂", Graduation:"🎓", Housewarming:"🏠",
+  Anniversary:"💝", Engagement:"💒", "Church Event":"⛪", Other:"🎉",
+  "Funeral / Msiba":"🕊️", "Sickness / Ugonjwa":"🙏",
+  "Accident / Ajali":"🚑", "Fire / Moto":"🔥",
+  "Displacement / Kukimbia":"🏕️", "Hardship / Shida":"🤲",
+  "Other Support":"🤝",
+};
+
+// Is this a support/tragedy event?
+function isSupport(occasion) {
+  return SUPPORT_OCCASIONS.includes(occasion);
+}
+
+function isSupport(fund) { return fund?.isSupport || ["Funeral / Msiba","Sickness / Ugonjwa","Accident / Ajali","Fire / Moto","Displacement / Kukimbia","Hardship / Shida","Other Support"].includes(fund?.occasion); }
 
 function money(n, cur="TZS") {
   return `${cur} ${Number(n||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}`;
@@ -19,7 +37,7 @@ export default function MichangoHome() {
   const [error, setError]   = useState("");
   const [creating, setCreating] = useState(false);
   const [form, setForm]     = useState({
-    title:"", occasion:"Wedding", description:"",
+    title:"", occasion:"Wedding", fundType:"michango", description:"",
     organiserName:"", organiserEmail:"", organiserPhone:"",
     eventDate:"", targetAmount:"", currency:"TZS",
   });
@@ -37,7 +55,7 @@ export default function MichangoHome() {
   const create = async () => {
     if (!form.title || !form.organiserName || !form.organiserPhone) { setError("Title, your name, and phone are required"); return; }
     setCreating(true); setError("");
-    const res = await fetch("/api/michango", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(form) });
+    const res = await fetch("/api/michango", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...form, isSupport: form.fundType==="matukio"}) });
     const d = await res.json();
     if (res.ok) router.push(`/michango/manage?id=${d.id}&phone=${encodeURIComponent(form.organiserPhone)}`);
     else setError(d.error || "Failed");
@@ -52,19 +70,30 @@ export default function MichangoHome() {
   return (
     <div>
       {/* Hero */}
-      <div style={{ background:"linear-gradient(160deg,#2d0a14,var(--maroon),#8b3e1c)", padding:"32px 20px 36px", position:"relative", overflow:"hidden" }}>
+      <div style={{ background:`linear-gradient(160deg,#2d0a14,var(--maroon),${form.fundType==="matukio"?"#1a2a4a":"#8b3e1c"})`, padding:"32px 20px 36px", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:-40, right:-30, width:180, height:180, borderRadius:"50%", background:"rgba(255,255,255,0.04)" }} />
         <div style={{ maxWidth:640, margin:"0 auto" }}>
           <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.65)", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:10 }}>Michango ya Harusi &amp; Matukio</div>
           <h1 style={{ fontFamily:"var(--font-display)", fontSize:"clamp(26px,5vw,44px)", fontWeight:900, color:"#fff", lineHeight:1.08, marginBottom:10, letterSpacing:"-0.02em" }}>
-            Wedding &amp; Event<br /><span style={{ color:"var(--gold-lt)", fontStyle:"italic" }}>Contributions</span>
+            {form.fundType==="matukio" ? <>Matukio<br /><span style={{ color:"#a8c4e8", fontStyle:"italic" }}>Support Fund</span></> : <>Wedding &amp; Event<br /><span style={{ color:"var(--gold-lt)", fontStyle:"italic" }}>Contributions</span></>}
           </h1>
-          <p style={{ fontSize:14, fontWeight:500, color:"rgba(255,255,255,0.78)", marginBottom:24, lineHeight:1.7 }}>
-            Collect and track michango for your wedding or event. Manage vendors, budgets, and export contributor lists in seconds.
+          <p style={{ fontSize:14, fontWeight:500, color:"rgba(255,255,255,0.78)", marginBottom:20, lineHeight:1.7 }}>
+            {form.fundType==="matukio"
+              ? "Collect support contributions for those facing loss, illness, or hardship. Private, dignified, and easy to manage."
+              : "Collect and track michango for your wedding or event. Manage vendors, budgets, and export contributor lists in seconds."}
           </p>
+          {/* Fund type selector */}
+          <div style={{ display:"flex", gap:8, marginBottom:20 }}>
+            <button onClick={()=>setForm(f=>({...f,fundType:"michango",occasion:"Wedding"}))} style={{ padding:"8px 20px", borderRadius:"var(--r-full)", border:"2px solid rgba(255,255,255,0.5)", background:form.fundType==="michango"?"rgba(255,255,255,0.25)":"transparent", color:"#fff", fontFamily:"inherit", fontSize:13, fontWeight:800, cursor:"pointer", transition:"all .15s" }}>
+              🎉 Michango / Celebration
+            </button>
+            <button onClick={()=>setForm(f=>({...f,fundType:"matukio",occasion:"Funeral / Msiba"}))} style={{ padding:"8px 20px", borderRadius:"var(--r-full)", border:"2px solid rgba(168,196,232,0.5)", background:form.fundType==="matukio"?"rgba(168,196,232,0.2)":"transparent", color:"#a8c4e8", fontFamily:"inherit", fontSize:13, fontWeight:800, cursor:"pointer", transition:"all .15s" }}>
+              🤲 Matukio / Support
+            </button>
+          </div>
           <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-            <button onClick={()=>setTab("create")} style={{ padding:"13px 28px", background:"var(--gold)", color:"#fff", borderRadius:"var(--r-xl)", fontWeight:800, fontSize:15, border:"none", cursor:"pointer", fontFamily:"inherit" }}>
-              + Create Fund
+            <button onClick={()=>setTab("create")} style={{ padding:"13px 28px", background:form.fundType==="matukio"?"#3a6090":"var(--gold)", color:"#fff", borderRadius:"var(--r-xl)", fontWeight:800, fontSize:15, border:"none", cursor:"pointer", fontFamily:"inherit" }}>
+              + {form.fundType==="matukio"?"Open Support Fund":"Create Fund"}
             </button>
             <button onClick={()=>setTab("manage")} style={{ padding:"13px 24px", background:"rgba(255,255,255,0.12)", color:"#fff", border:"1px solid rgba(255,255,255,0.3)", borderRadius:"var(--r-xl)", fontWeight:600, fontSize:15, cursor:"pointer", fontFamily:"inherit", backdropFilter:"blur(8px)" }}>
               Manage Existing →
@@ -107,7 +136,7 @@ export default function MichangoHome() {
                   const pct = f.targetAmount>0 ? Math.min(100,Math.round((raised/f.targetAmount)*100)) : null;
                   return (
                     <Link key={f.id} href={`/michango/${f.slug}`} style={{ display:"block", background:"var(--white)", borderRadius:"var(--r-lg)", boxShadow:"var(--shadow-sm)", overflow:"hidden", textDecoration:"none" }}>
-                      <div style={{ height:3, background:"linear-gradient(90deg,var(--maroon),var(--gold))" }} />
+                      <div style={{ height:3, background: isSupport(f)?"linear-gradient(90deg,#1a5a8a,#5a9fd4)":"linear-gradient(90deg,var(--maroon),var(--gold))" }} />
                       <div style={{ padding:"14px 16px" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                           <div style={{ fontSize:28, flexShrink:0 }}>{OCC_EMOJI[f.occasion]||"🎉"}</div>
@@ -154,14 +183,19 @@ export default function MichangoHome() {
               </div>
 
               <div>
-                <label style={S.lbl}>Occasion *</label>
+                <label style={S.lbl}>{form.fundType==="matukio" ? "Type of situation" : "Occasion"} *</label>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
-                  {OCCASIONS.map(o=>(
-                    <button key={o} onClick={()=>setForm(f=>({...f,occasion:o}))} style={{ padding:"10px 4px", borderRadius:"var(--r-md)", border:`2px solid ${form.occasion===o?"var(--maroon)":"var(--border2)"}`, background:form.occasion===o?"var(--maroon-bg)":"var(--white)", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                      <span style={{ fontSize:20 }}>{OCC_EMOJI[o]||"🎉"}</span>
-                      <span style={{ fontSize:10, fontWeight:form.occasion===o?800:600, color:form.occasion===o?"var(--maroon)":"var(--text2)", fontFamily:"inherit" }}>{o}</span>
-                    </button>
-                  ))}
+                  {(form.fundType==="matukio" ? SUPPORT_OCCASIONS : CELEBRATION_OCCASIONS).map(o=>{
+                    const active = form.occasion===o;
+                    const ac = form.fundType==="matukio" ? "#3a6090" : "var(--maroon)";
+                    const acBg = form.fundType==="matukio" ? "#e8f0f8" : "var(--maroon-bg)";
+                    return (
+                      <button key={o} onClick={()=>setForm(f=>({...f,occasion:o}))} style={{ padding:"10px 4px", borderRadius:"var(--r-md)", border:`2px solid ${active?ac:"var(--border2)"}`, background:active?acBg:"var(--white)", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+                        <span style={{ fontSize:20 }}>{OCC_EMOJI[o]||"🎉"}</span>
+                        <span style={{ fontSize:10, fontWeight:active?800:600, color:active?ac:"var(--text2)", fontFamily:"inherit", textAlign:"center", lineHeight:1.2 }}>{o.split(" / ")[0]}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -186,7 +220,7 @@ export default function MichangoHome() {
               {error && <div style={{ padding:"11px 14px", background:"var(--red-bg)", border:"1px solid rgba(192,57,43,.2)", borderRadius:"var(--r-md)", fontSize:13, fontWeight:700, color:"var(--red)" }}>{error}</div>}
 
               <button onClick={create} disabled={creating} className="btn-primary" style={{ opacity:creating?0.7:1, fontSize:15, marginTop:4 }}>
-                {creating ? "Creating..." : "🎉 Create Michango Fund →"}
+                {creating ? "Creating..." : form.fundType==="matukio" ? "🤲 Open Support Fund →" : "🎉 Create Michango Fund →"}
               </button>
             </div>
           </div>

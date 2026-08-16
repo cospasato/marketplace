@@ -34,7 +34,7 @@ export async function GET(req) {
 export async function POST(req) {
   const body = await req.json();
   const { title, occasion, description, organiserName, organiserEmail, organiserPhone,
-          eventDate, targetAmount, currency, coverImage, thankYouMsg } = body;
+          eventDate, targetAmount, currency, coverImage, thankYouMsg, isSupport } = body;
   if (!title || !organiserName || !organiserPhone)
     return NextResponse.json({ error: "Title, name and phone are required" }, { status: 400 });
   try {
@@ -47,6 +47,7 @@ export async function POST(req) {
         targetAmount: targetAmount ? parseFloat(targetAmount) : null,
         currency: currency || "TZS",
         coverImage, thankYouMsg,
+        isSupport: isSupport || false,
       },
     });
     return NextResponse.json(fund, { status: 201 });

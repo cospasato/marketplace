@@ -264,6 +264,7 @@ model EventFund {
   targetAmount  Float?                          // total budget target
   currency      String   @default("TZS")
   isPublic      Boolean  @default(true)
+  isSupport     Boolean  @default(false)   // true = Matukio (funeral/sickness/hardship)
   coverImage    String?
   thankYouMsg   String?
   createdAt     DateTime @default(now())

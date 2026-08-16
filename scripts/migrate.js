@@ -56,6 +56,7 @@ async function main() {
       // Backfill: pledgeAmount = amount for existing rows
       `UPDATE "EventContributor" SET "pledgeAmount" = amount WHERE "pledgeAmount" = 0`,
       `UPDATE "EventContributor" SET "amountPaid"   = amount WHERE "amountPaid"   = 0`,
+      `ALTER TABLE "EventFund" ADD COLUMN IF NOT EXISTS "isSupport" BOOLEAN DEFAULT false`,
     ];
     for (const sql of safeAlters) {
       try { await db.$executeRawUnsafe(sql); } catch {}
